@@ -1,0 +1,12 @@
+{
+  "name": "dualcraft",
+  "owner": { "name": "vmarquezperalta" },
+  "metadata": { "description": "DualCraft: web + mobile development workflow (Next.js ⇄ Flutter) for Claude Code." },
+  "plugins": [
+    {
+      "name": "dualcraft",
+      "source": "./",
+      "description": "Web + mobile development workflow (Next.js ⇄ Flutter) with a project brain."
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "packs": {
+    "core": "Núcleo y modos de trabajo",
+    "brain": "Brain: contexto, tareas y decisiones",
+    "process": "Proceso de desarrollo",
+    "db": "Base de datos y modelo ER",
+    "design": "Diseño",
+    "web": "Web (Next.js)",
+    "mobile": "Móvil (Flutter)",
+    "refactor": "Refactorización",
+    "security": "Seguridad",
+    "marketing": "Marketing y lanzamiento",
+    "convert": "Conversor web ⇄ móvil"
+  },
+  "commands": [
+    { "name": "help", "pack": "core", "phase": 1, "es": "Lista todos los comandos de DualCraft (disponibles y próximos)" },
+    { "name": "start", "pack": "core", "phase": 1, "es": "Inicia el trabajo: carga el contexto y pregunta el modo (bug/tarea corta, nuevo desarrollo, refactor)" },
+    { "name": "commit", "pack": "core", "phase": 1, "es": "Commit con Conventional Commits según el modo, enlazado a las tareas y con CHANGELOG" },
+
+    { "name": "brain", "pack": "brain", "phase": 1, "es": "Apunta y consulta tareas, bugs, decisiones, notas e ideas del proyecto" },
+    { "name": "park", "pack": "brain", "phase": 1, "es": "Aparca un desarrollo ya hecho para una versión posterior (rama o feature flag)" },
+    { "name": "map", "pack": "brain", "phase": 2, "es": "Mapa visual de nodos del brain con sus dependencias" },
+    { "name": "roadmap", "pack": "brain", "phase": 2, "es": "Vista roadmap: tareas agrupadas por versión" },
+
+    { "name": "brainstorm", "pack": "process", "phase": 3, "es": "Brainstorming de una idea antes de desarrollarla; apunta lo que no entra" },
+    { "name": "plan", "pack": "process", "phase": 3, "es": "Plan escrito para tareas de varios pasos" },
+    { "name": "tdd", "pack": "process", "phase": 3, "es": "Tests primero, después la implementación" },
+    { "name": "debug", "pack": "process", "phase": 3, "es": "Buscar la causa raíz de un bug antes de arreglarlo" },
+    { "name": "verify", "pack": "process", "phase": 3, "es": "Comprobar con evidencias antes de dar algo por terminado" },
+    { "name": "review", "pack": "process", "phase": 3, "es": "Revisión de código web/móvil, incluida accesibilidad" },
+    { "name": "docs", "pack": "process", "phase": 3, "es": "Actualiza el documento funcional del proyecto (docs/FUNCTIONAL.md)" },
+
+    { "name": "er", "pack": "db", "phase": 2, "es": "Diagrama ER visual del esquema de base de datos" },
+    { "name": "schema", "pack": "db", "phase": 2, "es": "Crea o edita el esquema (fuente de verdad) y genera modelos Dart, tipos TS y reglas de Firestore" },
+
+    { "name": "design-system", "pack": "design", "phase": 4, "es": "Design system en el Design de claude.ai" },
+    { "name": "tokens", "pack": "design", "phase": 4, "es": "Tokens compartidos → CSS/Tailwind y ThemeData de Flutter" },
+    { "name": "design-to-code", "pack": "design", "phase": 4, "es": "Pantalla de Design → componente React o widget Flutter" },
+
+    { "name": "web-architecture", "pack": "web", "phase": 5, "es": "Estructura y patrones del proyecto Next.js" },
+    { "name": "web-build", "pack": "web", "phase": 5, "es": "Build, dependencias y errores de compilación web" },
+    { "name": "web-test", "pack": "web", "phase": 5, "es": "Tests web (unitarios, componentes, e2e)" },
+    { "name": "web-browser", "pack": "web", "phase": 5, "es": "Probar la web en el navegador" },
+    { "name": "web-seo", "pack": "web", "phase": 5, "es": "SEO y rendimiento web" },
+    { "name": "mobile-architecture", "pack": "mobile", "phase": 5, "es": "Estructura y patrones del proyecto Flutter" },
+    { "name": "mobile-build", "pack": "mobile", "phase": 5, "es": "Build, flavors y errores de compilación móvil" },
+    { "name": "mobile-test", "pack": "mobile", "phase": 5, "es": "Tests Flutter (unit, widget, integración)" },
+    { "name": "mobile-device", "pack": "mobile", "phase": 5, "es": "Emulador/dispositivo: adb, capturas, logs" },
+    { "name": "mobile-crash", "pack": "mobile", "phase": 5, "es": "Analizar crashes (stack traces, Crashlytics)" },
+    { "name": "i18n", "pack": "mobile", "phase": 5, "es": "Textos e idiomas compartidos entre web y móvil" },
+    { "name": "analytics", "pack": "mobile", "phase": 5, "es": "Plan de eventos de analítica compartido web/móvil" },
+
+    { "name": "refactor-web", "pack": "refactor", "phase": 5, "es": "Refactorización específica de la web" },
+    { "name": "refactor-mobile", "pack": "refactor", "phase": 5, "es": "Refactorización específica de la app" },
+    { "name": "refactor-global", "pack": "refactor", "phase": 5, "es": "Refactorización de ambos + lógica duplicada entre plataformas" },
+
+    { "name": "security-global", "pack": "security", "phase": 6, "es": "Auditoría de seguridad de todo el proyecto" },
+    { "name": "security-web", "pack": "security", "phase": 6, "es": "Auditoría de seguridad de la web" },
+    { "name": "security-mobile", "pack": "security", "phase": 6, "es": "Auditoría de seguridad de la app" },
+
+    { "name": "marketing", "pack": "marketing", "phase": 7, "es": "Ideas de marketing para cada actualización (campañas, redes, ASO, SEO)" },
+    { "name": "release", "pack": "marketing", "phase": 7, "es": "Cierra versión: sube la versión, CHANGELOG, notas para tiendas y checklist de lanzamiento" },
+
+    { "name": "convert", "pack": "convert", "phase": 8, "es": "Convierte web → móvil o móvil → web vía especificación intermedia" }
+  ]
+}
