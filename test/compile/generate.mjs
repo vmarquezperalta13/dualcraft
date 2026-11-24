@@ -227,6 +227,22 @@ for (const id of ['nextjs', 'nuxt']) {
 write(path.join(OUT, 'web-server', 'h3-shim.d.ts'), 'interface H3Event { readonly __h3: true }\ndeclare function defineEventHandler<T>(h: (event: H3Event) => T | Promise<T>): unknown\ndeclare function createError(o: { statusCode: number; statusMessage?: string; data?: unknown }): Error\ndeclare function readBody(e: H3Event): Promise<unknown>\ndeclare function readRawBody(e: H3Event): Promise<string | undefined>\ndeclare function getHeader(e: H3Event, name: string): string | undefined\n')
 write(path.join(OUT, 'web-server', 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true, noEmit: true, target: 'es2022', module: 'esnext', moduleResolution: 'bundler', lib: ['es2022', 'dom'], types: ['node'], skipLibCheck: true }, include: ['**/*.ts'] }, null, 2))
 
+// ---------- iOS privacy manifests (plutil -lint on macOS) ----------
+function legalSetup(p) {
+  must(run('legal.mjs', ['scan', '--write'], p), 'legal scan')
+  const f = path.join(p, '.dualcraft', 'legal', 'data-map.json'); const m = JSON.parse(read(f))
+  Object.assign(m.controller, { legalName: 'Acme Apps S.L.', taxId: 'B12345678', address: 'Calle Mayor 1, Madrid', email: 'privacy@acme.app' })
+  Object.assign(m, { privacyPolicyUrl: 'https://acme.app/privacy', accountDeletionUrl: 'https://acme.app/delete', trackingDomains: ['example-tracker.com'] })
+  for (const x of m.data) { x.retention = 'Hasta que elimines tu cuenta'; delete x.needsReview }
+  write(f, JSON.stringify(m, null, 2))
+  must(run('legal.mjs', ['gen'], p), 'legal gen')
+}
+legalSetup(fl)
+copy(path.join(fl, 'app', 'ios', 'Runner', 'PrivacyInfo.xcprivacy'), path.join(OUT, 'swift', 'PrivacyInfo-flutter.xcprivacy'))
+write(M('iosapp', 'Demo', 'Prefs.swift'), 'import Foundation\nlet seen = UserDefaults.standard.bool(forKey: "seen")\n')
+legalSetup(multi)
+copy(M('iosapp', 'Demo', 'PrivacyInfo.xcprivacy'), path.join(OUT, 'swift', 'PrivacyInfo-ios.xcprivacy'))
+
 // ---------- GitHub Actions workflows (actionlint) ----------
 // multi-stack project (Firebase backend) with every web host, Supabase backend, and a Flutter-only project
 write(M('web', 'package.json'), JSON.stringify({ scripts: { build: 'astro build', lint: 'eslint .', test: 'vitest run' }, dependencies: { astro: '5.1.0' } }))

@@ -30,8 +30,8 @@ Then run `dualcraft:verify` on both platforms (fresh) — release builds include
 ## 5. Ship (with the user)
 **With `dualcraft:deploy` set up** — pushing the tag does it: production deploys of web and backend wait for the approval in GitHub (environment `production`), mobile builds land in Play internal testing and TestFlight; then promote them in the consoles (below). Watch the runs (`gh run watch`).
 **Web** — deploy through the project's pipeline (Vercel: push to the production branch or promote the preview); check production: main pages load, no console errors, sitemap reachable, analytics firing.
-**Android** — upload the `.aab` to Play Console (internal → closed → production, or staged rollout %); release notes from step 3; data safety form still accurate; keep the debug symbols / mapping for Crashlytics.
-**iOS** — upload via Xcode/Transporter, TestFlight first, then submit with "What's New"; privacy labels still accurate.
+**Android** — upload the `.aab` to Play Console (internal → closed → production, or staged rollout %); release notes from step 3; data safety form still accurate (`dualcraft:legal check`, docs/legal/google-data-safety.md); keep the debug symbols / mapping for Crashlytics.
+**iOS** — upload via Xcode/Transporter, TestFlight first, then submit with "What's New"; privacy labels and PrivacyInfo.xcprivacy still accurate (`dualcraft:legal`).
 **Store listing** — if screenshots or texts should change with this version → `dualcraft:screenshots` and `dualcraft:marketing` (ASO).
 **Backend first** — Firestore rules/indexes and Cloud Functions that the new version needs are deployed **before** the apps, and stay compatible with the previous app version still in users' hands.
 

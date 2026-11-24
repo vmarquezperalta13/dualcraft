@@ -74,7 +74,7 @@ jobs:
           deno-version: v2.x
       - run: node test/compile/generate.mjs out
       - working-directory: out/deno
-        run: deno check */index.ts
+        run: deno check ./*/index.ts
 
   dart:
     name: Analyze Dart output (Flutter)
@@ -124,9 +124,10 @@ jobs:
       - run: node test/compile/generate.mjs out
       - working-directory: out/swift
         run: |
-          xcrun swiftc -typecheck -target arm64-apple-macos14.0 *.swift
-          xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios17.0-simulator *.swift
+          xcrun swiftc -typecheck -target arm64-apple-macos14.0 ./*.swift
+          xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios17.0-simulator ./*.swift
           python3 -c "import json; json.load(open('DualCraft.xcstrings'))"
+          plutil -lint ./PrivacyInfo-*.xcprivacy
 
   sql:
     name: Apply SQL migrations (Postgres) and validate Prisma

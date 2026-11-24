@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.22.0] - 2026-11-24
+### Added
+- Legal and privacy pack: `/dualcraft:legal` and `scripts/legal.mjs` (scan, gen, check) — EU/Spain (GDPR, LOPDGDD, LSSI-CE, ePrivacy) plus App Store and Google Play rules; everything generated is a draft for professional review
+  - `.dualcraft/legal/data-map.json`: controller, data categories with purposes, legal basis, retention and processors, minimum age, policy and account-deletion URLs, tracking, cookies
+  - `scan`: infers collection from SDKs (Firebase, Supabase, store billing, RevenueCat, AdMob/Meta, location, photos, contacts, microphone, Sentry, Mixpanel, Amplitude, PostHog, Stripe, Google Analytics…), personal columns in the DB schema, permissions, tracking and cookies
+  - `gen`: privacy policy, terms (purchases and subscriptions when the payments pack is used) and cookie policy in every project language; App Store privacy answers; Google Play Data safety answers; iOS `PrivacyInfo.xcprivacy` (collected data, tracking, required-reason APIs from Swift code)
+  - `check`: map consistency (consent for ads/tracking/special data, international transfers), undeclared collection, in-app account deletion and web deletion URL, App Tracking Transparency, iOS permission texts, cookie consent banner, link to the policy
+- CI: `plutil -lint` on the generated privacy manifests
+### Changed
+- release skill points to the legal checks for the store privacy forms
+
 ## [0.21.0] - 2026-11-24
 ### Added
 - CI/CD and deploy pack: `/dualcraft:deploy` and `scripts/deploy.mjs` (init, gen, secrets, check)

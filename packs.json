@@ -139,6 +139,13 @@
         "deploy"
       ]
     },
+    "legal": {
+      "name": "Legal y privacidad",
+      "description": "RGPD/LSSI y tiendas: mapa de datos, borradores de políticas, App Privacy, Data safety, manifiesto de privacidad de iOS y comprobaciones",
+      "skills": [
+        "legal"
+      ]
+    },
     "shared": {
       "name": "Textos y analítica",
       "description": "i18n y plan de analítica compartidos entre stacks, refactor entre plataformas",
