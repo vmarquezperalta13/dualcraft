@@ -1,6 +1,7 @@
 ---
 name: start
-description: Starts DualCraft work in a project - sets the project up the first time (.dualcraft/), loads the brain context and ASKS THE WORK MODE (bug or short task / new development / refactor) before any code is touched. Use when the user runs /dualcraft:start, says "empezamos", "vamos a trabajar en…", "quiero hacer X" in a DualCraft project whose work mode is not chosen, or when the session context says "Work mode: NOT CHOSEN".
+description: >-
+  Starts DualCraft work in a project - sets the project up the first time (.dualcraft/), loads the brain context and ASKS THE WORK MODE (bug or short task / new development / refactor) before any code is touched. Use when the user runs /dualcraft:start, says "empezamos", "vamos a trabajar en…", "quiero hacer X" in a DualCraft project whose work mode is not chosen, or when the session context says "Work mode: NOT CHOSEN".
 ---
 
 # DualCraft start

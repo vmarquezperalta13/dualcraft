@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.14.0] - 2026-11-24
+### Added
+- Installer (`npx github:vmarquezperalta13/dualcraft`): `install` (interactive or flags), `add`, `remove`, `list`, `update`, `doctor`, `uninstall`
+- Packs (`packs.json`): core + one per stack (pulls the web/mobile platform skills) + optional design, data, shared, security, release, convert
+- Agents: Claude Code (local plugin `dualcraft@dualcraft-local` with only the chosen skills, hooks included), Gemini CLI and Codex CLI (skills as `dualcraft-*` with paths resolved to `~/.dualcraft/current`, plus a context block in GEMINI.md / AGENTS.md that loads the brain summary and related decisions)
+- `/dualcraft:help` marks skills that aren't installed and the command to add them
+### Fixed
+- `start` skill frontmatter was invalid YAML (`: ` inside the description), so Claude loaded it without metadata; descriptions with YAML-unsafe text now use a folded block
+
 ## [0.13.0] - 2026-11-24
 ### Added
 - Converter for any stack (stage D): `--from`/`--to` take any of the nine stacks (or web/mobile); inventory for Next.js, React + Vite (react-router), Astro (pages + endpoints), Nuxt (pages + Nitro handlers), Flutter, React Native (Expo Router), Kotlin Multiplatform / Android (Compose screens + Navigation routes), iOS (SwiftUI screens)

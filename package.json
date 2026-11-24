@@ -1,0 +1,11 @@
+{
+  "name": "dualcraft",
+  "version": "0.14.0",
+  "description": "Web + mobile development workflow for Claude Code, Gemini CLI and Codex CLI: project brain, decisions, process skills and generators for Next.js, React + Vite, Astro, Nuxt, Flutter, React Native, Kotlin Multiplatform, Android and iOS.",
+  "type": "module",
+  "bin": { "dualcraft": "bin/dualcraft.mjs" },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED",
+  "repository": { "type": "git", "url": "https://github.com/vmarquezperalta13/dualcraft.git" },
+  "files": ["bin", "scripts", "skills", "hooks", "references", "stacks", "catalog.json", "packs.json", ".claude-plugin", "CHANGELOG.md", "README.md"]
+}

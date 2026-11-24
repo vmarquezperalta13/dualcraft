@@ -1,12 +1,12 @@
 # DualCraft
 
-Web + mobile development workflow for Claude Code built around a **project brain**.
+Web + mobile development workflow for **Claude Code, Gemini CLI and Codex CLI**, built around a **project brain**.
 
 **Stacks** — web: Next.js · React + Vite · Astro · Vue/Nuxt — mobile: Flutter · React Native (Expo) · Kotlin Multiplatform · Android (Compose) · iOS (SwiftUI) — backends: Firebase · Supabase · PostgreSQL + Prisma.
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.13)
+## What it does (v0.14)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **New projects**: a full intake form (idea, type, platforms, stacks, backend, design, MVP features) creates the brief, decisions, MVP tasks and functional document, and scaffolds each stack with its CLI.
@@ -26,18 +26,34 @@ You talk to it in your language (Spanish by default); commands are in English.
 - **Databases**: Firebase, Supabase or PostgreSQL + Prisma with local + dev + prod environments set up through each CLI; the schema becomes SQL migrations (incremental, with RLS), a Prisma schema or Firestore rules — applied per environment and promoted to prod safely.
 - **Database schema as source of truth**: `.dualcraft/db/schema.dbml` ([DBML](https://dbml.dbdiagram.io/docs)) → ER diagram with crow's-foot notation (PNG/SVG export) and generated Dart models, TypeScript types and a Firestore rules skeleton.
 
-Run `/dualcraft:help` to see every command, available and upcoming.
+Run `/dualcraft:help` to see every command (installed and not installed).
 
 ## Install
 
 Requires Node.js 18+ and git.
 
 ```
-/plugin marketplace add vmarquezperalta13/dualcraft
-/plugin install dualcraft@dualcraft
+npx github:vmarquezperalta13/dualcraft install
 ```
 
-Or from the terminal: `claude plugin marketplace add vmarquezperalta13/dualcraft` and `claude plugin install dualcraft@dualcraft`.
+The installer asks which **agents** (Claude Code, Gemini CLI, Codex CLI), which **stacks** and which **optional packs** you want, and installs only that — fewer skills means less fixed context in every session (e.g. core + Flutter only ≈ 2.5k tokens instead of ≈ 5.6k with everything).
+
+| Pack | Contents |
+|---|---|
+| core (always) | brain, decisions, work modes, process skills, functional document, commits |
+| one per stack | nextjs · react-vite · astro · nuxt · flutter · react-native · kmp · android · ios (adds the web or mobile platform skills) |
+| design | Design System, tokens, screens, design → code |
+| data | schema, ER diagram, databases and environments |
+| shared | i18n, analytics, cross-platform refactor |
+| security | global / web / mobile audits |
+| release | release and marketing |
+| convert | converter between stacks |
+
+Other commands: `add <stack|pack>…`, `remove <stack|pack>…`, `list`, `update`, `doctor`, `uninstall`. Non-interactive: `install --agents claude,gemini --stacks nextjs,flutter --packs design,data --yes` (`--all-packs`, `--packs none`).
+
+Where it installs (global, for your user): shared scripts in `~/.dualcraft/current`; **Claude Code** gets a local plugin `dualcraft@dualcraft-local` (commands `/dualcraft:*`, hooks); **Gemini CLI** and **Codex CLI** get the skills as `dualcraft-*` in `~/.gemini/skills` / `~/.codex/skills` plus a DualCraft block in `GEMINI.md` / `AGENTS.md` that loads the brain and the related decisions.
+
+Everything, Claude Code only (no installer): `/plugin marketplace add vmarquezperalta13/dualcraft` then `/plugin install dualcraft@dualcraft`.
 
 Local development: `claude plugin marketplace add <path-to-this-folder>`.
 
@@ -88,7 +104,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 6. ✅ Security: global, web, mobile
 7. ✅ Marketing and release (versioning, store notes, launch checklist)
 8. ✅ Web ⇄ mobile converter
-9. Standalone installer with packs for several agents
+9. ✅ Installer with packs for Claude Code, Gemini CLI and Codex CLI
 
 ## Project files
 

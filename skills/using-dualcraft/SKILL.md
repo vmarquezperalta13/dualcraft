@@ -79,4 +79,4 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 
 **Process rules:** no code before an agreed design for new features; no fix before a root cause; no "done" without fresh verification evidence.
 
-All commands: `dualcraft:help`.
+All commands: `dualcraft:help` (it also shows skills not installed and how to add them: `npx github:vmarquezperalta13/dualcraft add <stack|pack>`).
