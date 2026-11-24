@@ -9,7 +9,7 @@ description: Starts DualCraft work in a project - sets the project up the first 
 
 ## 1. Set up the project (first time only)
 Run `$BRAIN summary`. If it says there is no DualCraft project:
-1. Detect the stacks yourself, don't ask what you can read:
+1. Detect the stacks yourself, don't ask what you can read — `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"` reports both:
    - Web: a `package.json` with `next` → `nextjs` (note its folder if not the root).
    - Mobile: a `pubspec.yaml` with `flutter` → `flutter` (note its folder).
    - Version: from `pubspec.yaml` (`version: 1.2.3+4` → `1.2.3`) or `package.json`; else `0.1.0`.
@@ -17,7 +17,8 @@ Run `$BRAIN summary`. If it says there is no DualCraft project:
 3. Run from the project root:
    `$BRAIN init --name "<name>" --version <v> [--web nextjs --web-path <dir>] [--mobile flutter --mobile-path <dir>] --lang es --commit-lang <en|es>`
 4. Make sure `.dualcraft/` is committed with the project (only `state.json` is ignored — init does that).
-5. Offer, in one line, to seed the brain from existing sources (TODO/FIXME comments, open issues, notes the user pastes). Do it only if they accept, via `dualcraft:brain`.
+5. Offer to map the architecture (`dualcraft:web-architecture` / `dualcraft:mobile-architecture`) so later work follows the project's patterns.
+6. Offer, in one line, to seed the brain from existing sources (TODO/FIXME comments, open issues, notes the user pastes). Do it only if they accept, via `dualcraft:brain`.
 
 ## 2. Show the context
 Summarise `$BRAIN summary` for the user in a few lines: version, what's in progress, open bugs, next tasks, parked work for the coming version. Don't dump the raw output.
@@ -43,9 +44,9 @@ Record it: `$BRAIN mode <bugfix|feature|refactor> --task <IDs> --scope <web|mobi
 ## 4. Work according to the mode
 | Mode | Flow |
 |---|---|
-| **bugfix** | `dualcraft:debug` (root cause with evidence) → `dualcraft:tdd` (failing test reproduces it, then fix) → `dualcraft:verify` |
+| **bugfix** | `dualcraft:debug` (root cause with evidence; crashes: `dualcraft:mobile-crash` first) → `dualcraft:tdd` (failing test reproduces it, then fix) → `dualcraft:verify` |
 | **feature** | `dualcraft:brainstorm` (agree the design; leftovers → brain) → `dualcraft:schema` if data changes → `dualcraft:design-screen` if there are new screens (then `dualcraft:design-to-code`) → `dualcraft:plan` if several steps or both platforms → `dualcraft:tdd` while implementing → `dualcraft:verify` → `dualcraft:review` for anything non-trivial → `dualcraft:docs` |
-| **refactor** | make sure tests cover the behaviour first (add them if not) → small steps with tests green after each → no behaviour change mixed in → `dualcraft:verify` |
+| **refactor** | `dualcraft:refactor-web`, `dualcraft:refactor-mobile` or `dualcraft:refactor-global` by scope (tests lock behaviour first → small steps, green after each → no behaviour change mixed in) → `dualcraft:verify` |
 
 A short task in bugfix mode that isn't a bug (copy change, config, dependency bump) skips debug: do it, then verify.
 

@@ -7,6 +7,7 @@
     "design": "Diseño",
     "web": "Web (Next.js)",
     "mobile": "Móvil (Flutter)",
+    "shared": "Compartido web + móvil",
     "refactor": "Refactorización",
     "security": "Seguridad",
     "marketing": "Marketing y lanzamiento",
@@ -48,8 +49,8 @@
     { "name": "mobile-test", "pack": "mobile", "phase": 5, "es": "Tests Flutter (unit, widget, integración)" },
     { "name": "mobile-device", "pack": "mobile", "phase": 5, "es": "Emulador/dispositivo: adb, capturas, logs" },
     { "name": "mobile-crash", "pack": "mobile", "phase": 5, "es": "Analizar crashes (stack traces, Crashlytics)" },
-    { "name": "i18n", "pack": "mobile", "phase": 5, "es": "Textos e idiomas compartidos entre web y móvil" },
-    { "name": "analytics", "pack": "mobile", "phase": 5, "es": "Plan de eventos de analítica compartido web/móvil" },
+    { "name": "i18n", "pack": "shared", "phase": 5, "es": "Textos e idiomas desde una fuente única → ARB de Flutter y next-intl; detecta textos sin traducir" },
+    { "name": "analytics", "pack": "shared", "phase": 5, "es": "Plan de eventos único → helpers tipados Dart/TS, docs/ANALYTICS.md y cobertura por plataforma" },
 
     { "name": "refactor-web", "pack": "refactor", "phase": 5, "es": "Refactorización específica de la web" },
     { "name": "refactor-mobile", "pack": "refactor", "phase": 5, "es": "Refactorización específica de la app" },

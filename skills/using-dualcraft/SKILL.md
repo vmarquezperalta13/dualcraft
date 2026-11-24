@@ -45,12 +45,27 @@ DualCraft is a web + mobile workflow (Next.js ⇄ Flutter) built around a **proj
 | Pull design changes into code, "actualiza los colores" | `dualcraft:tokens` |
 | Design a screen (mobile + web mockup) | `dualcraft:design-screen` |
 | Implement a designed screen | `dualcraft:design-to-code` |
+| Next.js structure, where a web change goes | `dualcraft:web-architecture` |
+| Web build errors, dependencies, upgrades | `dualcraft:web-build` |
+| Web tests | `dualcraft:web-test` |
+| See/try the web in a browser, screenshots | `dualcraft:web-browser` |
+| SEO, performance, Lighthouse | `dualcraft:web-seo` |
+| Flutter structure, where an app change goes | `dualcraft:mobile-architecture` |
+| App build errors, Gradle/pods, store builds | `dualcraft:mobile-build` |
+| Flutter tests | `dualcraft:mobile-test` |
+| Emulator/device, adb, logs, screenshots | `dualcraft:mobile-device` |
+| Crash, stack trace, Crashlytics | `dualcraft:mobile-crash` |
+| Texts, translations, languages | `dualcraft:i18n` |
+| Analytics events, tracking plan | `dualcraft:analytics` |
+| Refactor web / app / both | `dualcraft:refactor-web` / `refactor-mobile` / `refactor-global` |
 | "¿qué comandos hay?", help | `dualcraft:help` |
 
 **Data rule:** in a project with `.dualcraft/db/schema.dbml`, any change to stored data starts in the schema (`dualcraft:schema`) and models/types are regenerated — never hand-edit generated files.
 
 **Design rule:** the claude.ai Design System (`design.system` in config) is the source of truth for colors, typography, spacing and radius. Code uses only the generated tokens — never raw hex colors or magic sizes; a missing value is a Design System change.
 
+**Shared-sources rule:** texts come from `.dualcraft/i18n/` and analytics events from `.dualcraft/analytics/events.json` — both platforms use the generated files, never hard-coded strings or ad-hoc event names. Project facts: `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"`; per-platform maps in `.dualcraft/architecture/`.
+
 **Process rules:** no code before an agreed design for new features; no fix before a root cause; no "done" without fresh verification evidence.
 
-More packs (web, mobile, refactor, security, marketing, converter) are listed by `dualcraft:help` and are added phase by phase.
+More packs (security, marketing, converter) are listed by `dualcraft:help` and are added phase by phase.

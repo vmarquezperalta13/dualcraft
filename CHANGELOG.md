@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0] - 2026-11-24
+### Added
+- Web pack: `web-architecture`, `web-build`, `web-test`, `web-browser`, `web-seo`
+- Mobile pack: `mobile-architecture`, `mobile-build`, `mobile-test`, `mobile-device`, `mobile-crash`
+- Refactor pack: `refactor-web`, `refactor-mobile`, `refactor-global` (cross-platform drift)
+- `i18n`: one source of texts (`.dualcraft/i18n/<locale>.json`, ICU) → Flutter ARB + next-intl messages; checks and hard-coded string scan
+- `analytics`: tracking plan (`.dualcraft/analytics/events.json`) → typed Dart/TS helpers, `docs/ANALYTICS.md`, per-platform coverage
+- `detect.mjs`: what the Next.js and Flutter projects really use
+- Shared generated-file guard (code, Markdown and JSON/ARB)
+### Changed
+- `start` detects stacks with `detect.mjs`, offers architecture maps, routes refactors and crashes to the new skills
+
 ## [0.4.0] - 2026-11-24
 ### Added
 - Design pack: `design-system` (claude.ai Design System from scratch or from code), `tokens`, `design-screen` (mobile + web artboards), `design-to-code`
