@@ -77,6 +77,17 @@ test('security: scanner finds the classic holes and stays quiet on clean code', 
   const out = run('security.mjs', ['--json'], dir).out
   const rules = JSON.parse(out).findings.map((f) => f.rule)
   for (const r of ['rules.open', 'rules.any-signed-in', 'web.public-secret-env', 'supabase.service-role-public', 'functions.oncall-no-auth', 'flutter.prefs-secret', 'supabase.no-rls', 'flutter.iap-client-only']) assert.ok(rules.includes(r), `missing ${r}`)
+  // production lessons: emulator outside kDebugMode, region mismatch, IAP without complete/restore
+  const p2 = makeProject({ mobile: 'flutter' })
+  write(path.join(p2, 'functions', 'src', 'index.js'), 'const REGION = "europe-west1";\nexports.f = onCall({ region: REGION }, async (request) => { if (!request.auth) throw 1 })\n')
+  write(path.join(p2, 'lib', 'main.dart'), "void setup() {\n  FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);\n}\nvoid call() { FirebaseFunctions.instance.httpsCallable('f'); FirebaseFunctions.instanceFor(region: 'us-east1'); }\nvoid iap() { InAppPurchase.instance.purchaseStream.listen((p) {}); }\n")
+  write(path.join(p2, 'lib', 'debug.dart'), "void ok() {\n  if (kDebugMode) {\n    FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);\n  }\n}\n")
+  write(path.join(p2, 'firestore.rules'), "service cloud.firestore { match /databases/{d}/documents { match /u/{id} { allow read: if request.auth != null; } } }\n")
+  write(path.join(p2, 'lib', 'keys.dart'), "const sg = 'SG.abcdefghijklmnopqrstuv.abcdefghijklmnopqrstuvwxyz0123';\nconst wh = 'whsec_abcdefghijklmnopqrstuvwxyz012345';\n")
+  const f2 = JSON.parse(run('security.mjs', ['--json'], p2).out).findings
+  const r2 = f2.map((f) => f.rule)
+  for (const r of ['flutter.emulator-in-release', 'flutter.functions-default-region', 'flutter.functions-region-mismatch', 'flutter.iap-no-complete', 'flutter.iap-no-restore', 'rules.no-default-deny', 'secret.sendgrid', 'secret.stripe-webhook']) assert.ok(r2.includes(r), `missing ${r}`)
+  assert.equal(f2.filter((f) => f.rule === 'flutter.emulator-in-release').length, 1, 'guarded emulator must not be reported')
   const clean = makeProject()
   write(path.join(clean, 'lib', 'main.dart'), "void main() { runApp(const App()); }\n")
   assert.equal(JSON.parse(run('security.mjs', ['--json', '--min', 'medium'], clean).out).findings.length, 0)

@@ -24,6 +24,9 @@ Debug check: `flutter build apk --debug` (add `--flavor x -t lib/main_x.dart` if
 | iOS `pod install` errors (macOS only) | `cd ios && pod repo update && pod install`; raise `platform :ios` in the Podfile if a pod needs it |
 | `google-services.json` / `GoogleService-Info.plist` missing | add per flavor (never commit secrets beyond what Firebase config requires) |
 
+## Release-only failures
+If the debug build works and the release/testing build fails with Firebase (`unauthenticated`, `unavailable`, sign-in errors): R8 rules, upload-key **and** Play app-signing SHA fingerprints in Firebase, App Check provider, emulator guarded by `kDebugMode` — see `${CLAUDE_PLUGIN_ROOT}/references/firebase-functions.md` ("Debugging by error").
+
 ## Versioning & store builds
 - `pubspec.yaml` `version: X.Y.Z+N` — `X.Y.Z` follows the DualCraft version (release command), `N` (build number) must increase on every store upload.
 - Android release: `flutter build appbundle --release [--obfuscate --split-debug-info=build/symbols]`; keep the symbols for crash symbolication. Signing via `key.properties` + keystore **outside the repo**; never print or commit keystore passwords.

@@ -9,6 +9,8 @@ description: Mobile security review (MASVS) - secure storage, network, deep link
 
 `$SEC` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/security.mjs" --scope mobile`. Confirm each finding in the code; never print secret values. If the project has its own mobile/Firebase security skill, apply it as well.
 
+Playbook for Flutter + Firebase (rules patterns, client hardening, GDPR account deletion, checklist): `${CLAUDE_PLUGIN_ROOT}/references/security-firebase.md`; purchases: `${CLAUDE_PLUGIN_ROOT}/references/play-billing.md`; Functions and release-only failures: `${CLAUDE_PLUGIN_ROOT}/references/firebase-functions.md`.
+
 Mindset: **the app binary is public and can be modified.** Anything in it (API keys, logic, flags) can be read and changed; protection lives on the server (rules, functions). The app's job is to protect the user's data on the device and talk to the server safely.
 
 ## Checklist

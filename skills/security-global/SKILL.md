@@ -6,6 +6,7 @@ description: Full security audit - threat model, scanner, rules vs schema, funct
 # DualCraft security — global audit
 
 `$SEC` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/security.mjs"`, `$BRAIN` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/brain.mjs"`.
+Playbook (severity scale and **release gate**, rules patterns, A–G checklist, audit frequency, finding format): `${CLAUDE_PLUGIN_ROOT}/references/security-firebase.md` — follow it; Cloud Functions specifics: `${CLAUDE_PLUGIN_ROOT}/references/firebase-functions.md`.
 Platform depth: `dualcraft:security-web`, `dualcraft:security-mobile` (run them as part of this audit for each stack the project has). If the project has its own security-audit skill, use it too and merge the findings.
 
 Defensive review of the user's own project. Never exfiltrate, print or commit secrets you find — report location and type only, and tell the user to rotate them.
@@ -32,4 +33,4 @@ Write `docs/security/AUDIT-<YYYY-MM-DD>.md`: scope, threat model, method (scan +
 ## 5. Act
 - Each critical/high finding → brain bug: `$BRAIN new bug "<finding>" --priority high --tags security,<web|mobile|backend>`; medium → bug or task with a target version.
 - Offer to fix in priority order, each through `dualcraft:debug`/`dualcraft:tdd` (a test or rules test that proves the hole is closed) and `dualcraft:verify`.
-- Release gate: no open critical/high security bugs for the version (the release checklist will check `--tags security`).
+- Release gate (playbook): an open CRÍTICO blocks the release unless an exception is recorded as a decision (reason + who authorizes); ALTO ships only with a dated plan (≤ 7 days). No open critical/high security bugs for the version (the release checklist will check `--tags security`).

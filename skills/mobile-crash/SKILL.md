@@ -20,6 +20,7 @@ description: Crash analysis from stack traces, logcat, iOS logs, Crashlytics or 
   - `setState() called after dispose()` / `Looking up a deactivated widget's ancestor` → async work finishing after the screen closed (missing `mounted` check / subscription not cancelled).
   - `RenderFlex overflowed` / `unbounded height` → layout constraints (grey screen in release).
   - `type 'X' is not a subtype of type 'Y'` → JSON/Firestore shape differs from the model (check `.dualcraft/db/schema.dbml` and the generated models).
+  - In-app purchases locked after restart / "already own this item" → `${CLAUDE_PLUGIN_ROOT}/references/play-billing.md` (causes A/B/C).
   - `PlatformException` / `MissingPluginException` → plugin setup, permissions, or calling a plugin before `WidgetsFlutterBinding.ensureInitialized()`.
 - **Android**: `FATAL EXCEPTION` + `Caused by:` (deepest cause wins); ANR → `main` thread blocked (heavy sync work, platform channel waiting); `SIGSEGV` in a `.so` → native library/plugin.
 - **iOS**: the crashed thread, exception type (`EXC_BAD_ACCESS`, `SIGABRT` with reason), our frames.

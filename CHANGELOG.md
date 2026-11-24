@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.17.0] - 2026-11-24
+### Added
+- Field-tested references integrated from the AforApp / La Previa skills, generalized for any project:
+  - `references/firebase-functions.md` — Cloud Functions v2 patterns (callable template, transactions, error codes, secrets), client calls per stack, debugging by error (unauthenticated / unavailable / not-found, debug vs release: R8, SHA fingerprints with Play App Signing, App Check), webhooks, deploy
+  - `references/play-billing.md` — Play Console products, Flutter `in_app_purchase` architecture, the "bought but locked after restart" causes, server verification with the Play Developer API and RTDN, testing and release checklist
+  - `references/security-firebase.md` — severity scale and release gate, Firestore rules patterns, client hardening, GDPR account deletion, A–G checklist, audit frequency, finding format
+- Security scanner: Firebase emulator outside `kDebugMode`, Cloud Functions region mismatch between client and server, `purchaseStream` without `completePurchase`, no `restorePurchases`, missing default-deny rule, SendGrid / Stripe webhook / FCM server keys, unrestricted Google API keys
+### Changed
+- security-global, security-mobile, debug, mobile-build and mobile-crash use these references
+
 ## [0.16.0] - 2026-11-24
 ### Added
 - Test suite (`npm test`, node:test, no dependencies): parsers, brain and decisions, every generator and stack, hand-edit guards, database migrations, detector, converter, security scanner, release, docs and shareable map, GitHub sync (mock API), plugin consistency (frontmatter, packs, catalog, references, hooks) and the installer

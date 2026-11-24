@@ -19,6 +19,7 @@ Find the shortest reliable reproduction: a failing test (best), a script, or exa
 ## 3. Gather evidence
 - **Flutter**: full stack trace (first frame in *our* code), `flutter logs` / `adb logcat`, Crashlytics, `flutter analyze` warnings near the code. Typical causes: `setState` after `dispose`/`await` (missing `mounted` check), null from Firestore on a "required" field, async gaps with `BuildContext`, listeners/streams not cancelled, platform-specific plugin setup.
 - **Next.js**: browser console + network tab, server logs (route handlers, server components run on the server!), build output. Typical causes: hydration mismatch (dates, `window`, random values in render), server/client boundary (`'use client'` missing, secrets in client code), caching/revalidation of fetch, env vars not exposed (`NEXT_PUBLIC_`), effects without cleanup.
+- **Works in debug, fails in release / closed testing** (Firebase): R8 stripping classes, SHA fingerprints (Play App Signing re-signs the app), App Check provider, emulator left on, region mismatch — table in `${CLAUDE_PLUGIN_ROOT}/references/firebase-functions.md`.
 - **Firebase**: rules denials (`permission-denied`), missing indexes (the error links to create it), functions logs, emulator.
 - Recent changes: `git log -p` on the involved files, `git bisect` for regressions.
 

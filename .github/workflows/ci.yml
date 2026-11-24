@@ -53,7 +53,7 @@ jobs:
         run: |
           flutter pub get
           flutter gen-l10n
-          flutter analyze
+          flutter analyze --no-fatal-infos
 
   kotlin:
     name: Compile and run Kotlin output

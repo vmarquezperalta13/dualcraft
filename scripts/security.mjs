@@ -45,6 +45,10 @@ const SECRET_RULES = [
   ['high', 'secret.slack', /\bxox[abpors]-[A-Za-z0-9-]{10,}\b/, 'Slack token'],
   ['high', 'secret.openai-like', /\bsk-(proj-)?[A-Za-z0-9_-]{32,}\b/, 'API secret key (sk-…)'],
   ['high', 'secret.anthropic', /\bsk-ant-[A-Za-z0-9_-]{20,}\b/, 'Anthropic API key'],
+  ['critical', 'secret.stripe-webhook', /\bwhsec_[A-Za-z0-9]{20,}\b/, 'Stripe webhook signing secret'],
+  ['high', 'secret.sendgrid', /\bSG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}\b/, 'SendGrid API key'],
+  ['high', 'secret.fcm-server-key', /\bAAAA[A-Za-z0-9_-]{7}:[A-Za-z0-9_-]{100,}\b/, 'Firebase Cloud Messaging legacy server key'],
+  ['low', 'secret.google-api-key', /\bAIzaSy[0-9A-Za-z_-]{33}\b/, 'Google API key in code — not secret by itself, but restrict it (app/package + SHA, or HTTP referrers) in Google Cloud'],
   ['medium', 'secret.generic', /\b(api[_-]?secret|client[_-]?secret|secret[_-]?key|password|passwd|auth[_-]?token)\b\s*[:=]\s*["'][^"'\s]{8,}["']/i, 'Hard-coded credential-looking value'],
 ]
 for (const f of files) {
@@ -70,6 +74,7 @@ if (want('backend')) {
     each(/allow\s+[\w, ]*;/g, (m, l) => add('critical', 'rules.unconditional', f, l, `${kind} rule without condition: "${m[0]}"`, 'Add an explicit condition'))
     each(/request\.time\s*<\s*timestamp\.date\(/g, (m, l) => add('critical', 'rules.test-mode', f, l, `${kind} rules still in "test mode" (open until a date)`, 'Replace with real rules before any real data'))
     each(/match\s+\/\{(document|path|allPaths)=\*\*\}\s*\{[^}]*allow\s+(read|write|read,\s*write)[^;]*request\.auth\s*!=\s*null\s*;/g, (m, l) => add('high', 'rules.any-signed-in', f, l, `${kind}: any signed-in user can ${m[2]} everything`, 'Scope rules per collection with ownership/role checks'))
+    if (/service\s+cloud\.firestore/.test(s) && !/match\s+\/\{document=\*\*\}\s*\{\s*allow\s+read\s*,\s*write\s*:\s*if\s+false\s*;?\s*\}/.test(s)) add('low', 'rules.no-default-deny', f, null, 'No explicit default-deny rule at the end', 'Add match /{document=**} { allow read, write: if false; } so anything without a rule stays closed')
     each(/allow\s+(write|create|update)[^;]*;/g, (m, l) => { if (!/request\.resource\.data|keys\(\)|is\s+(string|int|number|bool|timestamp|map|list)/.test(m[0]) && !/if\s+false/.test(m[0]) && !/valid\w*\(/.test(m[0])) add('medium', 'rules.no-validation', f, l, `${kind} write without data validation: "${m[0].slice(0, 90)}"`, 'Validate shape and types (hasOnly/hasAll, types, sizes) — see firestore.rules.generated from /dualcraft:schema') })
   }
   // Supabase / Postgres migrations: every table needs RLS; write policies must not be open
@@ -155,6 +160,24 @@ if (want('mobile')) {
     for (const m of s.matchAll(/(print|debugPrint|log)\([^)]*\b(token|password|idToken|secret)\b/gi)) add('medium', 'flutter.log-secret', f, lineOf(s, m.index), 'Possible secret written to logs', 'Never log tokens or passwords')
     for (const m of s.matchAll(/badCertificateCallback\s*=\s*\([^)]*\)\s*=>\s*true/g)) add('critical', 'flutter.tls-bypass', f, lineOf(s, m.index), 'TLS certificate validation disabled', 'Remove the override')
     for (const m of s.matchAll(/setJavaScriptMode\(\s*JavaScriptMode\.unrestricted\s*\)/g)) add('low', 'flutter.webview-js', f, lineOf(s, m.index), 'WebView with unrestricted JavaScript', 'Only load trusted content; restrict navigation; avoid JS channels exposing sensitive actions')
+  }
+  // lessons from production Flutter + Firebase apps
+  const dartFiles = files.filter((x) => x.startsWith(mob) && /[\\/]lib[\\/].*\.dart$/.test(x) && !/\.g\.dart$|generated/.test(x))
+  const allDart = dartFiles.map((f) => [f, text(f)])
+  for (const [f, s] of allDart) for (const m of s.matchAll(/\.use(Functions|Firestore|Auth|Storage|Database)Emulator\s*\(/g)) {
+    const before = s.slice(Math.max(0, m.index - 300), m.index)
+    if (!/kDebugMode|kReleaseMode|assert\s*\(|isDebug|const bool\.fromEnvironment/.test(before)) add('high', 'flutter.emulator-in-release', f, lineOf(s, m.index), `use${m[1]}Emulator without a kDebugMode guard — in a release build every Firebase call fails ("unavailable")`, 'Wrap the emulator setup in if (kDebugMode) { … }')
+  }
+  const fnSrc = files.filter((x) => /(^|[\\/])functions[\\/]/.test(rel(x)) && /\.(ts|js)$/.test(x) && !IS_TEST(rel(x))).map(text).join('\n')
+  const fnRegions = [...new Set([...fnSrc.matchAll(/region\s*[:=]\s*["']([a-z]+-[a-z]+\d)["']|REGION\s*=\s*["']([a-z]+-[a-z]+\d)["']/g)].map((m) => m[1] || m[2]))]
+  if (fnRegions.length && !fnRegions.includes('us-central1')) for (const [f, s] of allDart) {
+    for (const m of s.matchAll(/FirebaseFunctions\.instance\s*\.\s*httpsCallable/g)) add('medium', 'flutter.functions-default-region', f, lineOf(s, m.index), `Callable uses the default region (us-central1) but the functions run in ${fnRegions.join(', ')} → "unavailable"/"not-found"`, `FirebaseFunctions.instanceFor(region: '${fnRegions[0]}')`)
+    for (const m of s.matchAll(/instanceFor\(\s*region:\s*['"]([a-z0-9-]+)['"]/g)) if (!fnRegions.includes(m[1])) add('high', 'flutter.functions-region-mismatch', f, lineOf(s, m.index), `Callable region ${m[1]} differs from the functions' region (${fnRegions.join(', ')})`, `Use region '${fnRegions[0]}' on both sides`)
+  }
+  const dartAll = allDart.map(([, s]) => s).join('\n')
+  if (/purchaseStream/.test(dartAll)) {
+    if (!/completePurchase\s*\(/.test(dartAll)) add('high', 'flutter.iap-no-complete', null, null, 'purchaseStream is used but completePurchase() is never called — Play keeps purchases pending ("you already own this item") and refunds them after 3 days', 'Call completePurchase() for every purchase with pendingCompletePurchase == true (purchased AND restored), after granting')
+    if (!/restorePurchases\s*\(/.test(dartAll)) add('medium', 'flutter.iap-no-restore', null, null, 'No restorePurchases() call — purchases are lost after reinstall or clearing data', 'Call restorePurchases() at launch (after the listener) and from a "Restore purchases" button')
   }
   if (/in_app_purchase|purchases_flutter/.test(text(path.join(mob, 'pubspec.yaml'))) && !files.some((x) => /[\\/]functions[\\/]/.test(x) && /verifyPurchase|purchases\.products|androidpublisher|verifyReceipt|validateReceipt|appstoreconnect/i.test(text(x)))) add('high', 'flutter.iap-client-only', path.join(mob, 'pubspec.yaml'), null, 'In-app purchases without visible server-side receipt verification', 'Verify purchases server-side (Cloud Function + Google Play Developer API / App Store Server API) before granting content')
 }
