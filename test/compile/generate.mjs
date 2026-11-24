@@ -227,5 +227,21 @@ for (const id of ['nextjs', 'nuxt']) {
 write(path.join(OUT, 'web-server', 'h3-shim.d.ts'), 'interface H3Event { readonly __h3: true }\ndeclare function defineEventHandler<T>(h: (event: H3Event) => T | Promise<T>): unknown\ndeclare function createError(o: { statusCode: number; statusMessage?: string; data?: unknown }): Error\ndeclare function readBody(e: H3Event): Promise<unknown>\ndeclare function readRawBody(e: H3Event): Promise<string | undefined>\ndeclare function getHeader(e: H3Event, name: string): string | undefined\n')
 write(path.join(OUT, 'web-server', 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true, noEmit: true, target: 'es2022', module: 'esnext', moduleResolution: 'bundler', lib: ['es2022', 'dom'], types: ['node'], skipLibCheck: true }, include: ['**/*.ts'] }, null, 2))
 
+// ---------- GitHub Actions workflows (actionlint) ----------
+// multi-stack project (Firebase backend) with every web host, Supabase backend, and a Flutter-only project
+write(M('web', 'package.json'), JSON.stringify({ scripts: { build: 'astro build', lint: 'eslint .', test: 'vitest run' }, dependencies: { astro: '5.1.0' } }))
+write(M('web', 'package-lock.json'), '{}')
+write(M('droid', 'app', 'build.gradle.kts'), 'android { namespace = "com.test.droid"\n  defaultConfig { applicationId = "com.test.droid" } }\n')
+for (const host of ['firebase', 'vercel', 'cloudflare', 'netlify']) {
+  must(run('deploy.mjs', ['init', '--host', host, '--force'], multi), 'deploy init ' + host)
+  fs.cpSync(M('.github', 'workflows'), path.join(OUT, 'workflows', host), { recursive: true })
+}
+must(run('deploy.mjs', ['init'], sb), 'deploy init supabase')
+fs.cpSync(path.join(sb, '.github', 'workflows'), path.join(OUT, 'workflows', 'supabase'), { recursive: true })
+fs.mkdirSync(path.join(fl, 'app', 'ios', 'Runner.xcworkspace'), { recursive: true }); fs.mkdirSync(path.join(fl, 'app', 'ios', 'Runner.xcodeproj'), { recursive: true })
+write(path.join(fl, 'app', 'android', 'app', 'build.gradle.kts'), 'android { defaultConfig { applicationId = "com.acme.hockey" } }\n')
+must(run('deploy.mjs', ['init'], fl), 'deploy init flutter')
+fs.cpSync(path.join(fl, '.github', 'workflows'), path.join(OUT, 'workflows', 'flutter'), { recursive: true })
+
 console.log(`compile fixtures → ${OUT}`)
 for (const d of fs.readdirSync(OUT)) console.log(`  ${d}: ${fs.readdirSync(path.join(OUT, d)).length} entries`)

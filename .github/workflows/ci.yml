@@ -48,6 +48,19 @@ jobs:
           npm i --no-audit --no-fund typescript@5.6.3 @types/node@22
           npx tsc -p .
 
+  actionlint:
+    name: Lint generated GitHub Actions workflows (actionlint + shellcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node test/compile/generate.mjs out
+      - name: Install actionlint (official script)
+        run: bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+      - run: ./actionlint -color out/workflows/*/*.yml .github/workflows/*.yml
+
   deno:
     name: Type-check Supabase Edge Functions (Deno)
     runs-on: ubuntu-latest

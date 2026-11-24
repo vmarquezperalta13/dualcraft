@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.21.0] - 2026-11-24
+### Added
+- CI/CD and deploy pack: `/dualcraft:deploy` and `scripts/deploy.mjs` (init, gen, secrets, check)
+  - GitHub Actions generated from the project's stacks (hash-protected): CI per stack (Next.js, React+Vite, Astro, Nuxt, React Native, Flutter, Android, KMP, iOS) plus Cloud Functions / Supabase Edge Functions
+  - web deploys to Firebase Hosting, Vercel, Cloudflare Pages or Netlify: preview per pull request, dev on main, production on `v*` tags behind the `production` environment; no deploys from forks
+  - backend deploys per environment (Firebase functions/rules/indexes, Supabase migrations and Edge Functions)
+  - mobile releases on tags: signed builds to Google Play internal testing and TestFlight (iOS automatic signing with an App Store Connect API key, `ExportOptions.plist`), EAS build + submit for React Native
+  - `secrets`: every secret and variable per GitHub environment, checked against the repo (missing ones, production without reviewers)
+  - `check`: stale workflows, Android release signing, application ids, ExportOptions, eas.json, keys ignored and never committed, SSR on static hosts
+- Reference `release-signing.md` (environments, Android upload key and Gradle snippets, iOS API-key signing, hosts, promotion and rollback)
+- Generated-file guard supports `#` headers (YAML)
+- CI: actionlint + shellcheck over every generated workflow
+### Changed
+- release skill ships through the pipeline when `dualcraft:deploy` is set up
+
 ## [0.20.0] - 2026-11-24
 ### Added
 - Push notifications pack: `/dualcraft:push` and `scripts/push.mjs` (init, gen, check)

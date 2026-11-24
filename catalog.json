@@ -12,6 +12,7 @@
     "backend": "Backend serverless",
     "payments": "Pagos",
     "push": "Notificaciones push",
+    "deploy": "CI/CD y despliegue",
     "security": "Seguridad",
     "marketing": "Marketing y lanzamiento",
     "convert": "Conversor web ⇄ móvil"
@@ -43,6 +44,7 @@
     { "name": "backend", "pack": "backend", "phase": 10, "es": "Backend serverless desde un contrato: Cloud Functions, Supabase Edge Functions o API routes; callables, webhooks firmados, triggers y cron; validación en servidor y clientes tipados para cada stack" },
     { "name": "payments", "pack": "payments", "phase": 10, "es": "Compras in-app en Google Play y App Store: catálogo único (suscripciones, desbloqueos, consumibles), verificación en servidor y notificaciones de las tiendas, o RevenueCat; catálogo tipado por stack y PurchaseService de Flutter" },
     { "name": "push", "pack": "push", "phase": 10, "es": "Notificaciones push con FCM (Android, iOS, web): catálogo de canales, temas y notificaciones tipadas con deep link, textos del i18n en el idioma de cada dispositivo, registro de dispositivos y PushService de Flutter" },
+    { "name": "deploy", "pack": "deploy", "phase": 10, "es": "CI/CD con GitHub Actions: CI por stack, despliegue web (Firebase Hosting, Vercel, Cloudflare, Netlify) con previews, backend por entornos y release móvil a pruebas internas de Play y TestFlight; secrets y firma" },
     { "name": "database", "pack": "db", "phase": 2, "es": "Crea la BD: Firebase, Supabase o Postgres+Prisma; entornos local+dev+prod por CLI; migraciones SQL con RLS, Prisma, reglas e índices; dev → prod" },
     { "name": "schema", "pack": "db", "phase": 2, "es": "Crea o edita el esquema (fuente de verdad) y genera modelos Dart, tipos TS y reglas de Firestore" },
 

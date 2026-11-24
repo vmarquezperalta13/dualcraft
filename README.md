@@ -49,6 +49,7 @@ The installer asks which **agents** (Claude Code, Gemini CLI, Codex CLI), which 
 | data | schema, ER diagram, databases and environments |
 | payments | in-app purchases on Google Play and the App Store (native server verification or RevenueCat) |
 | push | push notifications with FCM: channels, topics, typed notifications with deep links, texts per language |
+| deploy | CI/CD with GitHub Actions: CI per stack, web deploys with previews, backend per environment, mobile builds to Play internal testing and TestFlight |
 | backend | serverless functions from one contract (Cloud Functions, Supabase Edge Functions, API routes), typed clients for every stack |
 | shared | i18n, analytics, cross-platform refactor |
 | security | global / web / mobile audits |
@@ -83,6 +84,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:database` | Create the database and environments; migrations, rules, deploys |
 | `/dualcraft:payments` | In-app purchases: catalog, server verification or RevenueCat, purchase service |
 | `/dualcraft:push` | Push notifications: catalog, typed senders and parsers, device registration |
+| `/dualcraft:deploy` | CI/CD workflows, environments, secrets check, release signing |
 | `/dualcraft:backend` | Server functions from a contract: callables, webhooks, triggers, cron; validators + typed clients |
 | `/dualcraft:schema` | Edit the schema; generate Dart / TS / Firestore rules |
 | `/dualcraft:brainstorm` | Explore an idea and agree the design |
@@ -136,6 +138,7 @@ CI compiles the generated code for real on every push: TypeScript, Flutter, Kotl
   db/schema.dbml  database schema (source of truth)
   backend/api.json  server functions contract (source)
   push/notifications.json  channels, topics and notifications (texts in i18n under "push")
+  deploy/pipeline.json  web host, Android track, branch (workflows are generated from it)
   payments/products.json  products, entitlements and currencies sold in the apps (source)
   design/tokens.json  copy of the Design System tokens (pulled, never edited here)
   i18n/<locale>.json  UI texts for web + mobile (source)

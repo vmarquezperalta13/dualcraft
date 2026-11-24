@@ -132,6 +132,13 @@
         "push"
       ]
     },
+    "deploy": {
+      "name": "CI/CD y despliegue",
+      "description": "GitHub Actions: CI por stack, deploy web con previews (Firebase Hosting, Vercel, Cloudflare, Netlify), backend por entornos, builds móviles a Play interno y TestFlight",
+      "skills": [
+        "deploy"
+      ]
+    },
     "shared": {
       "name": "Textos y analítica",
       "description": "i18n y plan de analítica compartidos entre stacks, refactor entre plataformas",

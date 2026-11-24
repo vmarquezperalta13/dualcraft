@@ -42,6 +42,7 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 | Server functions, endpoints, webhooks, cron, calling the backend from the apps | `dualcraft:backend` |
 | In-app purchases, subscriptions, premium, coins, RevenueCat | `dualcraft:payments` |
 | Push notifications, notify users, FCM | `dualcraft:push` |
+| CI, deploys, pipelines, TestFlight / Play testing uploads, secrets | `dualcraft:deploy` |
 | New idea, "quiero añadir…", design before code | `dualcraft:brainstorm` |
 | Work with several steps / both platforms | `dualcraft:plan` |
 | Writing implementation code | `dualcraft:tdd` |
