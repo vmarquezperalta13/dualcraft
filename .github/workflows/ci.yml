@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: git config --global user.email ci@dualcraft.local && git config --global user.name ci
+      - run: node --test "test/*.test.mjs"
+
+  typescript:
+    name: Compile TypeScript output
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node test/compile/generate.mjs out
+      - run: npx -y -p typescript@5.6.3 tsc --noEmit --strict --target es2020 --lib es2020 --moduleResolution node out/ts/*.ts
+
+  dart:
+    name: Analyze Dart output (Flutter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: node test/compile/generate.mjs out
+      - working-directory: out/dart
+        run: |
+          flutter pub get
+          flutter gen-l10n
+          flutter analyze
+
+  kotlin:
+    name: Compile and run Kotlin output
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.14.3
+      - run: node test/compile/generate.mjs out
+      - working-directory: out/kotlin
+        run: gradle --no-daemon -q run
+
+  swift:
+    name: Type-check Swift output (macOS + iOS SDK)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node test/compile/generate.mjs out
+      - working-directory: out/swift
+        run: |
+          xcrun swiftc -typecheck -target arm64-apple-macos14.0 *.swift
+          xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios17.0-simulator *.swift
+          python3 -c "import json; json.load(open('DualCraft.xcstrings'))"
+
+  sql:
+    name: Apply SQL migrations (Postgres) and validate Prisma
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node test/compile/generate.mjs out
+      - working-directory: out/sql
+        run: |
+          npm init -y >/dev/null
+          npm i --no-audit --no-fund @electric-sql/pglite@0.2.17 prisma@6.1.0
+          node pg.mjs migrations
+          DATABASE_URL=postgresql://u:p@localhost:5432/db npx prisma validate --schema prisma/schema.prisma

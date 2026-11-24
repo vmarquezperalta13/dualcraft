@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.0] - 2026-11-24
+### Added
+- Test suite (`npm test`, node:test, no dependencies): parsers, brain and decisions, every generator and stack, hand-edit guards, database migrations, detector, converter, security scanner, release, docs and shareable map, GitHub sync (mock API), plugin consistency (frontmatter, packs, catalog, references, hooks) and the installer
+- CI on GitHub Actions: tests on Ubuntu and Windows (Node 22/24) plus real compilation of the generated code: TypeScript (strict), Flutter (gen-l10n + analyze), Kotlin (Compose + kotlinx.serialization, compiled and run), Swift (macOS and iOS simulator SDK), SQL migrations applied on Postgres (PGlite) and Prisma validate
+### Fixed
+- Kotlin inventory ignored projects whose package contains "test" (com.test.app)
+- Security scanner skipped Cloud Functions and secrets when the project path contained "test"/"spec" (e.g. C:/projects/latest)
+- Two SQL migrations generated in the same second got the wrong order / duplicate version
+
 ## [0.15.0] - 2026-11-24
 ### Added
 - `github`: brain ⇄ GitHub Issues sync (`github.mjs` status / push / pull, milestones from target versions, assignees, closing finished notes with a comment, importing unlinked issues; token from GH_TOKEN, gh or the git credential helper)

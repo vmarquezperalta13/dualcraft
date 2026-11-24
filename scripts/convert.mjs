@@ -218,7 +218,8 @@ function inventoryReactNative(dir) {
   return screens
 }
 function inventoryKotlin(dir) {
-  const files = walk(dir, (p) => p.endsWith('.kt') && !/[\\/](build|test|androidTest|commonTest)[\\/]/.test(p) && !/DbModels|DsTokens|AnalyticsEvents/.test(p))
+  // skip test source sets and build output — judged on the path relative to the stack (a package like com.test.app is fine)
+  const files = walk(dir, (p) => { const r = path.relative(dir, p); return p.endsWith('.kt') && !/(^|[\\/])build[\\/]|[\\/]src[\\/]\w*[Tt]est[\\/]/.test(r) && !/DbModels|DsTokens|AnalyticsEvents/.test(path.basename(p)) })
   const routes = {}
   for (const f of files) {
     const s = read(f)
@@ -239,7 +240,7 @@ function inventoryKotlin(dir) {
   return screens
 }
 function inventoryIos(dir) {
-  const files = walk(dir, (p) => p.endsWith('.swift') && !/Tests?[\\/]|DbModels|DsTokens|AnalyticsEvents/.test(p))
+  const files = walk(dir, (p) => p.endsWith('.swift') && !/(^|[\\/])\w*Tests?[\\/]/.test(path.relative(dir, p)) && !/DbModels|DsTokens|AnalyticsEvents/.test(path.basename(p)))
   const all = files.map(read).join('\n')
   const screens = []
   for (const f of files) {

@@ -1,0 +1,22 @@
+Project aforapp { database_type: 'Firestore' }
+Enum role { admin
+  member
+  "in-progress" }
+Table users [note: 'path: users'] {
+  id string [pk]
+  displayName string [not null]
+  email string [not null, unique]
+  role role [not null]
+  tags string[]
+  createdAt timestamp [not null]
+  lastSeen timestamp
+  settings map
+  class string
+}
+Table sessions [note: 'path: users/{userId}/sessions'] {
+  id string [pk]
+  userId string [not null, ref: > users.id]
+  count int [not null, default: 0]
+  score double
+  dates timestamp[]
+}

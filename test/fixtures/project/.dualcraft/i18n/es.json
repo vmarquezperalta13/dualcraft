@@ -1,0 +1,4 @@
+{"auth": {"login": {"title": "Inicia sesión", "welcome": "Hola, {name}"}},
+ "matches": {"count": "{count, plural, =0 {Sin partidos} one {# partido} other {# partidos}}"},
+ "web": {"seo": {"title": "AforApp — Aforos en directo"}},
+ "mobile": {"permissions": {"camera": "Necesitamos la cámara para escanear"}}}

@@ -1,12 +1,14 @@
 # DualCraft
 
+[![CI](https://github.com/vmarquezperalta13/dualcraft/actions/workflows/ci.yml/badge.svg)](https://github.com/vmarquezperalta13/dualcraft/actions/workflows/ci.yml)
+
 Web + mobile development workflow for **Claude Code, Gemini CLI and Codex CLI**, built around a **project brain**.
 
 **Stacks** — web: Next.js · React + Vite · Astro · Vue/Nuxt — mobile: Flutter · React Native (Expo) · Kotlin Multiplatform · Android (Compose) · iOS (SwiftUI) — backends: Firebase · Supabase · PostgreSQL + Prisma.
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.15)
+## What it does (v0.16)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **New projects**: a full intake form (idea, type, platforms, stacks, backend, design, MVP features) creates the brief, decisions, MVP tasks and functional document, and scaffolds each stack with its CLI.
@@ -97,6 +99,15 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:marketing` | Launch copy, ASO, campaigns, growth ideas |
 | `/dualcraft:screenshots` | Store screenshots framed per language and size |
 | `/dualcraft:convert` | Convert web ⇄ mobile, feature by feature |
+
+## Development
+
+```
+npm test                  # unit + integration tests (Node 22+)
+npm run compile-fixtures  # writes compile-out/ with the generated code per language
+```
+
+CI compiles the generated code for real on every push: TypeScript, Flutter, Kotlin, Swift (macOS) and Postgres/Prisma. Skill descriptions live in `scripts/dev/descriptions.json` (apply with `node scripts/dev/apply-descriptions.mjs`).
 
 ## Roadmap
 

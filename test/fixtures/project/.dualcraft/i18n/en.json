@@ -1,0 +1,1 @@
+{"auth":{"login":{"title":"Sign in","welcome":"Hi, {name}"}},"matches":{"count":"{count, plural, =0 {No matches} one {# match} other {# matches}}"},"web":{"seo":{"title":"x"}},"mobile":{"permissions":{"camera":"We need the camera"}}}

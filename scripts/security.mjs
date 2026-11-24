@@ -32,6 +32,8 @@ const text = (f) => { try { return fs.readFileSync(f, 'utf8') } catch { return '
 const lineOf = (s, idx) => s.slice(0, idx).split('\n').length
 const isBinary = (f) => /\.(png|jpe?g|gif|webp|ico|pdf|zip|jar|aar|so|ttf|otf|woff2?|mp4|mp3|keystore|jks|p12|apk|aab|ipa)$/i.test(f)
 const rel = (f) => posix(path.relative(root, f))
+// test code and fixtures: by folder or file name, never by a substring of an unrelated name ("latest", "contest")
+const IS_TEST = (r) => /(^|\/)(tests?|spec|__tests__|__mocks__|mocks?|fixtures?|examples?|testdata)\//i.test(r) || /\.(test|spec)\.[cm]?[jt]sx?$|_test\.(dart|go|py)$|Tests?\.(kt|swift)$/i.test(r)
 
 // ---------- secrets (everywhere) ----------
 const SECRET_RULES = [
@@ -52,7 +54,7 @@ for (const f of files) {
   if (/\.(jks|keystore|p12|pem)$/i.test(f)) add('critical', 'secret.keystore', f, null, 'Signing key / certificate file in the repository', 'Move it out of the repo and rotate it if the repo was ever shared')
   if (/key\.properties$/.test(f)) add('high', 'secret.key-properties', f, null, 'Android signing key.properties tracked by git', 'Untrack it and keep it local / in CI secrets')
   const s = text(f)
-  if (/test|spec|mock|fixture|example/i.test(rel(f)) && !/\.env/.test(base)) continue
+  if (IS_TEST(rel(f)) && !/\.env/.test(base)) continue
   for (const [sev, rule, re, msg] of SECRET_RULES) {
     const m = s.match(re)
     if (m && !/(your|example|xxx|changeme|placeholder|<)/i.test(m[0])) add(sev, rule, f, lineOf(s, m.index), msg, 'Remove it from the code, rotate it, load it from server-side env/secret manager')
@@ -90,7 +92,7 @@ if (want('backend')) {
     for (const m of s.matchAll(/(NEXT_PUBLIC_|VITE_|EXPO_PUBLIC_|PUBLIC_|NUXT_PUBLIC_)[A-Z0-9_]*SERVICE_ROLE[A-Z0-9_]*/g)) add('critical', 'supabase.service-role-public', f, lineOf(s, m.index), `${m[0]}: the Supabase service_role key bypasses RLS and is exposed to clients`, 'Use the anon key in clients; keep service_role only in server code/secrets and rotate it now')
     if (/\.(dart|kt|swift)$/.test(f) || /^\s*['"]use client['"]/m.test(s)) for (const m of s.matchAll(/service_role|SUPABASE_SERVICE_ROLE_KEY/g)) add('critical', 'supabase.service-role-client', f, lineOf(s, m.index), 'Supabase service_role referenced in client code', 'Clients use the anon key + RLS; privileged operations go to an Edge Function/server')
   }
-  for (const f of files.filter((x) => /(^|[\\/])functions[\\/](src[\\/])?.*\.(ts|js)$/.test(x) && !/\.d\.ts$|test|spec/.test(x))) {
+  for (const f of files.filter((x) => /(^|[\\/])functions[\\/](src[\\/])?.*\.(ts|js)$/.test(rel(x)) && !/\.d\.ts$/.test(x) && !IS_TEST(rel(x)))) {
     const s = text(f)
     for (const m of s.matchAll(/\bonCall\s*\(/g)) {
       const body = s.slice(m.index, m.index + 1500)

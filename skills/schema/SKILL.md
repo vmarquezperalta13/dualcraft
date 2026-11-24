@@ -1,6 +1,6 @@
 ---
 name: schema
-description: Database schema (.dualcraft/db/schema.dbml) as the single source of truth, generating models for every stack and Firestore rules. Use to define or change data, "saca el modelo de datos del código", or before hand-writing models.
+description: Database schema (.dualcraft/db/schema.dbml) as the single source of truth, generating models for every stack and Firestore rules. Use when defining or changing stored data, "saca el modelo de datos del código", or before hand-writing models.
 ---
 
 # DualCraft schema

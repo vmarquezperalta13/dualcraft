@@ -194,8 +194,14 @@ if (cmd === 'migration') {
   if (!prev) body = fullSql(model, rls)
   else { const d = diffSql(prev.model, strip(model), rls); body = d.sql; warnings = d.warnings }
   if (!body.trim() && !warnings.length) { console.log('No schema changes since the last migration (' + (prev?.migration || '—') + ').'); process.exit(0) }
-  const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)
   const outDir = opt.out ? path.resolve(String(opt.out)) : path.join(root, 'supabase', 'migrations')
+  // the version must be unique and later than every existing migration (two runs in the same second, clock skew)
+  let ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)
+  const last = fs.existsSync(outDir) ? fs.readdirSync(outDir).map((f) => (f.match(/^(\d{14})_/) || [])[1]).filter(Boolean).sort().pop() : null
+  if (last && ts <= last) {
+    const d = new Date(Date.UTC(+last.slice(0, 4), +last.slice(4, 6) - 1, +last.slice(6, 8), +last.slice(8, 10), +last.slice(10, 12), +last.slice(12, 14) + 1))
+    ts = d.toISOString().replace(/[-:T]/g, '').slice(0, 14)
+  }
   const file = path.join(outDir, `${ts}_${name}.sql`)
   const text = header(prev ? `Migration "${name}" (changes since ${prev.migration})` : `Initial migration "${name}"`) + (body || '-- (no automatic statements — see warnings)') + (warnings.length ? '\n\n-- ⚠ Manual review needed:\n' + warnings.map((w) => '-- ' + w).join('\n') : '') + '\n'
   if (opt.dry) { console.log(text); warnings.forEach((w) => console.error('⚠ ' + w)); process.exit(0) }
