@@ -63,6 +63,6 @@
     { "name": "marketing", "pack": "marketing", "phase": 7, "es": "Qué comunicar de cada versión + textos listos: tiendas/ASO, web, redes, in-app, push; campaña, métricas e ideas de crecimiento" },
     { "name": "release", "pack": "marketing", "phase": 7, "es": "Cierra versión: checklist, versión en config/pubspec/package.json, CHANGELOG, tag, notas de tienda por idioma y lanzamiento" },
 
-    { "name": "convert", "pack": "convert", "phase": 8, "es": "Convierte web → móvil o móvil → web vía especificación intermedia" }
+    { "name": "convert", "pack": "convert", "phase": 8, "es": "Convierte web ⇄ móvil por funcionalidades: inventario, decisiones de backend preguntadas, spec neutra, adaptación nativa y verificación" }
   ]
 }

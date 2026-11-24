@@ -1,7 +1,7 @@
 {
   "name": "dualcraft",
-  "version": "0.7.0",
-  "description": "Web + mobile development workflow (Next.js ⇄ Flutter): project brain with tasks, decisions and parked work, work modes that drive commits and versions, and more packs coming (design, ER schema, security, marketing, web⇄mobile converter).",
+  "version": "0.8.0",
+  "description": "Web + mobile development workflow (Next.js ⇄ Flutter): project brain with tasks, decisions and parked work, work modes that drive commits and versions, ER schema, design system, process, security, release & marketing, and a web ⇄ mobile converter.",
   "author": { "name": "vmarquezperalta" },
   "keywords": ["web", "mobile", "flutter", "nextjs", "workflow", "brain"]
 }

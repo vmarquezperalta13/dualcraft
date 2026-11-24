@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.0] - 2026-11-24
+### Added
+- `convert`: web ⇄ mobile conversion feature by feature — inventory, backend/platform touchpoints analysed and decided with the user, platform-neutral spec, native adaptation, generation on the shared schema/tokens/i18n/analytics, verification with shared test cases and screenshots; creates the target project when missing
+- `convert.mjs`: `inventory` (Next.js routes/handlers/server actions, Flutter screens/go_router/Firestore/callables/native plugins with web alternatives), `init`, `status`, `set` (blocks generation while backend decisions are pending), `backend`, `spec-check`
+- References: neutral spec format and web ⇄ mobile platform mapping
+
 ## [0.7.0] - 2026-11-24
 ### Added
 - `release`: readiness checklist, version bump (config, pubspec build number, package.json), CHANGELOG close, release commit and tag, store release notes per language, store/web launch and post-release follow-up
