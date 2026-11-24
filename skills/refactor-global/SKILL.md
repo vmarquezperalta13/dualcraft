@@ -1,6 +1,6 @@
 ---
 name: refactor-global
-description: Refactors across web and mobile together - finds business logic duplicated (and drifting) between Next.js and Flutter, moves shared rules to one place (backend, Cloud Functions, security rules) or mirrors them with shared test cases, aligns naming and data models with the schema, and brings both platforms onto the shared sources (schema, design tokens, i18n, analytics). Use when the user runs /dualcraft:refactor-global, "unifica web y app", "esto está duplicado en las dos", "la web y la app no hacen lo mismo", or in Refactor mode with scope both.
+description: Cross-platform refactoring - finds business rules duplicated or drifting between web and mobile and moves them to one place or shared test cases. Use for "unifica web y app", "esto está duplicado en las dos", "no hacen lo mismo".
 ---
 
 # DualCraft refactor — global

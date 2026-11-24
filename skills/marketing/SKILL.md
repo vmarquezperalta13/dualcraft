@@ -1,6 +1,6 @@
 ---
 name: marketing
-description: Marketing for each update of the web and the app - decides which changes are worth communicating and why they matter to users, then produces ideas and ready-to-use copy - store listing and ASO (Google Play, App Store), web (landing sections, news/blog, SEO), social posts per network, in-app announcements, push and email, launch campaign plan with timing and metrics from the tracking plan - plus a backlog of growth ideas. Use when the user runs /dualcraft:marketing, "ideas de marketing", "cómo anunciamos esta versión", "textos para redes", "mejora la ficha de la tienda", "ASO", "campaña de lanzamiento", or after a release.
+description: What to communicate in each update and ready copy - stores and ASO, web, social, in-app, push and email - with campaign plan, metrics and growth ideas. Use for "ideas de marketing", "cómo anunciamos esta versión", "ASO".
 ---
 
 # DualCraft marketing
@@ -19,7 +19,7 @@ Rank the version's changes by **user value × visibility**: a new capability or 
 ## 3. Produce (save as `docs/marketing/<version>.md`)
 | Channel | Deliverable |
 |---|---|
-| **Stores (ASO)** | "What's new" already in `.dualcraft/release/<v>.json` (from `dualcraft:release`); if the highlight changes the app's value: new screenshot order/captions (first 2–3 screenshots sell), updated short/promo text, keyword ideas. Persistent listing texts live in `.dualcraft/store/listing.json` (`{"es": {"play": {"title", "short", "full"}, "appstore": {"name", "subtitle", "promo", "keywords", "description"}}}`) → `$REL store-check`. |
+| **Stores (ASO)** | screenshots via `dualcraft:screenshots` (captions = the highlights). "What's new" already in `.dualcraft/release/<v>.json` (from `dualcraft:release`); if the highlight changes the app's value: new screenshot order/captions (first 2–3 screenshots sell), updated short/promo text, keyword ideas. Persistent listing texts live in `.dualcraft/store/listing.json` (`{"es": {"play": {"title", "short", "full"}, "appstore": {"name", "subtitle", "promo", "keywords", "description"}}}`) → `$REL store-check`. |
 | **Web** | landing/hero section or feature block for the highlight, news/blog post outline with SEO target query, meta title/description (`dualcraft:web-seo`), app store badges/deep links. |
 | **Social** | one post per network the project uses, adapted (not copy-paste): Instagram/TikTok (hook in the first line, visual idea or short video script with 3–5 shots), X/Threads (short), LinkedIn (if B2B). Hashtags few and relevant. |
 | **In-app** | "what's new" sheet or tooltip copy for the feature (texts through `dualcraft:i18n`), shown once. |

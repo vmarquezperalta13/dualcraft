@@ -1,6 +1,6 @@
 ---
 name: park
-description: Parks a development that is already done (or partly done) but must NOT ship in the current version - keeps the code safe on a parked branch or behind a feature flag, records it in the brain with its target version and how to resume it. Use when the user says "esto déjalo para la siguiente versión", "no lo metas en esta versión", "apárcalo", "guárdalo para más adelante", or when a release must go out without a finished feature. Also use to list or resume parked work ("¿qué tenemos aparcado?", "recupera lo aparcado de 1.4").
+description: Parks finished work that must wait for a later version (parked branch or feature flag) and resumes it later. Use for "déjalo para la siguiente versión", "apárcalo", "no lo metas en esta versión", "¿qué hay aparcado?".
 ---
 
 # DualCraft park

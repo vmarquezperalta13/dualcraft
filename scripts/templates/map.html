@@ -138,7 +138,7 @@ input[type=search] { width: 170px; background: var(--card); }
     n.requiredBy = nodes.filter((m) => m.depends_on.includes(n.id)).map((m) => m.id)
   }
   $('title').textContent = 'Brain · ' + DATA.project
-  $('meta').textContent = `v${DATA.version} · ${nodes.length} notas · ${edges.length} enlaces`
+  $('meta').textContent = `v${DATA.version} · ${nodes.length} notas · ${edges.length} enlaces${DATA.snapshot ? ' · actualizado ' + DATA.snapshot.split('-').reverse().join('/') : ''}`
 
   // ---------- filters ----------
   const state = { types: new Set(Object.keys(TYPES)), status: INITIAL_VIEW === 'road' ? 'open' : 'all', version: 'all', q: '', view: 'map' }
@@ -313,7 +313,7 @@ input[type=search] { width: 170px; background: var(--card); }
         ${g.map((n) => `<div class="card ${n.status}" style="--c:var(--${n.type})" data-id="${esc(n.id)}">
           <div class="top"><span>${esc(n.id)} · ${TYPES[n.type]}</span><span>${n.blocked ? '<span class="badge blocked">bloqueado</span> ' : ''}<span class="badge ${n.status}">${STATUS[n.status]}</span></span></div>
           <div class="ttl">${esc(n.title)}</div>
-          ${n.depends_on.length ? `<div class="dep">depende de ${n.depends_on.map(esc).join(', ')}</div>` : ''}
+          ${n.depends_on.length || n.assignee || n.estimate ? `<div class="dep">${[n.depends_on.length ? 'depende de ' + n.depends_on.map(esc).join(', ') : '', n.assignee ? '@' + esc(n.assignee) : '', n.estimate ? '~' + esc(n.estimate) : ''].filter(Boolean).join(' · ')}</div>` : ''}
         </div>`).join('')}</section>`
     }).join('')
     $('cols').querySelectorAll('.card').forEach((c) => (c.onclick = () => open(c.dataset.id)))
@@ -344,6 +344,7 @@ input[type=search] { width: 170px; background: var(--card); }
       <dl><dt>Estado</dt><dd>${STATUS[n.status]}${n.blocked ? ' · <span style="color:var(--warn)">bloqueado</span>' : ''}</dd>
       ${n.target ? `<dt>Versión</dt><dd>${esc(n.target)}</dd>` : ''}${n.priority ? `<dt>Prioridad</dt><dd>${esc(n.priority)}</dd>` : ''}
       ${n.branch ? `<dt>Rama</dt><dd><code>${esc(n.branch)}</code></dd>` : ''}${n.flag ? `<dt>Flag</dt><dd><code>${esc(n.flag)}</code></dd>` : ''}
+      ${n.assignee ? `<dt>Responsable</dt><dd>@${esc(n.assignee)}</dd>` : ''}${n.estimate ? `<dt>Estimación</dt><dd>${esc(n.estimate)}</dd>` : ''}${n.issue ? `<dt>Issue</dt><dd>${DATA.repo ? `<a href="https://github.com/${esc(DATA.repo)}/issues/${esc(String(n.issue).replace(/\D/g, ''))}" target="_blank" rel="noopener">${esc(n.issue)}</a>` : esc(n.issue)}</dd>` : ''}
       ${n.area ? `<dt>Area</dt><dd>${esc(n.area)}</dd>` : ''}${n.superseded_by ? `<dt>Sustituida por</dt><dd>${link(n.superseded_by)}</dd>` : ''}
       ${n.spec ? `<dt>Diseño</dt><dd><code>${esc(n.spec)}</code></dd>` : ''}${n.plan ? `<dt>Plan</dt><dd><code>${esc(n.plan)}</code></dd>` : ''}
       ${n.tags?.length ? `<dt>Tags</dt><dd>${n.tags.map(esc).join(', ')}</dd>` : ''}

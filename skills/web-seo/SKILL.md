@@ -1,6 +1,6 @@
 ---
 name: web-seo
-description: SEO and performance for the Next.js site - metadata and Open Graph, sitemap and robots, canonical and hreflang, structured data (JSON-LD), indexability of public vs private pages, Core Web Vitals (images, fonts, JS size, caching) and Lighthouse checks. Use when the user runs /dualcraft:web-seo, "SEO", "posicionamiento", "Google no indexa", "la web va lenta", "Lighthouse", "Core Web Vitals", before launching public pages, or when marketing asks for landing pages.
+description: SEO and performance - metadata, sitemap, canonical, hreflang, structured data, Core Web Vitals, Lighthouse. Use for "SEO", "posicionamiento", "Google no indexa", "la web va lenta", or before public pages.
 ---
 
 # DualCraft web SEO & performance

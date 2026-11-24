@@ -15,7 +15,15 @@ const PREFIX_TO_TYPE = Object.fromEntries(Object.entries(TYPES).map(([k, v]) => 
 const STATUSES = ['todo', 'doing', 'done', 'parked', 'dropped', 'superseded']
 const MODES = ['bugfix', 'feature', 'refactor']
 const AREAS = ['architecture', 'data', 'design', 'security', 'product', 'process', 'web', 'mobile', 'backend', 'infra', 'marketing', 'legal']
-const FIELD_ORDER = ['id', 'type', 'title', 'status', 'area', 'superseded_by', 'priority', 'target', 'depends_on', 'related', 'branch', 'flag', 'spec', 'plan', 'tags', 'created', 'updated']
+const FIELD_ORDER = ['id', 'type', 'title', 'status', 'area', 'superseded_by', 'priority', 'target', 'assignee', 'estimate', 'issue', 'depends_on', 'related', 'branch', 'flag', 'spec', 'plan', 'tags', 'created', 'updated']
+// estimates: "3h", "2d" (8h), "1w" (40h), "30m" or story points "5pt"
+export function estimateHours(e) {
+  const m = String(e || '').trim().match(/^(\d+(?:[.,]\d+)?)\s*(m|min|h|d|w|pt|pts|sp)?$/i)
+  if (!m) return null
+  const n = parseFloat(m[1].replace(',', '.')); const u = (m[2] || 'h').toLowerCase()
+  return u.startsWith('p') || u === 'sp' ? { points: n } : { hours: n * ({ m: 1 / 60, min: 1 / 60, h: 1, d: 8, w: 40 }[u]) }
+}
+const fmtHours = (h) => (h >= 8 ? `${+(h / 8).toFixed(1)}d` : `${+h.toFixed(1)}h`)
 const isActiveDecision = (n) => n.type === 'decision' && n.status === 'done'
 
 // ---------- helpers ----------
@@ -105,7 +113,7 @@ const cmpVer = (a, b) => {
   for (let i = 0; i < 3; i++) { const d = (pa[i] || 0) - (pb[i] || 0); if (d) return d }
   return 0
 }
-const line = (n) => `${n.id} [${n.type}/${n.status}${n.target ? ' → ' + n.target : ''}] ${n.title}${n.depends_on.length ? '  (depends on ' + n.depends_on.join(', ') + ')' : ''}`
+const line = (n) => `${n.id} [${n.type}/${n.status}${n.target ? ' → ' + n.target : ''}] ${n.title}${n.assignee ? ' @' + n.assignee : ''}${n.estimate ? ' ~' + n.estimate : ''}${n.issue ? ' ' + n.issue : ''}${n.depends_on.length ? '  (depends on ' + n.depends_on.join(', ') + ')' : ''}`
 
 // ---------- validation ----------
 function check(notes) {
@@ -227,6 +235,7 @@ const commands = {
     if (opt.status) notes = notes.filter((n) => list(opt.status).includes(n.status))
     if (opt.target) notes = notes.filter((n) => n.target === opt.target)
     if (opt.tag) notes = notes.filter((n) => n.tags.includes(opt.tag))
+    if (opt.assignee) notes = notes.filter((n) => (opt.assignee === 'none' ? !n.assignee : n.assignee === opt.assignee))
     if (opt.open) notes = notes.filter((n) => !['done', 'dropped'].includes(n.status))
     if (!notes.length) return console.log('(no notes match)')
     for (const n of notes) console.log(line(n))
@@ -247,7 +256,11 @@ const commands = {
     console.log(`Roadmap — ${config.name} (current ${config.version})`)
     for (const k of keys) {
       const g = groups[k]; const done = g.filter((n) => n.status === 'done').length
-      console.log(`\n## ${k}  (${done}/${g.length} done)`)
+      let h = 0; let pts = 0; let left = 0; let unest = 0
+      for (const n of g) { const e = estimateHours(n.estimate); if (!e) { if (n.status !== 'done') unest++; continue } if (e.points) pts += e.points; else { h += e.hours; if (n.status !== 'done') left += e.hours } }
+      const est = h || pts ? `  · est. ${h ? fmtHours(h) + (left !== h ? ` (${fmtHours(left)} left)` : '') : ''}${h && pts ? ' + ' : ''}${pts ? pts + ' pt' : ''}${unest ? ` · ${unest} unestimated` : ''}` : ''
+      const who = {}; for (const n of g) if (n.assignee && n.status !== 'done') who[n.assignee] = (who[n.assignee] || 0) + 1
+      console.log(`\n## ${k}  (${done}/${g.length} done)${est}${Object.keys(who).length ? '  · ' + Object.entries(who).map(([a, c]) => `@${a} ${c}`).join(' ') : ''}`)
       for (const n of g) console.log('  ' + line(n))
     }
   },
@@ -426,7 +439,8 @@ const commands = {
   init --name N --version V [--web nextjs] [--mobile flutter] [--lang es] [--commit-lang en]
   new <task|bug|decision|note|idea> <title> [--area architecture|data|design|security|product|…] [--target 1.3.0] [--depends T-001,D-002] [--related I-004] [--priority high|medium|low] [--tags a,b] [--status s] [--body "text"]
   set <ID> key=value ... [--log "message"]      e.g. set T-004 status=done
-  list [--type t] [--status s] [--target v] [--tag x] [--open]
+  list [--type t] [--status s] [--target v] [--tag x] [--assignee login|none] [--open]
+  (fields for set: assignee=<github login> estimate=<3h|2d|1w|5pt> issue=#12)
   show <ID>
   roadmap                                        tasks/bugs/ideas grouped by target version
   graph                                          JSON nodes + edges (for the visual map)

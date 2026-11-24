@@ -1,6 +1,6 @@
 ---
 name: database
-description: Creates and runs the project's database and backend environments - choose the provider (Firebase/Firestore, Supabase/Postgres, PostgreSQL + Prisma), set up local + dev + prod environments with each provider's CLI (emulators or Docker locally, cloud projects for dev and prod), turn the schema into the provider's artifacts (SQL migrations with RLS, Prisma schema and migrations, Firestore rules and indexes), apply them per environment, connect the apps, and promote changes from dev to prod safely. Use when the user runs /dualcraft:database, "crea la base de datos", "configura Firebase/Supabase", "entornos de desarrollo y producción", "aplica la migración", "sube las reglas", or after the schema changes.
+description: Creates the database and environments (Firebase, Supabase, Postgres+Prisma; local, dev, prod) with each CLI, migrations with RLS, rules and safe promotion to prod. Use for "crea la base de datos", "configura Firebase/Supabase", "aplica la migración".
 ---
 
 # DualCraft database

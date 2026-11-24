@@ -3,34 +3,164 @@
   "core": {
     "name": "Núcleo",
     "description": "Brain, decisiones, modos de trabajo, proceso (brainstorm, plan, TDD, debug, verify, review), documento funcional, commits",
-    "skills": ["using-dualcraft", "help", "new-project", "stacks", "start", "commit", "brain", "decisions", "park", "map", "roadmap", "brainstorm", "plan", "tdd", "debug", "verify", "review", "docs"]
+    "skills": [
+      "using-dualcraft",
+      "help",
+      "new-project",
+      "stacks",
+      "start",
+      "commit",
+      "brain",
+      "decisions",
+      "park",
+      "map",
+      "roadmap",
+      "brainstorm",
+      "plan",
+      "tdd",
+      "debug",
+      "verify",
+      "review",
+      "docs",
+      "github",
+      "share"
+    ]
   },
   "platforms": {
-    "web-platform": { "name": "Web (común)", "skills": ["web-architecture", "web-build", "web-test", "web-browser", "web-seo", "refactor-web"] },
-    "mobile-platform": { "name": "Móvil (común)", "skills": ["mobile-architecture", "mobile-build", "mobile-test", "mobile-device", "mobile-crash", "refactor-mobile"] }
+    "web-platform": {
+      "name": "Web (común)",
+      "skills": [
+        "web-architecture",
+        "web-build",
+        "web-test",
+        "web-browser",
+        "web-seo",
+        "refactor-web"
+      ]
+    },
+    "mobile-platform": {
+      "name": "Móvil (común)",
+      "skills": [
+        "mobile-architecture",
+        "mobile-build",
+        "mobile-test",
+        "mobile-device",
+        "mobile-crash",
+        "refactor-mobile"
+      ]
+    }
   },
   "stacks": {
-    "nextjs": { "name": "Next.js", "kind": "web" },
-    "react-vite": { "name": "React + Vite", "kind": "web" },
-    "astro": { "name": "Astro", "kind": "web" },
-    "nuxt": { "name": "Vue / Nuxt", "kind": "web" },
-    "flutter": { "name": "Flutter", "kind": "mobile" },
-    "react-native": { "name": "React Native (Expo)", "kind": "mobile" },
-    "kmp": { "name": "Kotlin Multiplatform", "kind": "mobile" },
-    "android": { "name": "Android nativo (Compose)", "kind": "mobile" },
-    "ios": { "name": "iOS nativo (SwiftUI)", "kind": "mobile" }
+    "nextjs": {
+      "name": "Next.js",
+      "kind": "web"
+    },
+    "react-vite": {
+      "name": "React + Vite",
+      "kind": "web"
+    },
+    "astro": {
+      "name": "Astro",
+      "kind": "web"
+    },
+    "nuxt": {
+      "name": "Vue / Nuxt",
+      "kind": "web"
+    },
+    "flutter": {
+      "name": "Flutter",
+      "kind": "mobile"
+    },
+    "react-native": {
+      "name": "React Native (Expo)",
+      "kind": "mobile"
+    },
+    "kmp": {
+      "name": "Kotlin Multiplatform",
+      "kind": "mobile"
+    },
+    "android": {
+      "name": "Android nativo (Compose)",
+      "kind": "mobile"
+    },
+    "ios": {
+      "name": "iOS nativo (SwiftUI)",
+      "kind": "mobile"
+    }
   },
   "optional": {
-    "design": { "name": "Diseño", "description": "Design System de claude.ai, tokens, pantallas y diseño → código", "skills": ["design-system", "tokens", "design-screen", "design-to-code"] },
-    "data": { "name": "Base de datos", "description": "Esquema DBML, diagrama ER, Firebase / Supabase / Postgres + Prisma con entornos", "skills": ["schema", "er", "database"] },
-    "shared": { "name": "Textos y analítica", "description": "i18n y plan de analítica compartidos entre stacks, refactor entre plataformas", "skills": ["i18n", "analytics", "refactor-global"] },
-    "security": { "name": "Seguridad", "description": "Auditoría global, web y móvil con escáner", "skills": ["security-global", { "skill": "security-web", "when": "web" }, { "skill": "security-mobile", "when": "mobile" }] },
-    "release": { "name": "Release y marketing", "description": "Cerrar versiones, notas de tienda, campañas e ideas de crecimiento", "skills": ["release", "marketing"] },
-    "convert": { "name": "Conversor", "description": "Convertir entre stacks (web ⇄ móvil y migraciones)", "skills": ["convert"] }
+    "design": {
+      "name": "Diseño",
+      "description": "Design System de claude.ai, tokens, pantallas y diseño → código",
+      "skills": [
+        "design-system",
+        "tokens",
+        "design-screen",
+        "design-to-code"
+      ]
+    },
+    "data": {
+      "name": "Base de datos",
+      "description": "Esquema DBML, diagrama ER, Firebase / Supabase / Postgres + Prisma con entornos",
+      "skills": [
+        "schema",
+        "er",
+        "database"
+      ]
+    },
+    "shared": {
+      "name": "Textos y analítica",
+      "description": "i18n y plan de analítica compartidos entre stacks, refactor entre plataformas",
+      "skills": [
+        "i18n",
+        "analytics",
+        "refactor-global"
+      ]
+    },
+    "security": {
+      "name": "Seguridad",
+      "description": "Auditoría global, web y móvil con escáner",
+      "skills": [
+        "security-global",
+        {
+          "skill": "security-web",
+          "when": "web"
+        },
+        {
+          "skill": "security-mobile",
+          "when": "mobile"
+        }
+      ]
+    },
+    "release": {
+      "name": "Release y marketing",
+      "description": "Cerrar versiones, notas de tienda, capturas para tiendas, campañas e ideas de crecimiento",
+      "skills": [
+        "release",
+        "marketing",
+        "screenshots"
+      ]
+    },
+    "convert": {
+      "name": "Conversor",
+      "description": "Convertir entre stacks (web ⇄ móvil y migraciones)",
+      "skills": [
+        "convert"
+      ]
+    }
   },
   "agents": {
-    "claude": { "name": "Claude Code", "how": "plugin local con hooks (comandos /dualcraft:*)" },
-    "gemini": { "name": "Gemini CLI", "how": "skills en ~/.gemini/skills + bloque en ~/.gemini/GEMINI.md" },
-    "codex": { "name": "Codex CLI", "how": "skills en ~/.codex/skills + bloque en ~/.codex/AGENTS.md" }
+    "claude": {
+      "name": "Claude Code",
+      "how": "plugin local con hooks (comandos /dualcraft:*)"
+    },
+    "gemini": {
+      "name": "Gemini CLI",
+      "how": "skills en ~/.gemini/skills + bloque en ~/.gemini/GEMINI.md"
+    },
+    "codex": {
+      "name": "Codex CLI",
+      "how": "skills en ~/.codex/skills + bloque en ~/.codex/AGENTS.md"
+    }
   }
 }

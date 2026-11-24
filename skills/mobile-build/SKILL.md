@@ -1,6 +1,6 @@
 ---
 name: mobile-build
-description: Builds the Flutter app and fixes build problems - pub dependencies and upgrades, Gradle/AGP/Kotlin/NDK on Android, CocoaPods and Xcode on iOS, flavors, code generation, signing and versioning for store builds. Use when the user runs /dualcraft:mobile-build, "no compila la app", "falla Gradle", "error de pods", "sube la versión de la app", "genera el appbundle/ipa", "actualiza Flutter o un paquete".
+description: Builds the mobile app and fixes build problems - dependencies, Gradle, pods, flavors, codegen, signing, store builds and versioning. Use for "no compila la app", "falla Gradle", "error de pods", "genera el appbundle/ipa".
 ---
 
 # DualCraft mobile build

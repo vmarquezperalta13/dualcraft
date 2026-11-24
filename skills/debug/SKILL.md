@@ -1,6 +1,6 @@
 ---
 name: debug
-description: Root-cause debugging for web and mobile - reproduce, gather evidence (logs, stack traces, network, device), form and test hypotheses, fix the cause not the symptom, and check whether the same bug exists on the other platform. Use before proposing any fix for a bug, crash, failing test or unexpected behaviour, in "Bug / tarea corta" mode, when the user runs /dualcraft:debug, says "no funciona", "falla", "da error", "se cuelga", "crash", or when a previous fix didn't work.
+description: Root cause before any fix - reproduce, gather evidence, test hypotheses, fix the cause, check the other platform. Use for any bug, crash or failing test, "no funciona", "falla", or when a previous fix didn't work.
 ---
 
 # DualCraft debug

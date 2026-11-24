@@ -22,6 +22,8 @@
 
     { "name": "brain", "pack": "brain", "phase": 1, "es": "Apunta y consulta tareas, bugs, decisiones, notas e ideas del proyecto" },
     { "name": "decisions", "pack": "brain", "phase": 8, "es": "Decisiones del proyecto (ADR): registrar, consultar por área, comprobar conflictos y sustituir con historial" },
+    { "name": "github", "pack": "brain", "phase": 9, "es": "Sincroniza el brain con GitHub Issues: issues, milestones por versión, responsables, cierre e importación" },
+    { "name": "share", "pack": "brain", "phase": 9, "es": "Publica el roadmap o el mapa como página privada (completo para el equipo o sin detalles internos para clientes)" },
     { "name": "park", "pack": "brain", "phase": 1, "es": "Aparca un desarrollo ya hecho para una versión posterior (rama o feature flag)" },
     { "name": "map", "pack": "brain", "phase": 2, "es": "Mapa visual de nodos del brain con sus dependencias" },
     { "name": "roadmap", "pack": "brain", "phase": 2, "es": "Vista roadmap: tareas agrupadas por versión" },
@@ -65,6 +67,7 @@
     { "name": "security-mobile", "pack": "security", "phase": 6, "es": "Seguridad de Flutter (MASVS): almacenamiento, red, deep links, manifest, release, IAP, App Check" },
 
     { "name": "marketing", "pack": "marketing", "phase": 7, "es": "Qué comunicar de cada versión + textos listos: tiendas/ASO, web, redes, in-app, push; campaña, métricas e ideas de crecimiento" },
+    { "name": "screenshots", "pack": "marketing", "phase": 9, "es": "Capturas para tiendas: por deep link en emulador/simulador/navegador, enmarcadas a tamaño Play/App Store con textos por idioma" },
     { "name": "release", "pack": "marketing", "phase": 7, "es": "Cierra versión: checklist, versión en config/pubspec/package.json, CHANGELOG, tag, notas de tienda por idioma y lanzamiento" },
 
     { "name": "convert", "pack": "convert", "phase": 8, "es": "Convierte entre cualquier stack (web ⇄ móvil o mismo tipo) por funcionalidades: inventario, decisiones de backend preguntadas, spec neutra, adaptación nativa y verificación" }

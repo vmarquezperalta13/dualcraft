@@ -1,6 +1,6 @@
 ---
 name: review
-description: Code review for Next.js and Flutter changes - correctness, lifecycle and async pitfalls, consistency between web and mobile, schema and brain decisions respected, security basics, performance and accessibility - reported as ranked findings with file:line. Use when the user runs /dualcraft:review, asks "revisa el código", "revisa los cambios", "¿está bien esto?", before merging or opening a PR, or after finishing a plan.
+description: Code review - correctness, lifecycle, cross-platform consistency, decisions, design tokens, security, accessibility - ranked findings with file:line. Use for "revisa el código", "¿está bien esto?", or before merging.
 ---
 
 # DualCraft review

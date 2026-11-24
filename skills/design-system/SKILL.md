@@ -1,6 +1,6 @@
 ---
 name: design-system
-description: Creates the project's design system in claude.ai (Design System artifact - tokens for colors light/dark, typography, spacing, radius, plus brand book and assets) from scratch with a short brand interview or from the existing code, links it to the DualCraft project and pulls its tokens into code. The Design System is the source of truth for the look of web AND mobile. Use when the user runs /dualcraft:design-system, says "crea el design system", "define la marca / los colores / la tipografía", or when tokens are needed and the project has no design.system link yet.
+description: Creates the project's claude.ai Design System (brand interview or from code), links it and pulls its tokens. Use for "crea el design system", "define la marca, colores o tipografía".
 ---
 
 # DualCraft design system

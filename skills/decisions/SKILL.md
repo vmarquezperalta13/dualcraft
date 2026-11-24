@@ -1,6 +1,6 @@
 ---
 name: decisions
-description: Manages the project's decisions (ADR style) so they are always respected - records a decision with context, alternatives and consequences, lists the decisions in force by area, finds the ones related to a topic, checks whether a proposed change contradicts any, and supersedes a decision with a new one keeping the history. Use when the user runs /dualcraft:decisions, says "hemos decidido…", "a partir de ahora…", "siempre/nunca vamos a…", "¿qué decidimos sobre…?", "cambiamos de idea sobre…", when a choice is made during brainstorm/plan/review, or when a request seems to contradict an existing decision.
+description: Project decisions (ADR) - record, list by area, find related, check conflicts, supersede with history. Use for "hemos decidido", "a partir de ahora", "¿qué decidimos sobre…?", "cambiamos de idea", or when a request contradicts a decision.
 ---
 
 # DualCraft decisions

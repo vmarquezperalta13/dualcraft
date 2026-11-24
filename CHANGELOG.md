@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.15.0] - 2026-11-24
+### Added
+- `github`: brain ⇄ GitHub Issues sync (`github.mjs` status / push / pull, milestones from target versions, assignees, closing finished notes with a comment, importing unlinked issues; token from GH_TOKEN, gh or the git credential helper)
+- Team fields on notes: `assignee`, `estimate` (3h, 2d, 1w, 5pt); `list --assignee`; roadmap totals per version (estimated, left, unestimated, open per person); map panel and roadmap cards show them
+- `share`: roadmap or map as a page to publish (`map.mjs --share`), full for the team or `--no-details` for clients (no note bodies, decisions, branches or repo links), with snapshot date
+- `screenshots`: store screenshots — capture by deep link (adb with demo status bar and per-app locale, iOS simulator, headless browser), framing at Google Play / App Store sizes with captions per language and design-token colors, size and count check
+### Changed
+- Skill descriptions rewritten: fixed context per session 5.3k → 2.3k tokens (−56%); `scripts/dev/apply-descriptions.mjs` keeps them YAML-safe
+
 ## [0.14.0] - 2026-11-24
 ### Added
 - Installer (`npx github:vmarquezperalta13/dualcraft`): `install` (interactive or flags), `add`, `remove`, `list`, `update`, `doctor`, `uninstall`

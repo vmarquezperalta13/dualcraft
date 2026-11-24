@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Starts a brand-new project with a thorough intake form - what it is, type, web/app/both, audience, monetization, stacks, backend, design style, main features (MVP), languages and constraints - then creates everything from the answers - project brief, DualCraft config, decisions, MVP tasks in the brain, functional document, design-system brief - and scaffolds the chosen stacks with their CLIs. Use when the user runs /dualcraft:new-project, says "nuevo proyecto", "quiero empezar una app/web", "empezamos de cero", or runs dualcraft:start in an empty folder or one without code.
+description: New project from zero - full intake form (idea, type, platforms, stacks, backend, design, MVP features), then brief, decisions, MVP tasks, functional doc and scaffolding. Use for "nuevo proyecto", "empezamos de cero", or start in an empty folder.
 ---
 
 # DualCraft new project

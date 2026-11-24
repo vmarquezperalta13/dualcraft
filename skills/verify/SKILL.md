@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Verification before any completion claim - run the real checks (analyzer, types, lint, tests, build) for every affected platform, read the output, and report evidence; nothing is "done", "fixed" or "working" without it. Use before saying work is finished, before committing or pushing, before closing a brain task, when the user runs /dualcraft:verify, or asks "¿funciona?", "¿está listo?", "comprueba que todo va bien".
+description: Evidence before saying done - run analyzer, types, lint, tests, build and decision checks for each affected platform and report. Use before claiming work is finished, committing or closing a task, or for "¿funciona?", "comprueba que va bien".
 ---
 
 # DualCraft verify

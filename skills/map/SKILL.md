@@ -1,6 +1,6 @@
 ---
 name: map
-description: Opens the visual map of the DualCraft brain - every note (task, bug, decision, note, idea) as a node, dependencies as arrows and related notes as dashed lines, with filters, search and a detail panel; it also has the Roadmap view. Use when the user runs /dualcraft:map or asks to see the brain, the notes, the tasks or their dependencies visually ("enséñame el mapa", "quiero ver los apuntes como red", "qué depende de qué", "ver el brain").
+description: Visual map of the brain - notes as nodes, dependencies as arrows, filters and detail panel (also roadmap view). Use for "enséñame el mapa", "qué depende de qué", "ver el brain".
 ---
 
 # DualCraft map

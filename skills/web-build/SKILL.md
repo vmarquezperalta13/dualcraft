@@ -1,6 +1,6 @@
 ---
 name: web-build
-description: Builds the Next.js app and fixes build problems - dependency installs and upgrades, type and lint errors, server/client boundary errors, environment variables, Next.js and React version upgrades, deploy builds (Vercel or other). Use when the user runs /dualcraft:web-build, "no compila la web", "falla el build", "next build da error", "actualiza Next/React", "instala X en la web", or before a web release.
+description: Builds the web app and fixes build problems - dependencies, upgrades, types, lint, env vars, deploy builds. Use for "no compila la web", "falla el build", "actualiza Next/React", "instala X en la web".
 ---
 
 # DualCraft web build

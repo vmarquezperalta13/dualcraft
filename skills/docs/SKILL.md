@@ -1,6 +1,6 @@
 ---
 name: docs
-description: Maintains the project's functional document (docs/FUNCTIONAL.md) - what the app does, per feature and platform, with its business rules - updated as tasks and developments are finished, with traceability to brain ids. Use when the user runs /dualcraft:docs, asks for "documento funcional", "documenta esto", "¿qué hace la app?", after a feature or user-visible fix is verified (before committing), or to catch up documentation for finished tasks.
+description: Functional document (docs/FUNCTIONAL.md) kept current per feature and platform, traceable to brain ids. Use for "documento funcional", "documenta esto", "¿qué hace la app?", or after a verified feature.
 ---
 
 # DualCraft functional document

@@ -1,6 +1,6 @@
 ---
 name: er
-description: Draws the project's database ER diagram (entity-relationship) from the DualCraft schema - tables with coloured headers and their fields, relations with crow's-foot notation, draggable, exportable to PNG/SVG. Use when the user runs /dualcraft:er or asks to see the database model, the ER diagram, the tables and their relations ("enséñame el modelo de datos", "diagrama de la base de datos", "esquema ER", "quiero ver las tablas en una imagen").
+description: ER diagram of the schema - tables, crow's-foot relations, drag, PNG/SVG export. Use for "enséñame el modelo de datos", "diagrama de la base de datos", "esquema ER".
 ---
 
 # DualCraft ER diagram

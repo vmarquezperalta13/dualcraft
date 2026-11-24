@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: Test-driven development for Next.js and Flutter - write the failing test first, watch it fail for the right reason, write the minimum code to pass, refactor with tests green. Use before writing implementation code for a feature, bug fix or behaviour change in a DualCraft project, when the user runs /dualcraft:tdd, or says "con tests", "hazlo con TDD", "añade tests".
+description: Test first, watch it fail, minimum code to pass, refactor green; same cases on every platform. Use before writing implementation code, or for "con tests", "hazlo con TDD".
 ---
 
 # DualCraft TDD

@@ -1,6 +1,6 @@
 ---
 name: schema
-description: Creates and maintains the DualCraft database schema (.dualcraft/db/schema.dbml, DBML format) - the single source of truth for the data model of web and mobile - and generates from it Dart models (Flutter), TypeScript types (Next.js) and a Firestore rules skeleton. Use when the user runs /dualcraft:schema, wants to define or change tables/collections/fields/relations, asks to "sacar el modelo de datos del código", or when a feature adds or changes stored data. Also before writing model classes or types by hand in a DualCraft project.
+description: Database schema (.dualcraft/db/schema.dbml) as the single source of truth, generating models for every stack and Firestore rules. Use to define or change data, "saca el modelo de datos del código", or before hand-writing models.
 ---
 
 # DualCraft schema

@@ -1,6 +1,6 @@
 ---
 name: using-dualcraft
-description: Use at the start of any conversation in a project that has a .dualcraft/ folder (the session context shows "DualCraft — project context"), or whenever the user mentions DualCraft. Establishes the DualCraft workflow - project context from the brain, ask the work mode before working, capture out-of-scope work in the brain, and route to the right dualcraft:* skill.
+description: DualCraft workflow - project context from the brain, work mode before working, capture out-of-scope work, route to the right dualcraft skill. Use at the start of any conversation in a project with a .dualcraft/ folder or when DualCraft is mentioned.
 ---
 
 # Using DualCraft
@@ -65,6 +65,9 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 | Refactor web / app / both | `dualcraft:refactor-web` / `refactor-mobile` / `refactor-global` |
 | Security audit of everything / web / app | `dualcraft:security-global` / `security-web` / `security-mobile` |
 | Close/ship a version, store release notes | `dualcraft:release` |
+| Store screenshots | `dualcraft:screenshots` |
+| GitHub Issues sync, assign or estimate tasks | `dualcraft:github` |
+| Share the roadmap or map as a page | `dualcraft:share` |
 | Communicate an update, ASO, social, campaigns, growth ideas | `dualcraft:marketing` |
 | Turn the web into an app or the app into a web, migrate to another stack, conversion progress | `dualcraft:convert` |
 | "¿qué comandos hay?", help | `dualcraft:help` |

@@ -1,6 +1,6 @@
 ---
 name: release
-description: Closes and ships a version of the web and the app - readiness checklist (brain items, parked work, security bugs, translations, analytics, docs, versions), version bump everywhere (config, pubspec with build number, package.json) and CHANGELOG, release commit and tag, store release notes per language within limits, store and web launch checklists, and post-release follow-up. Use when the user runs /dualcraft:release, "saca la versión", "cerramos la 1.3", "vamos a publicar", "sube a la Play Store / App Store", "release", or asks what's missing for a version.
+description: Closes and ships a version - readiness checklist, version bump everywhere, CHANGELOG, tag, store notes per language, launch and follow-up. Use for "saca la versión", "cerramos la 1.3", "vamos a publicar", "release".
 ---
 
 # DualCraft release
@@ -31,7 +31,7 @@ Then run `dualcraft:verify` on both platforms (fresh) — release builds include
 **Web** — deploy through the project's pipeline (Vercel: push to the production branch or promote the preview); check production: main pages load, no console errors, sitemap reachable, analytics firing.
 **Android** — upload the `.aab` to Play Console (internal → closed → production, or staged rollout %); release notes from step 3; data safety form still accurate; keep the debug symbols / mapping for Crashlytics.
 **iOS** — upload via Xcode/Transporter, TestFlight first, then submit with "What's New"; privacy labels still accurate.
-**Store listing** — if screenshots or texts should change with this version → `dualcraft:marketing` (ASO).
+**Store listing** — if screenshots or texts should change with this version → `dualcraft:screenshots` and `dualcraft:marketing` (ASO).
 **Backend first** — Firestore rules/indexes and Cloud Functions that the new version needs are deployed **before** the apps, and stay compatible with the previous app version still in users' hands.
 
 ## 6. After the release

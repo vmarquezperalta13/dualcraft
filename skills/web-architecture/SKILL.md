@@ -1,6 +1,6 @@
 ---
 name: web-architecture
-description: Understands and documents the structure of the project's Next.js app - router (App/Pages), folders, layers, data fetching, server vs client components, state, auth, styling - writes .dualcraft/architecture/web.md and tells where each kind of change goes, following the patterns already in use. Use when the user runs /dualcraft:web-architecture, asks "¿dónde va esto en la web?", "cómo está organizada la web", before creating a new page/feature/route in Next.js, or when refactoring web structure.
+description: Maps the web app structure (Next.js, React+Vite, Astro, Nuxt) into .dualcraft/architecture/web.md and says where each change goes. Use for "¿dónde va esto en la web?", "cómo está organizada la web", or before a new page or feature.
 ---
 
 # DualCraft web architecture

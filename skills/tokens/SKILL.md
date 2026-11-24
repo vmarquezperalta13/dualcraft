@@ -1,6 +1,6 @@
 ---
 name: tokens
-description: Pulls the design tokens from the project's claude.ai Design System into .dualcraft/design/tokens.json, checks them (including WCAG contrast in every theme) and generates the code for both platforms - CSS variables with light/dark + Tailwind v4 @theme for Next.js, ThemeData light/dark + DsColors ThemeExtension + spacing/radius/text styles for Flutter. Use when the user runs /dualcraft:tokens, after the Design System changes, says "actualiza los colores/estilos", "sincroniza el diseño", or before design-to-code if the generated tokens are missing or stale.
+description: Pulls Design System tokens, checks WCAG contrast and generates theme code for every stack. Use for "actualiza los colores", "sincroniza el diseño", or when generated tokens are missing or stale.
 ---
 
 # DualCraft tokens

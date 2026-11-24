@@ -1,6 +1,6 @@
 ---
 name: design-to-code
-description: Turns a screen designed in the claude.ai Design canvas into code - a Flutter widget/screen and/or a React (Next.js) component/page - using only the generated design tokens, the project's existing components and patterns, accessibility and i18n, and checks the result visually against the artboard. Use when the user runs /dualcraft:design-to-code, says "pasa este diseño a código", "implementa la pantalla de…", "maqueta esto", or a task has an approved design.
+description: Implements a designed screen with tokens only, existing components, accessibility and i18n, compared visually with the artboard. Use for "pasa este diseño a código", "implementa la pantalla de…", "maqueta esto".
 ---
 
 # DualCraft design to code

@@ -1,6 +1,6 @@
 ---
 name: mobile-test
-description: Writes and runs Flutter tests - unit tests for logic and state, widget tests for screens and components, golden tests for visuals, integration tests on a device - with proper fakes for Firebase and platform plugins. Use when the user runs /dualcraft:mobile-test, "tests de la app", "test de este widget", "integration test", "golden", or when TDD needs a Flutter test.
+description: Mobile tests - unit, widget/component, golden, integration - with fakes for Firebase and plugins. Use for "tests de la app", "test de este widget", "integration test", or when TDD needs a mobile test.
 ---
 
 # DualCraft mobile tests

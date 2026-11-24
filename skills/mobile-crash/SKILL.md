@@ -1,6 +1,6 @@
 ---
 name: mobile-crash
-description: Analyses mobile crashes and errors from any source - Flutter/Dart stack traces, Android logcat (Java/Kotlin exceptions, ANRs, native signals), iOS crash logs, Firebase Crashlytics or Sentry reports, screenshots of errors - finds the root cause in the code and hands over to the fix. Use when the user runs /dualcraft:mobile-crash, pastes a stack trace or crash report, shares a Crashlytics link/issue, or says "la app se cierra", "crash", "ANR", "pantalla roja/gris".
+description: Crash analysis from stack traces, logcat, iOS logs, Crashlytics or Sentry to the root cause in code. Use when a trace or crash report is shared, or for "la app se cierra", "crash", "ANR", "pantalla roja".
 ---
 
 # DualCraft mobile crash

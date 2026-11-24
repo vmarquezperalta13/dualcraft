@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Writes an implementation plan before touching code for any work with several steps, files or both platforms - small verifiable steps, exact files, tests first, verification commands - saved in .dualcraft/plans/ and linked to the brain task; then executes it step by step. Use when the user runs /dualcraft:plan, after an agreed brainstorm, when a task spans web and mobile, the schema, or more than ~3 files, or when resuming a plan ("sigue con el plan", "continúa con T-004").
+description: Written implementation plan (small steps, exact files, tests first, checks) saved and executed step by step. Use for multi-step or cross-platform work, after a brainstorm, or "sigue con el plan".
 ---
 
 # DualCraft plan

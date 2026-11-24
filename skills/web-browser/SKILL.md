@@ -1,6 +1,6 @@
 ---
 name: web-browser
-description: Runs the Next.js app and checks it in a real browser - starts the dev server, opens pages, takes screenshots at desktop and mobile widths, reads console and network errors, clicks through flows, and compares with the Design artboards. Use when the user runs /dualcraft:web-browser, "ábrela en el navegador", "mira cómo se ve la web", "prueba este flujo en la web", "haz captura", or when verifying a web UI change.
+description: Runs the web app and checks it in a browser - screenshots at desktop and mobile widths, console errors, flows, comparison with designs. Use for "ábrela en el navegador", "mira cómo se ve la web", "haz captura".
 ---
 
 # DualCraft web browser

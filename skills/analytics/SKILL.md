@@ -1,6 +1,6 @@
 ---
 name: analytics
-description: Manages the analytics tracking plan shared by web and mobile - .dualcraft/analytics/events.json defines every event, its params and platforms - validates it against GA4/Firebase limits, generates typed helpers for Dart and TypeScript and a readable docs/ANALYTICS.md, and checks which events are really tracked on each platform. Use when the user runs /dualcraft:analytics, "analítica", "eventos", "quiero medir…", "plan de tracking", "¿estamos midiendo X?", or when a feature needs measuring (its success criteria).
+description: Tracking plan (.dualcraft/analytics/events.json) validated and generated as typed helpers for every stack, with ANALYTICS.md and per-platform coverage. Use for "analítica", "eventos", "quiero medir…", "¿estamos midiendo X?".
 ---
 
 # DualCraft analytics

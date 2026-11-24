@@ -1,6 +1,6 @@
 ---
 name: mobile-device
-description: Works with Android emulators/devices (and the iOS Simulator on macOS) - list and start emulators, install and run the app, screenshots and screen recordings, logcat and flutter logs, deep links, UI automation with adb (tap, type, swipe, read the UI tree), permissions and app data. Use when the user runs /dualcraft:mobile-device, "arranca el emulador", "instala la app", "haz captura del móvil", "mira los logs", "prueba el deep link", or to check a mobile UI change on a device.
+description: Emulators and devices - start, install, run, screenshots, logs, deep links, adb UI automation, permissions. Use for "arranca el emulador", "instala la app", "captura del móvil", "mira los logs".
 ---
 
 # DualCraft mobile device

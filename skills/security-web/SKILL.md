@@ -1,6 +1,6 @@
 ---
 name: security-web
-description: Security review of the Next.js web app - authentication and sessions, authorization in route handlers, server actions and middleware, input validation, XSS, CSRF, SSRF, open redirects, security headers and CSP, secrets and env exposure, Firebase client usage, file uploads, rate limiting and dependencies (OWASP Top 10 for Next.js). Use when the user runs /dualcraft:security-web, "seguridad de la web", "revisa los endpoints", "¿es segura esta API?", before launching public web features, or as part of security-global.
+description: Web security review - auth, every endpoint and server action, XSS, CSRF, SSRF, headers and CSP, secrets. Use for "seguridad de la web", "¿es segura esta API?", or within a global audit.
 ---
 
 # DualCraft security — web

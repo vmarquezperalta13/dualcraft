@@ -1,6 +1,6 @@
 ---
 name: i18n
-description: Manages the app's texts and languages from one source shared by web and mobile - .dualcraft/i18n/<locale>.json (ICU messages) generates Flutter gen-l10n ARB files and next-intl message files - checks missing keys and placeholders across languages, finds hard-coded strings in the code and moves them, adds new languages. Use when the user runs /dualcraft:i18n, "traduce", "añade inglés", "textos de la app", "hay textos sin traducir", "cambia este texto", or when a feature adds user-facing text.
+description: Texts from one source (.dualcraft/i18n, ICU) generated for every stack; finds missing keys and hard-coded strings, adds languages. Use for "traduce", "añade inglés", "textos sin traducir", "cambia este texto".
 ---
 
 # DualCraft i18n

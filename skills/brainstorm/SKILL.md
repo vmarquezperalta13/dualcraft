@@ -1,6 +1,6 @@
 ---
 name: brainstorm
-description: Explores an idea with the user BEFORE building it - goal, users, flows on web and mobile, data it touches, edge cases, alternatives - and turns it into an agreed design; whatever is left out becomes brain tasks/ideas for later versions. Use when the user runs /dualcraft:brainstorm, in "Nuevo desarrollo" mode before any code, or when they say "tengo una idea", "quiero añadir…", "¿cómo hacemos…?", "piensa conmigo", "qué te parece si…".
+description: Explores an idea before building it (goal, flows per platform, data, edge cases, options) into an agreed design; leftovers go to the brain. Use in new-development mode before code, or for "tengo una idea", "quiero añadir…", "¿cómo hacemos…?".
 ---
 
 # DualCraft brainstorm

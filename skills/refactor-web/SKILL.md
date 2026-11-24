@@ -1,6 +1,6 @@
 ---
 name: refactor-web
-description: Refactors the Next.js code safely - improves structure without changing behaviour - large components, server/client boundaries, data fetching and caching, duplicated logic, prop drilling, dead code, bundle size, adoption of generated types/tokens/i18n - in small steps with tests green after each. Use when the user runs /dualcraft:refactor-web, "refactoriza la web", "limpia este componente", "esto está muy liado", or in Refactor mode with web scope.
+description: Safe web refactoring without behaviour change - components, server/client split, data fetching, duplication, dead code, adoption of shared sources - small green steps. Use for "refactoriza la web", "limpia este componente".
 ---
 
 # DualCraft refactor — web

@@ -1,6 +1,6 @@
 ---
 name: web-test
-description: Writes and runs tests for the Next.js app - unit (Vitest/Jest), components (Testing Library), API route handlers and server actions, end-to-end (Playwright) - choosing the right level, mocking Firebase/network properly, and setting up the test stack if missing. Use when the user runs /dualcraft:web-test, "tests de la web", "añade tests a este componente", "configura los tests", "e2e", or when TDD needs a web test.
+description: Web tests - unit, components, route handlers, e2e - right level, proper mocks, setup if missing. Use for "tests de la web", "añade tests a este componente", "e2e", or when TDD needs a web test.
 ---
 
 # DualCraft web tests

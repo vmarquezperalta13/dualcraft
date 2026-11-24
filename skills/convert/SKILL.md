@@ -1,6 +1,6 @@
 ---
 name: convert
-description: Converts an app between any of the supported stacks - web (Next.js, React + Vite, Astro, Vue/Nuxt) ⇄ mobile (Flutter, React Native, Kotlin Multiplatform, Android, iOS), and also web → web or mobile → mobile migrations - feature by feature - inventories the source, analyses every backend/platform touchpoint and asks the user whether it can be shared or how to handle it, writes a platform-neutral spec, adapts it to the target platform's patterns, generates code on the shared schema/tokens/i18n/analytics, and verifies behaviour and visuals. Creates the target project if it doesn't exist. Use when the user runs /dualcraft:convert, "pasa la web a app", "haz la versión web de la app", "convierte esta funcionalidad a móvil/web", or asks how far a conversion is.
+description: Converts between stacks (web and mobile, or migrations) feature by feature - inventory, backend decisions asked to the user, neutral spec, native adaptation, verification. Use for "pasa la web a app", "haz la versión web", "migra a Flutter".
 ---
 
 # DualCraft convert (any stack ⇄ any stack)

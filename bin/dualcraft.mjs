@@ -231,7 +231,7 @@ async function apply(sel, prev) {
   }
   writeState({ version: VERSION, installedAt: prev?.installedAt || new Date().toISOString(), updatedAt: new Date().toISOString(), home: posix(CURRENT), ...sel, skills })
   const desc = skills.reduce((n, s) => n + ((fs.readFileSync(path.join(SRC, 'skills', s, 'SKILL.md'), 'utf8').match(/^description:\s*(?:>-?\s*\n\s+)?(.*)$/m) || [])[1] || '').length, 0)
-  say(`\nListo. Coste fijo aproximado por sesión: ~${Math.round(desc / 4.2).toLocaleString('es-ES')} tokens de descripciones de skills (con todo instalado: ~5.600).`)
+  say(`\nListo. Coste fijo aproximado por sesión: ~${Math.round(desc / 4.2).toLocaleString('es-ES')} tokens de descripciones de skills (con todo instalado: ~2.600).`)
   say('Siguiente paso: en un proyecto, /dualcraft:start (Claude) o pide "empezar con DualCraft" (Gemini/Codex).')
 }
 

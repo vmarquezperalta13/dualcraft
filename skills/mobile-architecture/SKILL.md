@@ -1,6 +1,6 @@
 ---
 name: mobile-architecture
-description: Understands and documents the structure of the project's Flutter app - folders/features, layers (UI, state, repositories, services), state management (Riverpod/Bloc/Provider…), routing, dependency injection, Firebase access - writes .dualcraft/architecture/mobile.md and tells where each kind of change goes, following the patterns already in use. Use when the user runs /dualcraft:mobile-architecture, asks "¿dónde va esto en la app?", "cómo está organizada la app", before creating a new screen/feature in Flutter, or when refactoring app structure.
+description: Maps the mobile app structure (Flutter, React Native, KMP, Android, iOS) into .dualcraft/architecture/mobile.md and says where each change goes. Use for "¿dónde va esto en la app?", "cómo está organizada la app", or before a new screen.
 ---
 
 # DualCraft mobile architecture

@@ -6,7 +6,7 @@ Web + mobile development workflow for **Claude Code, Gemini CLI and Codex CLI**,
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.14)
+## What it does (v0.15)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **New projects**: a full intake form (idea, type, platforms, stacks, backend, design, MVP features) creates the brief, decisions, MVP tasks and functional document, and scaffolds each stack with its CLI.
@@ -14,6 +14,7 @@ You talk to it in your language (Spanish by default); commands are in English.
 - **Work modes**: before working, DualCraft asks whether it's a *bug / short task*, a *new development* or a *refactor*. The mode drives the flow, the commit type and the version impact.
 - **Parked work**: finished development that must wait for a later version is kept on a `parked/*` branch or behind a feature flag, with its target version recorded.
 - **Commits**: Conventional Commits derived from the mode, linked to brain ids, with `CHANGELOG.md`.
+- **Team & sharing**: assignee and estimate per task, estimates per version, two-way sync with GitHub Issues, and the roadmap/map as a shareable page (full, or without internal details for clients).
 - **Visual brain**: an offline HTML map of notes as nodes linked by their dependencies, plus a roadmap board by version.
 - **Process**: brainstorm before building, written plans, TDD, root-cause debugging, verification with evidence, code review (incl. accessibility) — for both platforms.
 - **Functional document** (`docs/FUNCTIONAL.md`) kept up to date as work is finished, traceable to brain ids.
@@ -36,7 +37,7 @@ Requires Node.js 18+ and git.
 npx github:vmarquezperalta13/dualcraft install
 ```
 
-The installer asks which **agents** (Claude Code, Gemini CLI, Codex CLI), which **stacks** and which **optional packs** you want, and installs only that — fewer skills means less fixed context in every session (e.g. core + Flutter only ≈ 2.5k tokens instead of ≈ 5.6k with everything).
+The installer asks which **agents** (Claude Code, Gemini CLI, Codex CLI), which **stacks** and which **optional packs** you want, and installs only that — fewer skills means less fixed context in every session (skill descriptions: ≈ 1.3k tokens for core + one stack, ≈ 2.6k with everything).
 
 | Pack | Contents |
 |---|---|
@@ -68,6 +69,8 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:brain` | Capture and query tasks, bugs, decisions, notes, ideas |
 | `/dualcraft:decisions` | Record, consult, check and supersede decisions |
 | `/dualcraft:park` | Park finished work for a later version |
+| `/dualcraft:github` | Sync the brain with GitHub Issues |
+| `/dualcraft:share` | Publish the roadmap or map as a page |
 | `/dualcraft:commit` | Mode-aware Conventional Commit + CHANGELOG |
 | `/dualcraft:map` | Visual map of the brain (nodes + dependencies) |
 | `/dualcraft:roadmap` | Work grouped by target version |
@@ -92,6 +95,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:security-global` · `security-web` · `security-mobile` | Security audits |
 | `/dualcraft:release` | Close and ship a version |
 | `/dualcraft:marketing` | Launch copy, ASO, campaigns, growth ideas |
+| `/dualcraft:screenshots` | Store screenshots framed per language and size |
 | `/dualcraft:convert` | Convert web ⇄ mobile, feature by feature |
 
 ## Roadmap

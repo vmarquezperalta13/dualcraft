@@ -1,6 +1,6 @@
 ---
 name: brain
-description: The DualCraft project brain - capture and query tasks, bugs, decisions, notes and ideas with their dependencies and target versions. Use when the user says "apunta", "anota", "déjalo para luego", "para la próxima versión", "¿qué tenemos pendiente?", "¿qué decidimos sobre…?", "backlog", "roadmap", when an out-of-scope task or idea comes up during work, when a decision is taken, or before proposing non-trivial architecture changes (check past decisions first).
+description: Project brain - capture and query tasks, bugs, notes and ideas with dependencies and target versions. Use for "apunta", "déjalo para luego", "¿qué tenemos pendiente?", "backlog", or when out-of-scope work comes up.
 ---
 
 # DualCraft brain
@@ -36,6 +36,9 @@ Rules:
 - Capture **during** work, without derailing it: create the note, tell the user in one line ("Apuntado: T-012 · Exportar a PDF → 1.4.0"), and continue.
 - Never store secrets, tokens or personal data in the brain — it's committed to git.
 - Before creating, check for a duplicate (`$BRAIN list --open` or search `.dualcraft/brain/`); update the existing note instead.
+
+## Team fields
+`assignee=<github login>` and `estimate=<3h|2d|1w|5pt>` on tasks and bugs (`$BRAIN set T-004 assignee=ana estimate=2d`); `$BRAIN list --assignee ana`; `$BRAIN roadmap` sums estimates per version. Issues: `dualcraft:github`.
 
 ## Updating
 ```

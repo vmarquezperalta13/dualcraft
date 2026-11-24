@@ -1,6 +1,6 @@
 ---
 name: security-global
-description: Full security audit of the whole project - web, mobile and backend together - threat model, automated scan, and a manual review of authentication, authorization, Firestore/Storage rules against the schema, Cloud Functions, payments, abuse and rate limiting, secrets, dependencies and privacy; produces a report with ranked findings, files brain bugs and fixes what the user approves. Use when the user runs /dualcraft:security-global, asks "¿es segura la app?", "auditoría de seguridad", "revisa la seguridad de todo", before a first public launch or a big release, or after adding payments, auth or new data.
+description: Full security audit - threat model, scanner, rules vs schema, functions, payments, abuse, privacy - dated report and brain bugs. Use for "auditoría de seguridad", "¿es segura la app?", or before a public launch.
 ---
 
 # DualCraft security — global audit

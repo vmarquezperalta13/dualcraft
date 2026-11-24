@@ -1,6 +1,6 @@
 ---
 name: stacks
-description: Shows the stacks DualCraft supports (web - Next.js, React + Vite, Astro, Vue/Nuxt; mobile - Flutter, React Native/Expo, Kotlin Multiplatform, Android native, iOS native; backends - Firebase, Supabase, PostgreSQL + Prisma), which ones the current project uses, and adds a new stack to a project (create it with its CLI and register it). Use when the user runs /dualcraft:stacks, asks "¿qué lenguajes/tecnologías soporta?", "añade una app móvil al proyecto", "quiero la web en Astro", or before working in a stack to load its reference.
+description: Supported stacks (Next.js, React+Vite, Astro, Nuxt, Flutter, React Native, KMP, Android, iOS) and adding one to the project. Use for "¿qué tecnologías soporta?", "añade una app/web al proyecto", or before working in a non-default stack.
 ---
 
 # DualCraft stacks

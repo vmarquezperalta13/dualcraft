@@ -1,6 +1,6 @@
 ---
 name: refactor-mobile
-description: Refactors the Flutter code safely - improves structure without changing behaviour - widget decomposition, state management cleanup, repositories between UI and Firebase, subscriptions and lifecycle, duplicated logic, dead code, adoption of generated models/tokens/l10n - in small steps with tests green after each. Use when the user runs /dualcraft:refactor-mobile, "refactoriza la app", "este widget es enorme", "limpia esta pantalla", or in Refactor mode with mobile scope.
+description: Safe mobile refactoring without behaviour change - widget/screen decomposition, state, repositories, lifecycle, duplication, shared sources - small green steps. Use for "refactoriza la app", "este widget es enorme".
 ---
 
 # DualCraft refactor — mobile

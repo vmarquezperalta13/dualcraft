@@ -1,6 +1,6 @@
 ---
 name: help
-description: Lists all DualCraft commands grouped by pack, showing which are available and which are coming. Use when the user runs /dualcraft:help or asks which DualCraft commands exist ("¿qué comandos hay?", "comandos de dualcraft", "qué puedo hacer con dualcraft").
+description: Lists DualCraft commands by pack, installed or not. Use for /dualcraft:help, "¿qué comandos hay?", "qué puedo hacer con dualcraft".
 ---
 
 # DualCraft help

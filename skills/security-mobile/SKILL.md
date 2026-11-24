@@ -1,6 +1,6 @@
 ---
 name: security-mobile
-description: Security review of the Flutter app (OWASP MASVS) - secure storage of tokens, network security (TLS, cleartext, pinning), authentication flows, deep links and WebViews, Android manifest (exported components, backup, debuggable), iOS ATS, permissions, logs, obfuscation and release config, in-app purchase verification, App Check / Play Integrity, Firebase usage from the client. Use when the user runs /dualcraft:security-mobile, "seguridad de la app", "¿es segura la app?", before a store release, or as part of security-global.
+description: Mobile security review (MASVS) - secure storage, network, deep links, manifest and ATS, release config, IAP verification, App Check. Use for "seguridad de la app", before a store release, or within a global audit.
 ---
 
 # DualCraft security — mobile

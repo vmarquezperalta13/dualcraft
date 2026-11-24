@@ -1,6 +1,6 @@
 ---
 name: design-screen
-description: Designs a screen of the app in the claude.ai Design canvas using the project's design system, always as a pair of artboards side by side - mobile (390x844) and web (1440 wide) - plus the states that matter (empty, loading, error), linked to the brain task. Use when the user runs /dualcraft:design-screen, says "diseña la pantalla de…", "haz un mockup", "cómo se vería…", or after a brainstorm when a feature has new screens.
+description: Designs a screen in the claude.ai Design canvas as mobile and web artboards with its states, using the design system. Use for "diseña la pantalla de…", "haz un mockup", "cómo se vería…".
 ---
 
 # DualCraft design screen

@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Creates DualCraft commits - Conventional Commits whose type comes from the work mode (bugfix / feature / refactor), scoped to web/mobile, linked to brain notes, and recorded in CHANGELOG.md. Always shows the message and asks before committing; never pushes without asking. Use when the user says "haz commit", "commitea", "sube los cambios", "guarda esto en git", or when work in a DualCraft project is finished and verified.
+description: Conventional Commits from the work mode, linked to brain ids, with CHANGELOG; asks before committing, never pushes unasked. Use for "haz commit", "commitea", "sube los cambios", or when verified work is done.
 ---
 
 # DualCraft commit
