@@ -6,7 +6,7 @@ Web + mobile development workflow for Claude Code built around a **project brain
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.11)
+## What it does (v0.12)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **New projects**: a full intake form (idea, type, platforms, stacks, backend, design, MVP features) creates the brief, decisions, MVP tasks and functional document, and scaffolds each stack with its CLI.

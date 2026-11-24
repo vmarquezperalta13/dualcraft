@@ -31,7 +31,7 @@ Device tooling: `mobile-device` (adb) applies as is. Crashes: `mobile-crash` (Ja
 `security-mobile` Android items: manifest (exported, backup, cleartext), EncryptedSharedPreferences/DataStore + Keystore for secrets, network security config, R8, Play Integrity.
 
 ## DualCraft outputs
-tokens → `ui/theme/DsTokens.kt` (Material 3 `lightColorScheme`/`darkColorScheme`, `DsSpacing`, `DsRadius`, `Typography`) · i18n → `res/values[-<lang>]/strings.xml` (+ `plurals`) · schema → `data/model/DbModels.kt` (`@Serializable` data classes) · analytics → `analytics/AnalyticsEvents.kt`.
+tokens → `ui/theme/DsTokens.kt` (Material 3 `lightColorScheme`/`darkColorScheme`, `DsSpacing`, `DsRadius`, `Typography`) · i18n → `res/values[-<lang>]/ds_strings.xml` (strings + plurals; the app's own `strings.xml` stays untouched) · schema → `data/model/DbModels.kt` (`@Serializable` data classes) · analytics → `analytics/AnalyticsEvents.kt`.
 
 ## Backends
 Firebase Android SDK (BoM) · Supabase: `supabase-kt` · REST: Retrofit/Ktor.

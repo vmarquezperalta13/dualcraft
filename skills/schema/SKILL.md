@@ -43,7 +43,7 @@ Table Session [note: 'path: users/{userId}/sessions'] {   // subcollection
 ## After every change
 1. `$ER check` — fix all errors.
 2. Show the user the change (diff of the schema) and get a yes before generating.
-3. `$GEN all` generates what applies to the project:
+3. `$GEN all` generates the models for **every stack** (TypeScript for Next.js/React/Astro/Nuxt/React Native, Dart for Flutter, `@Serializable` data classes for KMP/Android — needs the kotlinx.serialization plugin —, `Codable` structs for iOS; paths in the table in `dualcraft:tokens` (same layout for i18n, schema and analytics).) plus:
    - `dart` → `<mobile>/lib/generated/db_models.dart` (if mobile is Flutter): classes with `fromJson`, `toJson`, `copyWith`; enums with their stored values; Firestore Timestamps handled.
    - `ts` → `<web>/src/types/db.ts` (if there is a web stack): interfaces + enum unions.
    - `rules` → `firestore.rules.generated` (only if `database_type` is Firestore): type/shape validation per collection. It is a **skeleton**: access rules are TODO. Never overwrite `firestore.rules` with it — merge by hand, with the user, ideally through the security review.

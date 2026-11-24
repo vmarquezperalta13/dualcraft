@@ -11,11 +11,12 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { parseColor, toHex, toArgbInt, contrast } from './lib/color.mjs'
 import { findRoot, parseArgs, die, posix } from './lib/project.mjs'
+import { projectStacks, outputFor } from './lib/targets.mjs'
 
 const [cmd = 'help', ...rest] = process.argv.slice(2)
 const { opt } = parseArgs(rest)
-if (cmd === 'help' || !['check', 'web', 'dart', 'all'].includes(cmd)) {
-  console.log('node tokens.mjs check|web|dart|all [--file tokens.json] [--out path] [--stdout] [--force]'); process.exit(cmd === 'help' ? 0 : 1)
+if (cmd === 'help' || !['check', 'web', 'dart', 'ts', 'compose', 'swift', 'all'].includes(cmd)) {
+  console.log('node tokens.mjs check|all|web|dart|ts|compose|swift [--file tokens.json] [--out path] [--stdout] [--force] [--package com.x.theme]\n  all = every stack of the project (web CSS/Tailwind, Flutter, React Native TS, Compose for KMP/Android, SwiftUI)'); process.exit(cmd === 'help' ? 0 : 1)
 }
 
 const root = findRoot()
@@ -149,12 +150,13 @@ function writeGuarded(out, content) {
 }
 
 // ---------- web ----------
-function webMode() {
+function webMode(dir = path.join(root || '.', config.paths?.web || '')) {
   if (config.design?.web) return config.design.web
-  const pkg = root && path.join(root, config.paths?.web || '', 'package.json')
-  if (pkg && fs.existsSync(pkg)) {
-    const p = JSON.parse(fs.readFileSync(pkg, 'utf8')); const v = p.dependencies?.tailwindcss || p.devDependencies?.tailwindcss
-    if (v && /(^|[^\d])4/.test(v)) return 'tailwind4'
+  const pkg = path.join(dir, 'package.json')
+  if (fs.existsSync(pkg)) {
+    const p = JSON.parse(fs.readFileSync(pkg, 'utf8')); const d = { ...p.dependencies, ...p.devDependencies }
+    const v = d.tailwindcss || d['@tailwindcss/vite'] || d['@tailwindcss/postcss']
+    if (v && (/(^|[^\d])4/.test(v) || d['@tailwindcss/vite'] || d['@tailwindcss/postcss'])) return 'tailwind4'
   }
   return 'css'
 }
@@ -318,25 +320,154 @@ function report() {
 if (cmd === 'check') { report(); process.exit(errors.length ? 1 : 0) }
 if (errors.length) { report(); die('fix the token errors first.') }
 
-const stackDir = (k) => path.join(root || '.', config.paths?.[k] || '')
-function webOut() {
-  if (config.design?.out?.web) return path.join(root, config.design.out.web)
-  const w = stackDir('web')
-  for (const d of ['src/app', 'app', 'src/styles', 'styles']) if (fs.existsSync(path.join(w, d))) return path.join(w, d, 'ds-tokens.css')
-  return path.join(w, 'styles', 'ds-tokens.css')
-}
-const dartOut = () => (config.design?.out?.dart ? path.join(root, config.design.out.dart) : path.join(stackDir('mobile'), 'lib', 'generated', 'design_tokens.dart'))
 
-let targets = cmd === 'all' ? ['web', 'dart'].filter((t) => (t === 'web' ? !!config.stacks?.web : config.stacks?.mobile === 'flutter')) : [cmd]
-if (!targets.length) die('nothing to generate: the project has no web or Flutter stack in .dualcraft/config.json.')
-for (const t of targets) {
-  const mode = t === 'web' ? webMode() : 'dart'
-  const body = t === 'web' ? genWeb(mode) : genDart()
-  const content = t === 'web' ? stamp(body, '/*').replace(/^(\/\* dualcraft:hash=[0-9a-f]+)/, '$1 */') : stamp(body, '//')
-  if (opt.stdout) { console.log(content); continue }
-  const out = opt.out && targets.length === 1 ? path.resolve(String(opt.out)) : t === 'web' ? webOut() : dartOut()
-  writeGuarded(out, content)
-  console.log(`${t === 'web' ? `web (${mode})` : 'flutter'} → ${posix(path.relative(root || '.', out))}`)
+// ---------- shared naming for TS / Kotlin / Swift ----------
+const KOTLIN_RESERVED = new Set('as break class continue do else false for fun if in interface is null object package return super this throw true try typealias typeof val var when while'.split(' '))
+const SWIFT_RESERVED = new Set('associatedtype class deinit enum extension fileprivate func import init inout internal let open operator private protocol public rethrows static struct subscript typealias var break case continue default defer do else fallthrough for guard if in repeat return switch where while as catch false is nil super self Self throw throws true try'.split(' '))
+const camelId = (s, reserved = new Set(), lead = 'v') => {
+  const w = words(s); let c = w.map((x, i) => (i ? x[0].toUpperCase() + x.slice(1) : x.toLowerCase())).join('') || 'x'
+  if (/^\d/.test(c)) c = lead + c
+  return reserved.has(c) ? c + 'Token' : c
+}
+const lenId = (name, pre, lead, reserved) => { const s = strip(name, ...pre); return /^[0-9]/.test(s) ? lead + s.replace(/[^A-Za-z0-9]+/g, '_') : camelId(s, reserved) }
+const lightId = (themes.find((t) => t.id === 'light') || themes[0]).id
+const darkTheme = themes.find((t) => t.id === 'dark')
+const quoteKey = (k) => (/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k))
+const absLineHeight = (t) => (t.lh != null && t.size ? +(t.lh * t.size).toFixed(2) : null)
+const trackingPx = (t) => (t.tracking == null ? null : String(t.tracking).endsWith('em') ? +(parseFloat(t.tracking) * (t.size || 16)).toFixed(3) : px(t.tracking))
+const weightNum = (w) => { const n = parseInt(String(w).split(/\s+/)[0], 10); return Number.isNaN(n) ? null : Math.min(900, Math.max(100, Math.round(n / 100) * 100)) }
+const realFamily = (t) => { const f = firstFamily(t.stack); return f && !/^(system-ui|sans-serif|serif|monospace|-apple-system|ui-sans-serif)$/.test(f) ? f : null }
+const header = (cmt) => `${cmt} GENERATED by DualCraft from ${SRC} (Design System "${raw.name || '?'}" v${raw.version ?? '?'}) — do not edit by hand.\n${cmt} Change the Design System and run /dualcraft:tokens.\n`
+
+// ---------- React Native (TypeScript) ----------
+function genTs() {
+  const L = [header('//'), "import { useColorScheme } from 'react-native'", '']
+  L.push('export const dsColors = {')
+  for (const th of themes) { L.push(`  ${quoteKey(th.id)}: {`); for (const c of colors) L.push(`    ${camelId(c.name)}: '${toHex(c.values[th.id])}',${c.usage ? ` // ${c.usage}` : ''}`); L.push('  },') }
+  L.push('} as const', '', `export type DsThemeName = keyof typeof dsColors`, `export type DsColors = { [K in keyof (typeof dsColors)[${JSON.stringify(lightId)}]]: string }`, '')
+  L.push('export const dsSpacing = {'); for (const s of spacing.filter((x) => x.px !== null)) L.push(`  ${lenId(s.name, ['spacing', 'space'], 's')}: ${dnum(s.px)},`); L.push('} as const', '')
+  L.push('export const dsRadius = {'); for (const r of radius.filter((x) => x.px !== null)) L.push(`  ${lenId(r.name, ['radius', 'rounded'], 'r')}: ${dnum(r.px)},`); L.push('} as const', '')
+  L.push('export const dsText = {')
+  for (const t of textStyles) {
+    const p = []
+    if (realFamily(t)) p.push(`fontFamily: '${realFamily(t).replace(/'/g, "\\'")}'`)
+    if (t.size != null) p.push(`fontSize: ${dnum(t.size)}`)
+    if (absLineHeight(t) != null) p.push(`lineHeight: ${absLineHeight(t)}`)
+    if (weightNum(t.weight)) p.push(`fontWeight: '${weightNum(t.weight)}' as const`)
+    if (trackingPx(t) != null) p.push(`letterSpacing: ${trackingPx(t)}`)
+    L.push(`  ${camelId(t.name)}: { ${p.join(', ')} },`)
+  }
+  L.push('} as const', '')
+  L.push(`/** Theme for a color scheme name ('light' | 'dark' | another theme id). Unknown names fall back to "${lightId}". */`,
+    'export function dsTheme(scheme?: string | null) {',
+    `  const name = (scheme && scheme in dsColors ? scheme : ${JSON.stringify(lightId)}) as DsThemeName`,
+    '  return { name, colors: dsColors[name] as DsColors, spacing: dsSpacing, radius: dsRadius, text: dsText }',
+    '}', '',
+    '/** The theme that follows the device setting (light/dark). */',
+    'export function useDsTheme() {', '  return dsTheme(useColorScheme())', '}', '')
+  return L.join('\n')
+}
+
+// ---------- Jetpack Compose / Compose Multiplatform (Kotlin) ----------
+function genCompose(pkg) {
+  const ids = colors.map((c) => ({ ...c, id: camelId(c.name, KOTLIN_RESERVED) }))
+  const tn = (th) => 'DsColors' + th.id.replace(/(^|[^A-Za-z0-9])(\w)/g, (_, __, ch) => ch.toUpperCase())
+  const L = [header('//'), `package ${pkg}`, '',
+    'import androidx.compose.foundation.isSystemInDarkTheme', 'import androidx.compose.material3.MaterialTheme', 'import androidx.compose.material3.Typography',
+    'import androidx.compose.material3.darkColorScheme', 'import androidx.compose.material3.lightColorScheme', 'import androidx.compose.runtime.Composable',
+    'import androidx.compose.runtime.CompositionLocalProvider', 'import androidx.compose.runtime.Immutable', 'import androidx.compose.runtime.staticCompositionLocalOf',
+    'import androidx.compose.ui.graphics.Color', 'import androidx.compose.ui.text.TextStyle', 'import androidx.compose.ui.text.font.FontWeight',
+    'import androidx.compose.ui.unit.dp', 'import androidx.compose.ui.unit.sp', '']
+  L.push('@Immutable', 'data class DsColors(')
+  for (const c of ids) L.push(`    ${c.usage ? `/** ${c.usage.replace(/\*\//g, '')} */ ` : ''}val ${c.id}: Color,`)
+  L.push(')', '')
+  for (const th of themes) { L.push(`val ${tn(th)} = DsColors(`); for (const c of ids) L.push(`    ${c.id} = Color(${toArgbInt(c.values[th.id])}),`); L.push(')', '') }
+  L.push(`val LocalDsColors = staticCompositionLocalOf { ${tn(themes.find((t) => t.id === lightId))} }`, '')
+  const lenObj = (name, items, pre, lead) => { const ok = items.filter((i) => i.px !== null); if (!ok.length) return; L.push(`object ${name} {`); for (const i of ok) L.push(`    ${i.usage ? `/** ${i.usage} */ ` : ''}val ${lenId(i.name, pre, lead, KOTLIN_RESERVED)} = ${dnum(i.px)}.dp`); L.push('}', '') }
+  lenObj('DsSpacing', spacing, ['spacing', 'space'], 's')
+  lenObj('DsRadius', radius, ['radius', 'rounded'], 'r')
+  if (textStyles.length) {
+    L.push('object DsText {')
+    for (const t of textStyles) {
+      const p = []
+      if (t.size != null) p.push(`fontSize = ${dnum(t.size)}.sp`)
+      if (absLineHeight(t) != null) p.push(`lineHeight = ${absLineHeight(t)}.sp`)
+      if (weightNum(t.weight)) p.push(`fontWeight = FontWeight(${weightNum(t.weight)})`)
+      if (trackingPx(t) != null) p.push(`letterSpacing = ${trackingPx(t)}.sp`)
+      L.push(`    val ${camelId(t.name, KOTLIN_RESERVED)} = TextStyle(${p.join(', ')})${realFamily(t) ? ` // font: ${realFamily(t)} — add it as a FontFamily resource and set fontFamily` : ''}`)
+    }
+    L.push('}', '')
+  }
+  const roles = {}
+  for (const c of ids) { const r = MATERIAL_ROLES.includes(c.id) ? c.id : ROLE_ALIASES[c.id]; if (r && r !== 'shadow' && !roles[r]) roles[r] = c.id }
+  const textMap = textStyles.map((t) => camelId(t.name, KOTLIN_RESERVED)).filter((id) => MATERIAL_TEXT.includes(id))
+  L.push('/** Ds colors of the current theme: `Ds.colors.primary`. */', 'object Ds {', '    val colors: DsColors', '        @Composable get() = LocalDsColors.current', '}', '')
+  L.push('@Composable', 'fun DsTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {')
+  L.push(darkTheme ? `    val c = if (darkTheme) ${tn(darkTheme)} else ${tn(themes.find((t) => t.id === lightId))}` : `    val c = ${tn(themes.find((t) => t.id === lightId))}`)
+  L.push(`    val base = ${darkTheme ? 'if (darkTheme) darkColorScheme() else lightColorScheme()' : 'lightColorScheme()'}`)
+  L.push(`    val scheme = base${Object.keys(roles).length ? `.copy(${Object.entries(roles).map(([r, id]) => `${r} = c.${id}`).join(', ')})` : ''}`)
+  L.push(`    CompositionLocalProvider(LocalDsColors provides c) {`, `        MaterialTheme(colorScheme = scheme${textMap.length ? `, typography = Typography(${textMap.map((id) => `${id} = DsText.${id}`).join(', ')})` : ''}, content = content)`, '    }', '}', '')
+  return L.join('\n')
+}
+
+// ---------- SwiftUI ----------
+function genSwift() {
+  const rgba = (c) => '0x' + [c.r, c.g, c.b, Math.round(c.a * 255)].map((x) => x.toString(16).padStart(2, '0').toUpperCase()).join('')
+  const swW = { 100: 'ultraLight', 200: 'thin', 300: 'light', 400: 'regular', 500: 'medium', 600: 'semibold', 700: 'bold', 800: 'heavy', 900: 'black' }
+  const L = [header('//'), 'import SwiftUI', '#if canImport(UIKit)', 'import UIKit', '#endif', '',
+    'private extension Color {', '    init(dsRGBA v: UInt32) {',
+    '        self.init(.sRGB, red: Double((v >> 24) & 0xFF) / 255, green: Double((v >> 16) & 0xFF) / 255, blue: Double((v >> 8) & 0xFF) / 255, opacity: Double(v & 0xFF) / 255)',
+    '    }', '    static func ds(_ light: UInt32, _ dark: UInt32) -> Color {', '        #if canImport(UIKit)',
+    '        return Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(dsRGBA: dark) : UIColor(dsRGBA: light) })',
+    '        #else', '        return Color(dsRGBA: light)', '        #endif', '    }', '}', '',
+    '#if canImport(UIKit)', 'private extension UIColor {', '    convenience init(dsRGBA v: UInt32) {',
+    '        self.init(red: CGFloat((v >> 24) & 0xFF) / 255, green: CGFloat((v >> 16) & 0xFF) / 255, blue: CGFloat((v >> 8) & 0xFF) / 255, alpha: CGFloat(v & 0xFF) / 255)',
+    '    }', '}', '#endif', '']
+  L.push('/// Design-system colors; they follow the system light/dark appearance.', 'enum DsColor {')
+  for (const c of colors) { if (c.usage) L.push(`    /// ${c.usage}`); L.push(`    static let ${camelId(c.name, SWIFT_RESERVED)} = Color.ds(${rgba(c.values[lightId])}, ${rgba(c.values[darkTheme ? 'dark' : lightId])})`) }
+  L.push('}', '')
+  const lenEnum = (name, items, pre, lead) => { const ok = items.filter((i) => i.px !== null); if (!ok.length) return; L.push(`enum ${name} {`); for (const i of ok) { if (i.usage) L.push(`    /// ${i.usage}`); L.push(`    static let ${lenId(i.name, pre, lead, SWIFT_RESERVED)}: CGFloat = ${dnum(i.px)}`) } L.push('}', '') }
+  lenEnum('DsSpacing', spacing, ['spacing', 'space'], 's')
+  lenEnum('DsRadius', radius, ['radius', 'rounded'], 'r')
+  if (textStyles.length) {
+    L.push('/// Text styles: `.font(DsText.bodyMedium.font)` and `.lineSpacing(DsText.bodyMedium.lineSpacing)`.', 'struct DsTextStyle {', '    let font: Font', '    let lineSpacing: CGFloat', '    let tracking: CGFloat', '}', '', 'enum DsText {')
+    for (const t of textStyles) {
+      const w = swW[weightNum(t.weight) || 400]
+      const size = dnum(t.size ?? 16)
+      const font = realFamily(t) ? `.custom("${realFamily(t).replace(/"/g, '\\"')}", size: ${size}).weight(.${w})` : `.system(size: ${size}, weight: .${w})`
+      const ls = absLineHeight(t) != null ? Math.max(0, +(absLineHeight(t) - (t.size ?? 16)).toFixed(2)) : 0
+      L.push(`    static let ${camelId(t.name, SWIFT_RESERVED)} = DsTextStyle(font: ${font}, lineSpacing: ${ls}, tracking: ${trackingPx(t) ?? 0})`)
+    }
+    L.push('}', '')
+  }
+  return L.join('\n')
+}
+
+// ---------- dispatch ----------
+const GEN_FOR = { nextjs: 'web', 'react-vite': 'web', astro: 'web', nuxt: 'web', flutter: 'dart', 'react-native': 'ts', kmp: 'compose', android: 'compose', ios: 'swift' }
+const DEFAULT_STACK = { web: 'nextjs', dart: 'flutter', ts: 'react-native', compose: 'android', swift: 'ios' }
+let jobs
+if (cmd === 'all') {
+  if (!root) die('"all" needs a DualCraft project (.dualcraft/config.json)')
+  jobs = projectStacks(root, config).map((s) => ({ stack: s, gen: GEN_FOR[s.id] }))
+  if (!jobs.length) die('nothing to generate: no stacks in .dualcraft/config.json (stacks.web / stacks.mobile).')
+} else {
+  const st = root ? projectStacks(root, config).find((s) => GEN_FOR[s.id] === cmd) : null
+  jobs = [{ stack: st || { id: DEFAULT_STACK[cmd], kind: '?', dir: root || '.' }, gen: cmd }]
+}
+const legacyOut = (gen) => (gen === 'web' ? config.design?.out?.web : gen === 'dart' ? config.design?.out?.dart : null)
+for (const { stack, gen } of jobs) {
+  const target = root ? outputFor('tokens', stack, root, config) : { file: path.resolve('ds-tokens'), pkg: 'app.theme' }
+  let body; let label
+  if (gen === 'web') { const mode = webMode(stack.dir); body = stamp(genWeb(mode), '/*').replace(/^(\/\* dualcraft:hash=[0-9a-f]+)/, '$1 */'); label = `${stack.id} (${mode})` }
+  else if (gen === 'dart') { body = stamp(genDart(), '//'); label = 'flutter' }
+  else if (gen === 'ts') { body = stamp(genTs(), '//'); label = 'react-native' }
+  else if (gen === 'compose') { body = stamp(genCompose(String(opt.package || target.pkg || 'app.theme')), '//'); label = `${stack.id} (compose)` }
+  else { body = stamp(genSwift(), '//'); label = 'ios (swiftui)' }
+  if (opt.stdout) { console.log(body); continue }
+  const out = opt.out && jobs.length === 1 ? path.resolve(String(opt.out)) : legacyOut(gen) ? path.join(root, legacyOut(gen)) : target.file
+  writeGuarded(out, body)
+  console.log(`${label} → ${posix(path.relative(root || '.', out))}`)
 }
 const bad = contrastReport.filter((r) => !r.ok)
-if (bad.length) console.log(`⚠ ${bad.length} contrast pair(s) below WCAG AA — run "check" for details.`)
+if (bad.length) console.error(`⚠ ${bad.length} contrast pair(s) below WCAG AA — run "check" for details.`)

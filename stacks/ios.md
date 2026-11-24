@@ -30,7 +30,7 @@ Swift Concurrency (async/await, actors, `@MainActor` on UI state); `@Observable`
 Keychain for tokens; ATS on (no arbitrary loads); Universal Links validated; privacy manifest (`PrivacyInfo.xcprivacy`) and usage descriptions accurate; App Attest for App Check.
 
 ## DualCraft outputs
-tokens → `DesignSystem/DsTokens.swift` (`Color` per theme via asset-free dynamic colors, `DsSpacing`, `DsRadius`, `Font` styles) · i18n → `Resources/Localizable.xcstrings` (String Catalog) · schema → `Core/Models/DbModels.swift` (`Codable` structs) · analytics → `Core/Analytics/AnalyticsEvents.swift`.
+tokens → `DesignSystem/DsTokens.swift` (`Color` per theme via asset-free dynamic colors, `DsSpacing`, `DsRadius`, `Font` styles) · i18n → `Resources/DualCraft.xcstrings` (String Catalog, table "DualCraft") · schema → `Core/Models/DbModels.swift` (`Codable` structs) · analytics → `Core/Analytics/AnalyticsEvents.swift`.
 
 ## Backends
 Firebase iOS SDK (SPM) · Supabase: `supabase-swift` · REST: URLSession + Codable.

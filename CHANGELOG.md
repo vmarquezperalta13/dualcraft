@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.0] - 2026-11-24
+### Added
+- Multi-stack generators (stage B) — one output per stack of the project:
+  - tokens: React Native TS theme (`useDsTheme`), Compose Material 3 theme for KMP/Android (`DsTheme`, `Ds.colors`, spacing, radius, typography), SwiftUI (dynamic light/dark colors, spacing, radius, text styles); CSS for React + Vite / Astro / Nuxt
+  - i18n: i18next JSON (React Native, React + Vite), Astro JSON, vue-i18n (Nuxt, plurals converted), Android/KMP `ds_strings.xml` with `<plurals>`, iOS String Catalog `DualCraft.xcstrings`
+  - models: Kotlin `@Serializable` data classes, Swift `Codable` structs (+ `DsJSONValue`), TypeScript for every JS stack
+  - analytics: Kotlin and Swift helpers; coverage scans Kotlin, Swift, Vue and Astro code
+- `lib/targets.mjs`: per-stack output paths, Kotlin package from Gradle namespace, iOS app folder detection
+### Verified
+- Generated Kotlin compiled and run (Compose + kotlinx.serialization on JVM); generated TypeScript type-checked with `--strict`; Dart still `flutter analyze` clean
+
 ## [0.11.0] - 2026-11-24
 ### Added
 - `database` skill: provider choice (Firebase, Supabase, PostgreSQL + Prisma), local + dev + prod environments with each provider's CLI, schema → provider artifacts, apply per environment, safe dev → prod promotion

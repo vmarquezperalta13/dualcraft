@@ -31,6 +31,8 @@ Start from the question the product/marketing wants answered ("¿cuántos usuari
 - Next.js `…/lib/analytics-events.ts`: `analyticsEvents.signUp({ method: 'google' })` → `{ name, params }`; one client-side adapter sends it (gtag / Firebase JS / PostHog — whatever `detect` shows).
 - `docs/ANALYTICS.md`: the tracking plan as a table, for product and marketing.
 
+Outputs for every stack: see the table in `dualcraft:tokens` (same layout for i18n, schema and analytics). Kotlin: `AnalyticsEvents.signUp(SignUpMethod.GOOGLE)` → `AnalyticsEvent(name, params)`; Swift: `AnalyticsEvents.signUp(method: .google)`. Each app has one small adapter that sends `AnalyticsEvent` to its SDK.
+
 ## Coverage
 `$AN coverage` → which declared events are used in each platform's code (✓/✗). A ✗ for a platform the event is declared on = a gap to fix or a platform to remove from the event.
 

@@ -30,7 +30,7 @@ iosApp/                Xcode project hosting the shared framework
 Same mobile checklist (`security-mobile`): Android manifest + R8; iOS ATS/Keychain via actuals (e.g. `multiplatform-settings` with encrypted storage, or Keychain/EncryptedSharedPreferences actuals); secrets never in common code.
 
 ## DualCraft outputs
-tokens → `commonMain/kotlin/.../theme/DsTokens.kt` (Compose `ColorScheme` light/dark, `DsSpacing`, `DsRadius`, `Typography`) · i18n → `commonMain/composeResources/values[-<lang>]/strings.xml` (`stringResource(Res.string.x)`) · schema → `commonMain/kotlin/.../model/DbModels.kt` (`@Serializable` data classes) · analytics → `commonMain/kotlin/.../analytics/AnalyticsEvents.kt`.
+tokens → `commonMain/kotlin/.../theme/DsTokens.kt` (Compose `ColorScheme` light/dark, `DsSpacing`, `DsRadius`, `Typography`) · i18n → `commonMain/composeResources/values[-<lang>]/ds_strings.xml` (`stringResource(Res.string.x)`, `pluralStringResource`) · schema → `commonMain/kotlin/.../model/DbModels.kt` (`@Serializable` data classes) · analytics → `commonMain/kotlin/.../analytics/AnalyticsEvents.kt`.
 
 ## Backends
 Firebase: GitLive `firebase-kotlin-sdk` (multiplatform) · Supabase: `supabase-kt` · REST/Prisma backends: Ktor client.
