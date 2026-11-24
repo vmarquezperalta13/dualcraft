@@ -343,6 +343,7 @@ input[type=search] { width: 170px; background: var(--card); }
       <dl><dt>Estado</dt><dd>${STATUS[n.status]}${n.blocked ? ' · <span style="color:var(--warn)">bloqueado</span>' : ''}</dd>
       ${n.target ? `<dt>Versión</dt><dd>${esc(n.target)}</dd>` : ''}${n.priority ? `<dt>Prioridad</dt><dd>${esc(n.priority)}</dd>` : ''}
       ${n.branch ? `<dt>Rama</dt><dd><code>${esc(n.branch)}</code></dd>` : ''}${n.flag ? `<dt>Flag</dt><dd><code>${esc(n.flag)}</code></dd>` : ''}
+      ${n.spec ? `<dt>Diseño</dt><dd><code>${esc(n.spec)}</code></dd>` : ''}${n.plan ? `<dt>Plan</dt><dd><code>${esc(n.plan)}</code></dd>` : ''}
       ${n.tags?.length ? `<dt>Tags</dt><dd>${n.tags.map(esc).join(', ')}</dd>` : ''}
       ${n.depends_on.length ? `<dt>Depende de</dt><dd>${n.depends_on.map(link).join('<br>')}</dd>` : ''}
       ${n.requiredBy.length ? `<dt>Necesaria para</dt><dd>${n.requiredBy.map(link).join('<br>')}</dd>` : ''}

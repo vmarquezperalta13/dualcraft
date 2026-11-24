@@ -7,6 +7,10 @@ description: Creates DualCraft commits - Conventional Commits whose type comes f
 
 `$BRAIN` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/brain.mjs"`.
 
+## 0. Preconditions
+- The work was verified in this session (`dualcraft:verify`). If not, run it first — don't commit unverified work; if the user insists, say in the commit body what wasn't verified.
+- For `feat` and user-visible `fix`: the functional document is updated (`dualcraft:docs`) and goes in this commit. Skip for internal changes.
+
 ## 1. Gather
 - `$BRAIN mode` → the work mode, tasks and scope. If no mode is recorded, ask the user which one applies (same three options as `dualcraft:start`).
 - `git status` and `git diff` (staged + unstaged). If changes belong to **different** pieces of work, propose splitting them into several commits.

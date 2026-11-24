@@ -41,11 +41,15 @@ Then ask (or infer) **what** they'll work on:
 Record it: `$BRAIN mode <bugfix|feature|refactor> --task <IDs> --scope <web|mobile|both>`, and `$BRAIN set <ID> status=doing`.
 
 ## 4. Work according to the mode
-- **bugfix** — reproduce → find the root cause (don't guess) → smallest correct fix → test that would have caught it → verify.
-- **feature** — short brainstorm of the idea (goal, screens/flows, data it touches, edge cases), agree the scope with the user, and put whatever is left out into the brain as tasks/ideas with a target version. For multi-step work write a plan before coding. Tests first where practical.
-- **refactor** — confirm tests cover the behaviour first (add them if not), change in small steps, tests green after each step, no behaviour changes mixed in.
+| Mode | Flow |
+|---|---|
+| **bugfix** | `dualcraft:debug` (root cause with evidence) → `dualcraft:tdd` (failing test reproduces it, then fix) → `dualcraft:verify` |
+| **feature** | `dualcraft:brainstorm` (agree the design; leftovers → brain) → `dualcraft:schema` if data changes → `dualcraft:plan` if several steps or both platforms → `dualcraft:tdd` while implementing → `dualcraft:verify` → `dualcraft:review` for anything non-trivial → `dualcraft:docs` |
+| **refactor** | make sure tests cover the behaviour first (add them if not) → small steps with tests green after each → no behaviour change mixed in → `dualcraft:verify` |
+
+A short task in bugfix mode that isn't a bug (copy change, config, dependency bump) skips debug: do it, then verify.
 
 Throughout: capture out-of-scope things with `dualcraft:brain`; if a finished piece must wait for a later version, use `dualcraft:park`.
 
 ## 5. Close
-When done and verified: `$BRAIN set <ID> status=done --log "<one-line outcome>"`, then `dualcraft:commit`. Afterwards `$BRAIN mode clear` unless the user continues in the same mode.
+When verified: `$BRAIN set <ID> status=done --log "<one-line outcome>"`, functional document updated if behaviour changed (`dualcraft:docs`), then `dualcraft:commit`. Afterwards `$BRAIN mode clear` unless the user continues in the same mode.

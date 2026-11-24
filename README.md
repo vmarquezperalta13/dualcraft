@@ -4,13 +4,15 @@ Web + mobile development workflow for Claude Code — **Next.js ⇄ Flutter** �
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.2)
+## What it does (v0.3)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **Work modes**: before working, DualCraft asks whether it's a *bug / short task*, a *new development* or a *refactor*. The mode drives the flow, the commit type and the version impact.
 - **Parked work**: finished development that must wait for a later version is kept on a `parked/*` branch or behind a feature flag, with its target version recorded.
 - **Commits**: Conventional Commits derived from the mode, linked to brain ids, with `CHANGELOG.md`.
 - **Visual brain**: an offline HTML map of notes as nodes linked by their dependencies, plus a roadmap board by version.
+- **Process**: brainstorm before building, written plans, TDD, root-cause debugging, verification with evidence, code review (incl. accessibility) — for both platforms.
+- **Functional document** (`docs/FUNCTIONAL.md`) kept up to date as work is finished, traceable to brain ids.
 - **Database schema as source of truth**: `.dualcraft/db/schema.dbml` ([DBML](https://dbml.dbdiagram.io/docs)) → ER diagram with crow's-foot notation (PNG/SVG export) and generated Dart models, TypeScript types and a Firestore rules skeleton.
 
 Run `/dualcraft:help` to see every command, available and upcoming.
@@ -41,12 +43,19 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:roadmap` | Work grouped by target version |
 | `/dualcraft:er` | ER diagram of the database schema |
 | `/dualcraft:schema` | Edit the schema; generate Dart / TS / Firestore rules |
+| `/dualcraft:brainstorm` | Explore an idea and agree the design |
+| `/dualcraft:plan` | Step-by-step implementation plan |
+| `/dualcraft:tdd` | Test first, then implement |
+| `/dualcraft:debug` | Root cause before any fix |
+| `/dualcraft:verify` | Evidence before saying it's done |
+| `/dualcraft:review` | Code review, incl. accessibility |
+| `/dualcraft:docs` | Update the functional document |
 
 ## Roadmap
 
 1. ✅ Core: brain, work modes, parked work, commits, help
 2. ✅ Visual brain map (nodes + dependencies), roadmap view, ER diagram and schema as source of truth
-3. Process: brainstorm, plan, TDD, debug, verify, review, functional document
+3. ✅ Process: brainstorm, plan, TDD, debug, verify, review, functional document
 4. Design: claude.ai Design → shared tokens → React / Flutter
 5. Web and mobile packs, refactoring, i18n, analytics
 6. Security: global, web, mobile
@@ -62,6 +71,8 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
   brain/          one note per file
   db/schema.dbml  database schema (source of truth)
   db/layout.json  saved ER diagram positions (optional)
+  specs/          agreed designs (from brainstorm)
+  plans/          implementation plans
   out/            generated views: map.html, roadmap.html, er.html (gitignored)
   state.json      current work mode (local, gitignored)
 ```

@@ -14,7 +14,7 @@ const TYPES = { task: 'T', bug: 'B', decision: 'D', note: 'N', idea: 'I' }
 const PREFIX_TO_TYPE = Object.fromEntries(Object.entries(TYPES).map(([k, v]) => [v, k]))
 const STATUSES = ['todo', 'doing', 'done', 'parked', 'dropped']
 const MODES = ['bugfix', 'feature', 'refactor']
-const FIELD_ORDER = ['id', 'type', 'title', 'status', 'priority', 'target', 'depends_on', 'related', 'branch', 'flag', 'tags', 'created', 'updated']
+const FIELD_ORDER = ['id', 'type', 'title', 'status', 'priority', 'target', 'depends_on', 'related', 'branch', 'flag', 'spec', 'plan', 'tags', 'created', 'updated']
 
 // ---------- helpers ----------
 const today = () => new Date().toISOString().slice(0, 10)
