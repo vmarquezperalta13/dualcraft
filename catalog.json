@@ -60,8 +60,8 @@
     { "name": "security-web", "pack": "security", "phase": 6, "es": "Seguridad de Next.js: auth, endpoints y server actions, XSS/CSRF/SSRF, cabeceras y CSP, secretos" },
     { "name": "security-mobile", "pack": "security", "phase": 6, "es": "Seguridad de Flutter (MASVS): almacenamiento, red, deep links, manifest, release, IAP, App Check" },
 
-    { "name": "marketing", "pack": "marketing", "phase": 7, "es": "Ideas de marketing para cada actualización (campañas, redes, ASO, SEO)" },
-    { "name": "release", "pack": "marketing", "phase": 7, "es": "Cierra versión: sube la versión, CHANGELOG, notas para tiendas y checklist de lanzamiento" },
+    { "name": "marketing", "pack": "marketing", "phase": 7, "es": "Qué comunicar de cada versión + textos listos: tiendas/ASO, web, redes, in-app, push; campaña, métricas e ideas de crecimiento" },
+    { "name": "release", "pack": "marketing", "phase": 7, "es": "Cierra versión: checklist, versión en config/pubspec/package.json, CHANGELOG, tag, notas de tienda por idioma y lanzamiento" },
 
     { "name": "convert", "pack": "convert", "phase": 8, "es": "Convierte web → móvil o móvil → web vía especificación intermedia" }
   ]

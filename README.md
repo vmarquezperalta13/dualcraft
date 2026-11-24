@@ -4,7 +4,7 @@ Web + mobile development workflow for Claude Code — **Next.js ⇄ Flutter** �
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.6)
+## What it does (v0.7)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **Work modes**: before working, DualCraft asks whether it's a *bug / short task*, a *new development* or a *refactor*. The mode drives the flow, the commit type and the version impact.
@@ -17,6 +17,7 @@ You talk to it in your language (Spanish by default); commands are in English.
 - **Web and mobile packs**: architecture maps, builds, tests, browser and device tooling, SEO, crash analysis, and safe refactoring per platform or across both.
 - **Shared texts and analytics**: one i18n source → Flutter ARB + next-intl; one tracking plan → typed event helpers for Dart and TypeScript.
 - **Security**: global, web and mobile audits with a static scanner (secrets, Firebase rules, Cloud Functions, Next.js endpoints and headers, Android/iOS config, payments) and a dated report; findings become brain bugs.
+- **Release & marketing**: a readiness checklist across brain, security, texts, analytics and docs; one command bumps every version and closes the CHANGELOG; store notes validated against Play/App Store limits; launch copy, campaign plan and growth ideas for each update.
 - **Database schema as source of truth**: `.dualcraft/db/schema.dbml` ([DBML](https://dbml.dbdiagram.io/docs)) → ER diagram with crow's-foot notation (PNG/SVG export) and generated Dart models, TypeScript types and a Firestore rules skeleton.
 
 Run `/dualcraft:help` to see every command, available and upcoming.
@@ -63,6 +64,8 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:i18n` · `analytics` | Shared texts and tracking plan |
 | `/dualcraft:refactor-web` · `refactor-mobile` · `refactor-global` | Safe refactoring |
 | `/dualcraft:security-global` · `security-web` · `security-mobile` | Security audits |
+| `/dualcraft:release` | Close and ship a version |
+| `/dualcraft:marketing` | Launch copy, ASO, campaigns, growth ideas |
 
 ## Roadmap
 
@@ -72,7 +75,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 4. ✅ Design: claude.ai Design → shared tokens → React / Flutter
 5. ✅ Web and mobile packs, refactoring, i18n, analytics
 6. ✅ Security: global, web, mobile
-7. Marketing and release (versioning, store notes, launch checklist)
+7. ✅ Marketing and release (versioning, store notes, launch checklist)
 8. Web ⇄ mobile converter
 9. Standalone installer with packs for several agents
 
@@ -87,6 +90,8 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
   i18n/<locale>.json  UI texts for web + mobile (source)
   analytics/events.json  tracking plan (source)
   architecture/   web.md / mobile.md structure maps
+  store/listing.json  store listing texts per language
+  release/<version>.json  store release notes per language
   db/layout.json  saved ER diagram positions (optional)
   specs/          agreed designs (from brainstorm)
   plans/          implementation plans

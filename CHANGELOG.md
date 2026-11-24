@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0] - 2026-11-24
+### Added
+- `release`: readiness checklist, version bump (config, pubspec build number, package.json), CHANGELOG close, release commit and tag, store release notes per language, store/web launch and post-release follow-up
+- `marketing`: what to communicate per version and ready-to-use copy for stores/ASO, web, social, in-app, push/email; campaign plan, metrics from the tracking plan, growth ideas saved to the brain
+- `release.mjs`: `suggest` (next version from Conventional Commits), `check`, `bump`, `notes`, `store-check` (Google Play / App Store / web text limits)
+
 ## [0.6.0] - 2026-11-24
 ### Added
 - Security pack: `security-global` (threat model, scan, manual review of rules/functions/payments/abuse/privacy, dated report, brain bugs), `security-web` (Next.js), `security-mobile` (Flutter, MASVS)

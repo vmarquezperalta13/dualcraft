@@ -59,6 +59,8 @@ DualCraft is a web + mobile workflow (Next.js ⇄ Flutter) built around a **proj
 | Analytics events, tracking plan | `dualcraft:analytics` |
 | Refactor web / app / both | `dualcraft:refactor-web` / `refactor-mobile` / `refactor-global` |
 | Security audit of everything / web / app | `dualcraft:security-global` / `security-web` / `security-mobile` |
+| Close/ship a version, store release notes | `dualcraft:release` |
+| Communicate an update, ASO, social, campaigns, growth ideas | `dualcraft:marketing` |
 | "¿qué comandos hay?", help | `dualcraft:help` |
 
 **Data rule:** in a project with `.dualcraft/db/schema.dbml`, any change to stored data starts in the schema (`dualcraft:schema`) and models/types are regenerated — never hand-edit generated files.
@@ -69,4 +71,4 @@ DualCraft is a web + mobile workflow (Next.js ⇄ Flutter) built around a **proj
 
 **Process rules:** no code before an agreed design for new features; no fix before a root cause; no "done" without fresh verification evidence.
 
-More packs (marketing, converter) are listed by `dualcraft:help` and are added phase by phase.
+More packs (converter) are listed by `dualcraft:help` and are added phase by phase.
