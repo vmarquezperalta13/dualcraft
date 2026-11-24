@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.0] - 2026-11-24
+### Added
+- Design pack: `design-system` (claude.ai Design System from scratch or from code), `tokens`, `design-screen` (mobile + web artboards), `design-to-code`
+- `tokens.mjs`: Design System tokens → CSS variables with light/dark + Tailwind v4 `@theme` and `type-*` utilities (Next.js), and `ThemeData` + `DsColors` ThemeExtension + spacing/radius/text styles (Flutter)
+- WCAG contrast check of text/background pairs in every theme
+- Hand-edit guard on generated token files
+- `brain.mjs config` to read and set project settings (e.g. the Design System link)
+### Changed
+- `review` flags raw colors/sizes where a design token exists; the feature flow includes screen design
+
 ## [0.3.0] - 2026-11-24
 ### Added
 - Process pack: `brainstorm`, `plan`, `tdd`, `debug`, `verify`, `review` (with accessibility) and `docs`

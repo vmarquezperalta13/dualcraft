@@ -41,10 +41,16 @@ DualCraft is a web + mobile workflow (Next.js ⇄ Flutter) built around a **proj
 | Before saying done / committing | `dualcraft:verify` |
 | Reviewing changes, before merge/PR | `dualcraft:review` |
 | Functional document, "documenta" | `dualcraft:docs` |
+| Brand, colors, typography, "crea el design system" | `dualcraft:design-system` |
+| Pull design changes into code, "actualiza los colores" | `dualcraft:tokens` |
+| Design a screen (mobile + web mockup) | `dualcraft:design-screen` |
+| Implement a designed screen | `dualcraft:design-to-code` |
 | "¿qué comandos hay?", help | `dualcraft:help` |
 
 **Data rule:** in a project with `.dualcraft/db/schema.dbml`, any change to stored data starts in the schema (`dualcraft:schema`) and models/types are regenerated — never hand-edit generated files.
 
+**Design rule:** the claude.ai Design System (`design.system` in config) is the source of truth for colors, typography, spacing and radius. Code uses only the generated tokens — never raw hex colors or magic sizes; a missing value is a Design System change.
+
 **Process rules:** no code before an agreed design for new features; no fix before a root cause; no "done" without fresh verification evidence.
 
-More packs (design, web, mobile, refactor, security, marketing, converter) are listed by `dualcraft:help` and are added phase by phase.
+More packs (web, mobile, refactor, security, marketing, converter) are listed by `dualcraft:help` and are added phase by phase.

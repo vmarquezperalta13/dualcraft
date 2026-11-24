@@ -266,6 +266,28 @@ const commands = {
     console.log(`mode: ${s.mode}${s.tasks.length ? ' · tasks ' + s.tasks.join(', ') : ''}`)
   },
 
+  config(pos) {
+    const { dir, config } = ctx()
+    const [action, ...pairs] = pos
+    const get = (obj, key) => key.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj)
+    if (!action || action === 'get') {
+      const v = pairs[0] ? get(config, pairs[0]) : config
+      return console.log(v === undefined ? '(not set)' : typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v))
+    }
+    if (action !== 'set' && action !== 'unset') die('usage: config [get key] | set key=value ... | unset key')
+    for (const p of pairs) {
+      const [key, raw] = action === 'set' ? p.split(/=(.*)/s) : [p, undefined]
+      if (action === 'set' && raw === undefined) die(`expected key=value, got "${p}"`)
+      if (['name', 'createdAt'].includes(key)) die(`${key} cannot be changed here`)
+      const ks = key.split('.'); let o = config
+      for (const k of ks.slice(0, -1)) o = o[k] && typeof o[k] === 'object' ? o[k] : (o[k] = {})
+      if (action === 'unset') delete o[ks.at(-1)]
+      else o[ks.at(-1)] = raw === 'true' ? true : raw === 'false' ? false : raw === 'null' ? null : raw
+      console.log(action === 'set' ? `${key} = ${raw}` : `${key} removed`)
+    }
+    fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify(config, null, 2) + '\n')
+  },
+
   summary(pos, opt) {
     const root = findRoot()
     if (!root) {
@@ -290,6 +312,7 @@ const commands = {
     out.push(`# DualCraft — project context (${config.name})`)
     out.push(`Version ${config.version}${stacks ? ' · ' + stacks : ''} · talk to the user in "${config.lang}", commit messages in "${config.commitLang}".`)
     out.push(`Brain CLI: node "${SELF}" <command>   (brain notes: .dualcraft/brain/)`)
+    if (config.design?.system) out.push(`Design System (source of truth for colors, type, spacing): ${config.design.system}${config.design.screens ? ' · screens canvas: ' + config.design.screens : ''}`)
     out.push(st.mode ? `Current work mode: ${st.mode}${st.tasks?.length ? ' on ' + st.tasks.join(', ') : ''} (since ${String(st.since).slice(0, 10)}).`
       : 'Work mode: NOT CHOSEN — before starting any work, use the dualcraft:start skill to ask the user the work mode.')
     const sec = (title, arr, max = 8) => { if (arr.length) { out.push(`\n## ${title} (${arr.length})`); arr.slice(0, max).forEach((n) => out.push('- ' + line(n))); if (arr.length > max) out.push(`- … ${arr.length - max} more`) } }
@@ -315,6 +338,7 @@ const commands = {
   graph                                          JSON nodes + edges (for the visual map)
   check                                          validate ids, statuses, dependencies, cycles
   mode [bugfix|feature|refactor|clear] [--task T-001,T-002] [--scope web|mobile|both]
+  config [get key] | set key=value ... | unset key   e.g. config set design.system=https://claude.ai/artifact/…
   summary                                        project context for the session`)
   },
 }

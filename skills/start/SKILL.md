@@ -44,7 +44,7 @@ Record it: `$BRAIN mode <bugfix|feature|refactor> --task <IDs> --scope <web|mobi
 | Mode | Flow |
 |---|---|
 | **bugfix** | `dualcraft:debug` (root cause with evidence) → `dualcraft:tdd` (failing test reproduces it, then fix) → `dualcraft:verify` |
-| **feature** | `dualcraft:brainstorm` (agree the design; leftovers → brain) → `dualcraft:schema` if data changes → `dualcraft:plan` if several steps or both platforms → `dualcraft:tdd` while implementing → `dualcraft:verify` → `dualcraft:review` for anything non-trivial → `dualcraft:docs` |
+| **feature** | `dualcraft:brainstorm` (agree the design; leftovers → brain) → `dualcraft:schema` if data changes → `dualcraft:design-screen` if there are new screens (then `dualcraft:design-to-code`) → `dualcraft:plan` if several steps or both platforms → `dualcraft:tdd` while implementing → `dualcraft:verify` → `dualcraft:review` for anything non-trivial → `dualcraft:docs` |
 | **refactor** | make sure tests cover the behaviour first (add them if not) → small steps with tests green after each → no behaviour change mixed in → `dualcraft:verify` |
 
 A short task in bugfix mode that isn't a bug (copy change, config, dependency bump) skips debug: do it, then verify.

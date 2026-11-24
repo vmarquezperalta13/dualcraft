@@ -26,6 +26,8 @@ The brain decisions (`D-xxx`) and notes for the touched areas, the spec/plan of 
 - Data fetching/caching/revalidation correct; route handlers validate input and auth.
 - Effects with proper deps and cleanup; no fetch waterfalls; images via `next/image`; metadata/SEO for public pages.
 
+**Design system** — no raw hex colors, font sizes, paddings or radii where a token exists (Flutter: `Color(0x…)`, `Colors.<name>`, `EdgeInsets.all(13)`, `fontSize: 17`; web: `#hex`, arbitrary Tailwind values like `p-[13px]`, `text-[#…]`); generated token files not edited by hand; screens match their Design artboards.
+
 **Cross-platform consistency** — the same business rule behaves the same on web and mobile (validations, limits, rounding, permissions); both use the generated models/types from the schema; strings come from i18n, not hard-coded.
 
 **Data & backend** — stored data matches `.dualcraft/db/schema.dbml` (no fields invented in code); Firestore queries have the needed indexes; rules still protect the change; writes can't be abused (mass writes, client-trusted values like prices or scores).

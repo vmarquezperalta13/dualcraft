@@ -4,7 +4,7 @@ Web + mobile development workflow for Claude Code — **Next.js ⇄ Flutter** �
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.3)
+## What it does (v0.4)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **Work modes**: before working, DualCraft asks whether it's a *bug / short task*, a *new development* or a *refactor*. The mode drives the flow, the commit type and the version impact.
@@ -13,6 +13,7 @@ You talk to it in your language (Spanish by default); commands are in English.
 - **Visual brain**: an offline HTML map of notes as nodes linked by their dependencies, plus a roadmap board by version.
 - **Process**: brainstorm before building, written plans, TDD, root-cause debugging, verification with evidence, code review (incl. accessibility) — for both platforms.
 - **Functional document** (`docs/FUNCTIONAL.md`) kept up to date as work is finished, traceable to brain ids.
+- **Design**: the project's claude.ai Design System is the source of truth for the look; its tokens become Tailwind v4 / CSS variables for Next.js and a Material theme for Flutter (light + dark, contrast-checked). Screens are designed as mobile + web artboard pairs and implemented with tokens only.
 - **Database schema as source of truth**: `.dualcraft/db/schema.dbml` ([DBML](https://dbml.dbdiagram.io/docs)) → ER diagram with crow's-foot notation (PNG/SVG export) and generated Dart models, TypeScript types and a Firestore rules skeleton.
 
 Run `/dualcraft:help` to see every command, available and upcoming.
@@ -50,13 +51,17 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:verify` | Evidence before saying it's done |
 | `/dualcraft:review` | Code review, incl. accessibility |
 | `/dualcraft:docs` | Update the functional document |
+| `/dualcraft:design-system` | Create/link the claude.ai Design System |
+| `/dualcraft:tokens` | Pull tokens and generate web + Flutter theme code |
+| `/dualcraft:design-screen` | Design a screen: mobile + web artboards |
+| `/dualcraft:design-to-code` | Implement a designed screen with tokens only |
 
 ## Roadmap
 
 1. ✅ Core: brain, work modes, parked work, commits, help
 2. ✅ Visual brain map (nodes + dependencies), roadmap view, ER diagram and schema as source of truth
 3. ✅ Process: brainstorm, plan, TDD, debug, verify, review, functional document
-4. Design: claude.ai Design → shared tokens → React / Flutter
+4. ✅ Design: claude.ai Design → shared tokens → React / Flutter
 5. Web and mobile packs, refactoring, i18n, analytics
 6. Security: global, web, mobile
 7. Marketing and release (versioning, store notes, launch checklist)
@@ -70,6 +75,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
   config.json     name, version, stacks, languages
   brain/          one note per file
   db/schema.dbml  database schema (source of truth)
+  design/tokens.json  copy of the Design System tokens (pulled, never edited here)
   db/layout.json  saved ER diagram positions (optional)
   specs/          agreed designs (from brainstorm)
   plans/          implementation plans
