@@ -108,6 +108,13 @@
         "database"
       ]
     },
+    "backend": {
+      "name": "Backend serverless",
+      "description": "Cloud Functions / Supabase Edge Functions / API routes desde un contrato: validación en servidor, webhooks, triggers, cron y clientes tipados por stack",
+      "skills": [
+        "backend"
+      ]
+    },
     "shared": {
       "name": "Textos y analítica",
       "description": "i18n y plan de analítica compartidos entre stacks, refactor entre plataformas",

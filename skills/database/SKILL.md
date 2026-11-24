@@ -60,5 +60,6 @@ Review every generated migration with the user before applying it: the ⚠ lines
 ## 6. Security & follow-up
 - `node "${CLAUDE_PLUGIN_ROOT}/scripts/security.mjs" --scope backend` (tables without RLS, open write policies, service_role exposed, open Firestore rules) — fix before prod.
 - Generated policies/rules are a starting point: review ownership and roles with `dualcraft:security-global`.
+- Server logic (callables, webhooks, triggers, cron) and how the apps call it: `dualcraft:backend`.
 - Brain: tasks for anything pending (enable Auth providers, set up backups, monitoring); decisions for provider, regions and environment layout.
 - `$DB status` shows provider, environments and the last migration at any time.

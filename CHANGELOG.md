@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.18.0] - 2026-11-24
+### Added
+- Backend serverless pack: `/dualcraft:backend` and `scripts/backend.mjs` (init, add, gen, check, list)
+  - one contract for every server function: `.dualcraft/backend/api.json` (kind, auth, typed input/output, errors, platforms)
+  - providers: Firebase Cloud Functions v2 (one region everywhere), Supabase Edge Functions, Next.js / Nuxt API routes
+  - scaffolds per kind: callable, http, webhook (signature on the raw body + idempotency), trigger (Firestore, Storage, Pub/Sub, Auth blocking, Supabase Database Webhooks), schedule (onSchedule, pg_cron, platform cron)
+  - generated server validators (unknown fields rejected, size limits by default) and typed clients for TypeScript, Dart, Kotlin and Swift through a small transport interface
+  - check: contract valid, functions implemented and exported, no Cloud Functions v1, region drift in functions and client code, generated files up to date
+- CI compiles the scaffolds and clients: Cloud Functions with the real firebase-functions types, Next.js/Nuxt routes, Supabase Edge Functions with Deno, Dart, Kotlin (runs encode/decode) and Swift
+### Changed
+- Security scanner: webhooks that verify a signature no longer count as HTTP functions without authentication
+
 ## [0.17.0] - 2026-11-24
 ### Added
 - Field-tested references integrated from the AforApp / La Previa skills, generalized for any project:

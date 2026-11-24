@@ -107,7 +107,7 @@ if (want('backend')) {
     for (const m of s.matchAll(/\bonRequest\s*\(/g)) {
       const body = s.slice(m.index, m.index + 1500)
       if (/cors\s*:\s*true|origin\s*:\s*(true|['"]\*['"])/.test(body)) add('medium', 'functions.cors-any', f, lineOf(s, m.index), 'HTTP function accepts any origin (CORS *)', 'Restrict origins to your domains')
-      if (!/verifyIdToken|authorization|Authorization|auth\(/.test(body)) add('medium', 'functions.onrequest-no-auth', f, lineOf(s, m.index), 'HTTP function without visible authentication', 'Verify a Firebase ID token or a signed secret (webhooks: verify the provider signature)')
+      if (!/verifyIdToken|authorization|Authorization|auth\(|timingSafeEqual|constructEvent|verifySignature/.test(body)) add('medium', 'functions.onrequest-no-auth', f, lineOf(s, m.index), 'HTTP function without visible authentication', 'Verify a Firebase ID token or a signed secret (webhooks: verify the provider signature)')
     }
   }
 }

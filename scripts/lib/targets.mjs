@@ -59,10 +59,10 @@ const kt = (dir, config, id, sub, file) => {
 }
 const exists = (...p) => fs.existsSync(path.join(...p))
 
-/** Default output path for a generator ('tokens' | 'models' | 'analytics') on a stack. Returns { file, pkg? }. */
+/** Default output path for a generator ('tokens' | 'models' | 'analytics' | 'api') on a stack. Returns { file, pkg? }. */
 export function outputFor(gen, stack, root, config) {
   const { id, dir } = stack
-  const override = config[gen === 'tokens' ? 'design' : gen === 'models' ? 'db' : 'analytics']?.out?.[id]
+  const override = config[{ tokens: 'design', models: 'db', analytics: 'analytics', api: 'backend' }[gen]]?.out?.[id]
   if (override) return { file: path.join(root, override), pkg: config.design?.kotlinPackage }
   const src = exists(dir, 'src') ? 'src' : ''
   const T = {
@@ -98,6 +98,17 @@ export function outputFor(gen, stack, root, config) {
       kmp: () => kt(dir, config, id, 'analytics', 'AnalyticsEvents.kt'),
       android: () => kt(dir, config, id, 'analytics', 'AnalyticsEvents.kt'),
       ios: () => ({ file: path.join(iosAppDir(dir, config), 'Core', 'Analytics', 'AnalyticsEvents.swift') }),
+    },
+    api: {
+      nextjs: () => ({ file: path.join(dir, src, 'lib', 'api-client.ts') }),
+      'react-vite': () => ({ file: path.join(dir, 'src', 'lib', 'api-client.ts') }),
+      astro: () => ({ file: path.join(dir, 'src', 'lib', 'api-client.ts') }),
+      nuxt: () => ({ file: path.join(dir, exists(dir, 'app') ? 'app' : '', 'utils', 'api-client.ts') }),
+      'react-native': () => ({ file: path.join(dir, 'src', 'lib', 'api-client.ts') }),
+      flutter: () => ({ file: path.join(dir, 'lib', 'generated', 'api_client.dart') }),
+      kmp: () => kt(dir, config, id, 'api', 'ApiClient.kt'),
+      android: () => kt(dir, config, id, 'data/api', 'ApiClient.kt'),
+      ios: () => ({ file: path.join(iosAppDir(dir, config), 'Core', 'Api', 'ApiClient.swift') }),
     },
   }
   return T[gen][id]()
