@@ -115,6 +115,16 @@
         "backend"
       ]
     },
+    "payments": {
+      "name": "Pagos",
+      "description": "Compras in-app (Google Play, App Store): suscripciones, desbloqueos y consumibles con verificación en servidor o RevenueCat",
+      "skills": [
+        {
+          "skill": "payments",
+          "when": "mobile"
+        }
+      ]
+    },
     "shared": {
       "name": "Textos y analítica",
       "description": "i18n y plan de analítica compartidos entre stacks, refactor entre plataformas",

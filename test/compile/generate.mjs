@@ -5,7 +5,8 @@
 //   <out>/kotlin  → gradle run (Compose JVM + kotlinx.serialization: compiles and exercises the code)
 //   <out>/swift   → swiftc -typecheck *.swift (macOS)
 //   <out>/sql     → node pg.mjs (PGlite applies the migrations) · prisma validate
-//   <out>/functions   → npm install && tsc (Cloud Functions scaffolds against the real firebase-functions types)
+//   <out>/functions   → npm install && tsc (Cloud Functions scaffolds + native payments against the real firebase-functions, Google and Apple types)
+//   <out>/functions-rc → same, RevenueCat mode
 //   <out>/web-server  → tsc (Next.js route handlers + Nuxt server routes with a small h3 shim)
 //   <out>/deno        → deno check (Supabase Edge Functions)
 import fs from 'node:fs'
@@ -31,16 +32,29 @@ function backend(p, provider, adds) {
   must(run('backend.mjs', ['gen'], p), 'backend gen ' + provider)
   must(run('backend.mjs', ['check'], p), 'backend check ' + provider)
 }
+// payments catalog (subscriptions with base plans, lifetime unlock, consumable) → server verification + catalogs
+function payments(p, mode) {
+  write(path.join(p, '.dualcraft', 'payments', 'products.json'), JSON.stringify({ ...JSON.parse(read(path.join(ROOT, 'test', 'fixtures', 'products.json'))), mode }, null, 2))
+  must(run('payments.mjs', ['init', '--mode', mode], p), 'payments init ' + mode)
+  must(run('payments.mjs', ['check'], p), 'payments check ' + mode)
+  must(run('backend.mjs', ['check'], p), 'backend check after payments ' + mode)
+}
 
 // ---------- multi-stack project (Firestore schema: enums, maps, reserved names) ----------
 const multi = makeMultiProject('firestore')
 for (const s of ['tokens.mjs', 'gen.mjs', 'analytics.mjs', 'i18n.mjs']) must(run(s, s === 'tokens.mjs' || s === 'gen.mjs' ? ['all'] : ['gen'], multi), s)
 const M = (...p) => path.join(multi, ...p)
 backend(multi, 'firebase', FB)
+payments(multi, 'native')
 fs.cpSync(M('functions'), path.join(OUT, 'functions'), { recursive: true })
+// RevenueCat mode on Firebase (its own functions folder)
+const rc = makeProject()
+backend(rc, 'firebase', COMMON)
+payments(rc, 'revenuecat')
+fs.cpSync(path.join(rc, 'functions'), path.join(OUT, 'functions-rc'), { recursive: true })
 
 // TypeScript
-for (const [f, name] of [['rn/src/theme/ds-tokens.ts', 'rn-tokens.ts'], ['rn/src/types/db.ts', 'rn-db.ts'], ['rn/src/lib/analytics-events.ts', 'rn-analytics.ts'], ['web/src/types/db.ts', 'web-db.ts'], ['web/src/lib/analytics-events.ts', 'web-analytics.ts'], ['rn/src/lib/api-client.ts', 'rn-api.ts'], ['web/src/lib/api-client.ts', 'web-api.ts'], ['functions/src/generated/api.ts', 'server-api.ts']]) copy(M(f), path.join(OUT, 'ts', name))
+for (const [f, name] of [['rn/src/theme/ds-tokens.ts', 'rn-tokens.ts'], ['rn/src/types/db.ts', 'rn-db.ts'], ['rn/src/lib/analytics-events.ts', 'rn-analytics.ts'], ['web/src/types/db.ts', 'web-db.ts'], ['web/src/lib/analytics-events.ts', 'web-analytics.ts'], ['rn/src/lib/api-client.ts', 'rn-api.ts'], ['web/src/lib/api-client.ts', 'web-api.ts'], ['functions/src/generated/api.ts', 'server-api.ts'], ['rn/src/lib/payments-catalog.ts', 'rn-payments.ts']]) copy(M(f), path.join(OUT, 'ts', name))
 write(path.join(OUT, 'ts', 'rn.d.ts'), "declare module 'react-native' { export function useColorScheme(): 'light' | 'dark' | null | undefined }\n")
 write(path.join(OUT, 'ts', 'use.ts'), "import { dsTheme, dsText } from './rn-tokens'\nimport { analyticsEvents } from './rn-analytics'\nimport type { Users } from './rn-db'\nconst t = dsTheme('dark'); const c: string = t.colors.onSurface; const w: '600' = dsText.titleLarge.fontWeight\nconst e = analyticsEvents.signUp({ method: 'google' }); const u: Pick<Users, 'id'> = { id: 'x' }\nvoid c; void w; void e; void u\n")
 write(path.join(OUT, 'ts', 'use-api.ts'), `import { createApi, ApiError, type ApiTransport } from './rn-api'
@@ -59,10 +73,19 @@ export function validate(): string {
   return 'not rejected'
 }
 `)
+write(path.join(OUT, 'ts', 'use-payments.ts'), `import { products, productByStoreId, storeIds, entitlements, type Entitlement } from './rn-payments'
+import { createApi, type ApiTransport } from './rn-api'
+const e: Entitlement | undefined = products.premiumMonthly.entitlement
+const coins: number | undefined = products.coins100.grants.coins
+const ids: string[] = storeIds('android')
+const found = productByStoreId('com.test.premium.yearly')?.id
+const api = createApi({ call: async () => ({ entitlements: ['premium'] }) } satisfies ApiTransport)
+export const check = async () => [e, coins, ids, found, entitlements.premium, (await api.verifyPurchase({ platform: 'ios', productId: 'premium_lifetime', token: 'x.y.z' })).entitlements]
+`)
 
 // Kotlin (KMP outputs: theme, models, analytics)
 const K = (...p) => M('kmp', 'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'test', 'app', ...p)
-for (const [f, to] of [[K('theme', 'DsTokens.kt'), 'theme/DsTokens.kt'], [K('model', 'DbModels.kt'), 'model/DbModels.kt'], [K('analytics', 'AnalyticsEvents.kt'), 'analytics/AnalyticsEvents.kt'], [K('api', 'ApiClient.kt'), 'api/ApiClient.kt']]) copy(f, path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', to))
+for (const [f, to] of [[K('theme', 'DsTokens.kt'), 'theme/DsTokens.kt'], [K('model', 'DbModels.kt'), 'model/DbModels.kt'], [K('analytics', 'AnalyticsEvents.kt'), 'analytics/AnalyticsEvents.kt'], [K('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [K('payments', 'PaymentsCatalog.kt'), 'payments/PaymentsCatalog.kt']]) copy(f, path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', to))
 write(path.join(OUT, 'kotlin', 'settings.gradle.kts'), 'pluginManagement { repositories { gradlePluginPortal(); mavenCentral(); google() } }\ndependencyResolutionManagement { repositories { mavenCentral(); google() } }\nrootProject.name = "dualcraft-kotlin-check"\n')
 write(path.join(OUT, 'kotlin', 'build.gradle.kts'), 'plugins {\n    kotlin("jvm") version "2.0.21"\n    kotlin("plugin.serialization") version "2.0.21"\n    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"\n    id("org.jetbrains.compose") version "1.7.0"\n    application\n}\ndependencies {\n    implementation(compose.desktop.currentOs)\n    implementation(compose.material3)\n    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")\n}\napplication { mainClass.set("check.MainKt") }\n')
 write(path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'check', 'Main.kt'), `package check
@@ -70,6 +93,7 @@ import com.test.app.model.*
 import com.test.app.analytics.*
 import com.test.app.theme.*
 import com.test.app.api.*
+import com.test.app.payments.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 class FakeTransport : ApiTransport {
@@ -85,6 +109,8 @@ fun main() {
     val out = runBlocking { api.ping(); api.redeemCode(RedeemCodeInput(code = "ABC", platform = RedeemCodePlatform.IOS, \`class\` = 3)) }
     check(out.coins == 5L && out.ratio == 1.0 && out.level == RedeemCodeLevel.SILVER_PLUS && out.levels == listOf(RedeemCodeLevels.GOLD) && out.default == true) { "api decode " + out }
     check(fake.last == mapOf("code" to "ABC", "platform" to "ios", "class" to 3L)) { "api encode " + fake.last }
+    check(PaymentsCatalog.byStoreId("com.test.premium.yearly") == PaymentsCatalog.premiumYearly && PaymentsCatalog.premiumYearly.entitlement == Entitlement.PREMIUM) { "payments lookup" }
+    check(PaymentsCatalog.storeIds(StorePlatform.ANDROID) == setOf("premium", "premium_lifetime", "coins_100") && PaymentsCatalog.coins100.grants["coins"] == 100L) { "payments ids " + PaymentsCatalog.storeIds(StorePlatform.ANDROID) }
     val json = Json { ignoreUnknownKeys = true }
     val u = json.decodeFromString<Users>("""{"id":"u1","displayName":"Ana","email":"a@b.c","role":"in-progress","createdAt":"2026-01-01T00:00:00Z","class":"vip"}""")
     check(u.role == Role.IN_PROGRESS && u.classValue == "vip") { "serialization names" }
@@ -97,20 +123,24 @@ fun main() {
 `)
 
 // Swift (iOS outputs)
-for (const [f, to] of [['iosapp/Demo/DesignSystem/DsTokens.swift', 'DsTokens.swift'], ['iosapp/Demo/Core/Models/DbModels.swift', 'DbModels.swift'], ['iosapp/Demo/Core/Analytics/AnalyticsEvents.swift', 'AnalyticsEvents.swift'], ['iosapp/Demo/Resources/DualCraft.xcstrings', 'DualCraft.xcstrings'], ['iosapp/Demo/Core/Api/ApiClient.swift', 'ApiClient.swift']]) copy(M(f), path.join(OUT, 'swift', to))
+for (const [f, to] of [['iosapp/Demo/DesignSystem/DsTokens.swift', 'DsTokens.swift'], ['iosapp/Demo/Core/Models/DbModels.swift', 'DbModels.swift'], ['iosapp/Demo/Core/Analytics/AnalyticsEvents.swift', 'AnalyticsEvents.swift'], ['iosapp/Demo/Resources/DualCraft.xcstrings', 'DualCraft.xcstrings'], ['iosapp/Demo/Core/Api/ApiClient.swift', 'ApiClient.swift'], ['iosapp/Demo/Core/Payments/PaymentsCatalog.swift', 'PaymentsCatalog.swift']]) copy(M(f), path.join(OUT, 'swift', to))
 write(path.join(OUT, 'swift', 'Use.swift'), 'import SwiftUI\nfunc dualcraftCheck() -> [Any] {\n    let u = Users(id: "1", displayName: "a", email: "e", role: .inProgress, tags: nil, createdAt: Date(), lastSeen: nil, settings: ["k": .string("v")], classValue: "vip")\n    return [DsColor.primary, DsSpacing.s4, DsText.titleLarge.font, AnalyticsEvents.signUp(method: .google).name, u.classValue as Any]\n}\n' +
   'struct FakeTransport: ApiTransport {\n    func call(_ endpoint: String, _ data: [String: Any]) async throws -> Any? {\n        if endpoint == "ping" { return nil }\n        return ["coins": 5, "ratio": 1, "level": "silver-plus", "items": ["a"], "levels": ["gold"], "default": true] as [String: Any]\n    }\n}\n' +
-  'func apiCheck() async throws -> Int {\n    let api = Api(transport: FakeTransport())\n    try await api.ping()\n    let r = try await api.redeemCode(RedeemCodeInput(code: "ABC", platform: .ios, class: 3))\n    return r.coins + (r.levels?.count ?? 0) + (r.level == .silverPlus ? 1 : 0)\n}\n')
+  'func apiCheck() async throws -> Int {\n    let api = Api(transport: FakeTransport())\n    try await api.ping()\n    let r = try await api.redeemCode(RedeemCodeInput(code: "ABC", platform: .ios, class: 3))\n    return r.coins + (r.levels?.count ?? 0) + (r.level == .silverPlus ? 1 : 0)\n}\n' +
+  'func paymentsCheck() -> Bool {\n    PaymentsCatalog.byStoreId("com.test.premium.yearly")?.entitlement == .premium && PaymentsCatalog.storeIds(.android).contains("premium") && PaymentsCatalog.coins100.grants["coins"] == 100\n}\n')
 
 // ---------- Flutter project (hockey schema) ----------
 const fl = makeProject({ mobile: 'flutter', paths: { mobile: 'app' }, schema: 'hockey' })
-write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\nflutter:\n  generate: true\n')
+write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\n  in_app_purchase: any\nflutter:\n  generate: true\n')
 write(path.join(fl, 'app', 'l10n.yaml'), 'arb-dir: lib/l10n\ntemplate-arb-file: app_es.arb\noutput-localization-file: app_localizations.dart\n')
 for (const s of ['tokens.mjs', 'gen.mjs', 'analytics.mjs', 'i18n.mjs']) must(run(s, s === 'tokens.mjs' || s === 'gen.mjs' ? ['all'] : ['gen'], fl), `flutter ${s}`)
 backend(fl, 'firebase', COMMON)
-write(path.join(fl, 'app', 'lib', 'main.dart'), "import 'package:flutter/material.dart';\nimport 'generated/design_tokens.dart';\nimport 'generated/db_models.dart';\nimport 'generated/analytics_events.dart';\nimport 'generated/api_client.dart';\nvoid main() => runApp(MaterialApp(theme: DsTheme.light(), darkTheme: DsTheme.dark(), home: Builder(builder: (c) => Container(color: c.ds.surface, padding: const EdgeInsets.all(DsSpacing.s4)))));\nfinal t = HockeyTeam(id: 1, name: 'x');\nfinal e = AnalyticsEvents.signUp(method: SignUpMethod.google);\n" +
+payments(fl, 'native')
+write(path.join(fl, 'app', 'lib', 'main.dart'), "import 'package:flutter/material.dart';\nimport 'generated/design_tokens.dart';\nimport 'generated/db_models.dart';\nimport 'generated/analytics_events.dart';\nimport 'generated/api_client.dart';\nimport 'generated/payments_catalog.dart';\nimport 'services/purchase_service.dart';\nvoid main() => runApp(MaterialApp(theme: DsTheme.light(), darkTheme: DsTheme.dark(), home: Builder(builder: (c) => Container(color: c.ds.surface, padding: const EdgeInsets.all(DsSpacing.s4)))));\nfinal t = HockeyTeam(id: 1, name: 'x');\nfinal e = AnalyticsEvents.signUp(method: SignUpMethod.google);\n" +
   "class FakeTransport implements ApiTransport {\n  @override\n  Future<Object?> call(String endpoint, Map<String, Object?> data) async => endpoint == 'ping' ? null : <String, Object?>{'coins': 5, 'level': 'silver-plus', 'levels': ['gold'], 'default': true};\n}\n" +
-  "Future<int> apiCheck() async {\n  final api = Api(FakeTransport());\n  await api.ping();\n  final r = await api.redeemCode(RedeemCodeInput(code: 'ABC', platform: RedeemCodePlatform.ios, classValue: 3));\n  return r.coins + (r.levels?.length ?? 0) + (r.level == RedeemCodeLevel.silverPlus ? 1 : 0);\n}\n")
+  "Future<int> apiCheck() async {\n  final api = Api(FakeTransport());\n  await api.ping();\n  final r = await api.redeemCode(RedeemCodeInput(code: 'ABC', platform: RedeemCodePlatform.ios, classValue: 3));\n  return r.coins + (r.levels?.length ?? 0) + (r.level == RedeemCodeLevel.silverPlus ? 1 : 0);\n}\n" +
+  "class MemoryCache implements EntitlementCache {\n  Set<String> _s = {};\n  @override\n  Future<Set<String>> load() async => _s;\n  @override\n  Future<void> save(Set<String> e) async => _s = {...e};\n}\n" +
+  "bool paymentsCheck(PurchaseService s) => s.has(Entitlement.premium) || PaymentsCatalog.byStoreId('premium')?.type == ProductType.subscription;\nfinal service = PurchaseService(Api(FakeTransport()), MemoryCache());\n")
 fs.cpSync(path.join(fl, 'app'), path.join(OUT, 'dart'), { recursive: true })
 
 // ---------- SQL / Prisma (hockey schema, Supabase) ----------
@@ -138,6 +168,7 @@ console.log('postgres OK: ' + t.rows[0].n + ' tables, ' + p.rows[0].n + ' polici
 // ---------- Supabase Edge Functions (Deno) ----------
 const sb = makeProject({ extra: { backend: { provider: 'supabase' } } })
 backend(sb, 'supabase', [...COMMON, ['trigger0', '--kind', 'trigger', '--on', 'db:orders.insert']])
+payments(sb, 'revenuecat')
 fs.cpSync(path.join(sb, 'supabase', 'functions'), path.join(OUT, 'deno'), { recursive: true })
 
 // ---------- Next.js route handlers and Nuxt server routes (provider http) ----------

@@ -36,11 +36,11 @@ jobs:
           node-version: 22
       - run: node test/compile/generate.mjs out
       - run: npx -y -p typescript@5.6.3 tsc --noEmit --strict --target es2020 --lib es2020 --moduleResolution node out/ts/*.ts
-      - name: Cloud Functions scaffolds (real firebase-functions types)
-        working-directory: out/functions
+      - name: Cloud Functions scaffolds and payments (real firebase-functions, Google and Apple types)
         run: |
-          npm install --no-audit --no-fund
-          npx tsc --noEmit -p .
+          for d in out/functions out/functions-rc; do
+            (cd "$d" && npm install --no-audit --no-fund && npx tsc --noEmit -p .)
+          done
       - name: Next.js route handlers and Nuxt server routes
         working-directory: out/web-server
         run: |

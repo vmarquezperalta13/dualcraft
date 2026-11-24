@@ -1,6 +1,6 @@
 # Google Play in-app purchases — Play Console, Flutter `in_app_purchase`, server verification
 
-Field-tested in production. Used by `security-mobile` (and the payments pack). Other stacks: the same flow applies with their library (React Native: `react-native-iap` / RevenueCat; Android: Play Billing Library; KMP: platform actuals or RevenueCat).
+Field-tested in production. Used by `dualcraft:payments` and `security-mobile` (App Store side: `app-store-iap.md`; managed alternative: `revenuecat.md`). Other stacks: the same flow applies with their library (React Native: `react-native-iap` / RevenueCat; Android: Play Billing Library; KMP: platform actuals or RevenueCat).
 
 ## Play Console
 - Prerequisites: app uploaded at least to **Internal testing** with a build signed by the **production upload key**; active payments profile (an individual account can't be converted to a company later).
@@ -39,7 +39,7 @@ Future<void> _onPurchases(List<PurchaseDetails> purchases) async {
   }
 }
 ```
-Launch order: `listen` → load local entitlements → `restorePurchases()`.
+Launch order: `listen` → load local entitlements → `restorePurchases()`. DualCraft scaffolds this as `lib/services/purchase_service.dart` (`/dualcraft:payments`). Consumables: buy with `autoConsume: false` and let the server consume after crediting — a failed verification then retries instead of losing the coins.
 
 ## The classic bug: "bought, locked after restart" / "you already own this item"
 | Cause | Symptom | Fix |

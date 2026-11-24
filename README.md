@@ -47,6 +47,7 @@ The installer asks which **agents** (Claude Code, Gemini CLI, Codex CLI), which 
 | one per stack | nextjs · react-vite · astro · nuxt · flutter · react-native · kmp · android · ios (adds the web or mobile platform skills) |
 | design | Design System, tokens, screens, design → code |
 | data | schema, ER diagram, databases and environments |
+| payments | in-app purchases on Google Play and the App Store (native server verification or RevenueCat) |
 | backend | serverless functions from one contract (Cloud Functions, Supabase Edge Functions, API routes), typed clients for every stack |
 | shared | i18n, analytics, cross-platform refactor |
 | security | global / web / mobile audits |
@@ -79,6 +80,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:roadmap` | Work grouped by target version |
 | `/dualcraft:er` | ER diagram of the database schema |
 | `/dualcraft:database` | Create the database and environments; migrations, rules, deploys |
+| `/dualcraft:payments` | In-app purchases: catalog, server verification or RevenueCat, purchase service |
 | `/dualcraft:backend` | Server functions from a contract: callables, webhooks, triggers, cron; validators + typed clients |
 | `/dualcraft:schema` | Edit the schema; generate Dart / TS / Firestore rules |
 | `/dualcraft:brainstorm` | Explore an idea and agree the design |
@@ -131,6 +133,7 @@ CI compiles the generated code for real on every push: TypeScript, Flutter, Kotl
   brain/          one note per file
   db/schema.dbml  database schema (source of truth)
   backend/api.json  server functions contract (source)
+  payments/products.json  products, entitlements and currencies sold in the apps (source)
   design/tokens.json  copy of the Design System tokens (pulled, never edited here)
   i18n/<locale>.json  UI texts for web + mobile (source)
   analytics/events.json  tracking plan (source)

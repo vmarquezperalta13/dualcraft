@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.19.0] - 2026-11-24
+### Added
+- Payments pack: `/dualcraft:payments` and `scripts/payments.mjs` (init, gen, check)
+  - one catalog: `.dualcraft/payments/products.json` — subscriptions (period, trial, Play base plans), one-time unlocks and consumables, entitlements and currencies, store ids per platform
+  - native mode (Firebase): `verifyPurchase` with the Google Play Developer API and the App Store Server Library (StoreKit 2 signed transactions), acknowledge/consume after granting, one owner per purchase, entitlements with several sources, wallet credited once; Play RTDN and App Store Server Notifications V2
+  - RevenueCat mode: webhook for Firebase or Supabase that mirrors entitlements and credits consumables
+  - typed catalogs for TypeScript, Dart, Kotlin and Swift; Flutter `PurchaseService` scaffold (listener at start, restore, server verification, completes only when granted)
+  - check: catalog rules, server pieces, client-side grants, missing restore, purchases not verified, `autoConsume`
+- References: `app-store-iap.md` (App Store Connect, StoreKit 2, server verification, notifications, testing) and `revenuecat.md`
+- CI compiles the payments server against the real Google and Apple libraries (native and RevenueCat) and the Flutter purchase service
+
 ## [0.18.0] - 2026-11-24
 ### Added
 - Backend serverless pack: `/dualcraft:backend` and `scripts/backend.mjs` (init, add, gen, check, list)

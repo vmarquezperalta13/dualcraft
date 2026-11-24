@@ -1,0 +1,13 @@
+{
+  "mode": "native",
+  "android": { "packageName": "com.test.app" },
+  "apple": { "bundleId": "com.test.demo", "appAppleId": 1234567890 },
+  "entitlements": [{ "id": "premium", "description": "Contenido premium" }],
+  "currencies": [{ "id": "coins", "description": "Monedas" }],
+  "products": [
+    { "id": "premium_monthly", "type": "subscription", "entitlement": "premium", "period": "P1M", "trial": "P7D", "android": "premium", "basePlan": "monthly", "ios": "com.test.premium.monthly", "description": "Premium mensual" },
+    { "id": "premium_yearly", "type": "subscription", "entitlement": "premium", "period": "P1Y", "android": "premium", "basePlan": "yearly", "ios": "com.test.premium.yearly", "description": "Premium anual" },
+    { "id": "premium_lifetime", "type": "nonConsumable", "entitlement": "premium", "description": "Premium para siempre" },
+    { "id": "coins_100", "type": "consumable", "grants": { "coins": 100 }, "description": "100 monedas" }
+  ]
+}
