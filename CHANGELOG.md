@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.20.0] - 2026-11-24
+### Added
+- Push notifications pack: `/dualcraft:push` and `scripts/push.mjs` (init, gen, check)
+  - one catalog: `.dualcraft/push/notifications.json` — Android channels, topics (per language), notifications with typed params, deep-link route, priority, collapse key and TTL
+  - texts from the shared i18n (`push.<id>.title/body`, ICU params and plurals) rendered on the server in each device's language
+  - Firebase Installation IDs (FCM's current target) with legacy-token fallback: `registerDevice` / `unregisterDevice` (one owner per app instance), `sendToUser` (dead-id cleanup), `sendToTopic`
+  - typed senders on the server and `PushMessage` parsers for TypeScript, Dart (sealed classes), Kotlin and Swift; Flutter `PushService` (firebase_messaging 17: register/onRegistered, channels, cold start, foreground banner, sign-out)
+  - check: catalog and texts in every locale, server pieces, permission request, id changes, cold-start opening, iOS entitlements, Android icon and permission, notifications never sent
+- Reference `push-notifications.md`
+### Changed
+- Cloud Functions scaffold: firebase-admin 14 and firebase-functions 7
+- CI: Deno check fixed (nodeModulesDir auto), actions/checkout and setup-node v5
+
 ## [0.19.0] - 2026-11-24
 ### Added
 - Payments pack: `/dualcraft:payments` and `scripts/payments.mjs` (init, gen, check)

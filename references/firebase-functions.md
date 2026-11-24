@@ -1,6 +1,6 @@
 # Firebase Cloud Functions (v2) — patterns, client calls, debugging, deploy
 
-Field-tested in production Flutter + Firebase apps. Used by `dualcraft:backend` and the security skills (and the payments and push packs).
+Field-tested in production Flutter + Firebase apps. Used by `dualcraft:backend` and the security skills (and `dualcraft:payments`, `dualcraft:push`).
 
 ## Rules of thumb
 - **Always v2** (`firebase-functions/v2/*`); never mix with v1 (`functions.https.onCall`) in the same codebase.

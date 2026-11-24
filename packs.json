@@ -125,6 +125,13 @@
         }
       ]
     },
+    "push": {
+      "name": "Notificaciones push",
+      "description": "FCM para Android, iOS y web: canales, temas, notificaciones tipadas con deep link, textos por idioma y registro de dispositivos",
+      "skills": [
+        "push"
+      ]
+    },
     "shared": {
       "name": "Textos y analítica",
       "description": "i18n y plan de analítica compartidos entre stacks, refactor entre plataformas",

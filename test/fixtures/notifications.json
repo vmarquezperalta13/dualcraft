@@ -1,0 +1,15 @@
+{
+  "channels": [
+    { "id": "matches", "name": "Partidos", "description": "Inicio y resultado de tus partidos", "importance": "high" },
+    { "id": "promos", "name": "Ofertas", "description": "Ofertas y novedades", "importance": "low" }
+  ],
+  "topics": [{ "id": "news", "description": "Novedades de la app" }],
+  "notifications": [
+    { "id": "match_started", "channel": "matches", "description": "Empieza un partido que sigues",
+      "params": { "matchId": { "type": "string", "required": true }, "home": { "type": "string" }, "minute": { "type": "int" }, "live": { "type": "bool" } },
+      "route": "/matches/{matchId}", "priority": "high", "collapse": "match_{matchId}", "ttl": 3600 },
+    { "id": "goals_summary", "channel": "matches", "description": "Resumen de goles",
+      "params": { "count": { "type": "int", "required": true }, "ratio": { "type": "double" } }, "route": "/stats/{count}" },
+    { "id": "weekly_offer", "channel": "promos", "description": "Oferta semanal", "priority": "normal" }
+  ]
+}

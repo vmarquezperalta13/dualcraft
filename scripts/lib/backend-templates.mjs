@@ -164,7 +164,7 @@ export const firebaseFunctionsPackage = (name) => JSON.stringify({
   name: `${name}-functions`, private: true, main: 'lib/index.js',
   engines: { node: '22' },
   scripts: { build: 'tsc', 'build:watch': 'tsc --watch', serve: 'npm run build && firebase emulators:start --only functions', deploy: 'firebase deploy --only functions', logs: 'firebase functions:log' },
-  dependencies: { 'firebase-admin': '^13.0.0', 'firebase-functions': '^6.1.0' },
+  dependencies: { 'firebase-admin': '^14.0.0', 'firebase-functions': '^7.0.0' },
   devDependencies: { typescript: '^5.6.0' },
 }, null, 2) + '\n'
 

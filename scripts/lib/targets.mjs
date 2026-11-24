@@ -59,10 +59,10 @@ const kt = (dir, config, id, sub, file) => {
 }
 const exists = (...p) => fs.existsSync(path.join(...p))
 
-/** Default output path for a generator ('tokens' | 'models' | 'analytics' | 'api' | 'payments') on a stack. Returns { file, pkg? }. */
+/** Default output path for a generator ('tokens' | 'models' | 'analytics' | 'api' | 'payments' | 'push') on a stack. Returns { file, pkg? }. */
 export function outputFor(gen, stack, root, config) {
   const { id, dir } = stack
-  const override = config[{ tokens: 'design', models: 'db', analytics: 'analytics', api: 'backend', payments: 'payments' }[gen]]?.out?.[id]
+  const override = config[{ tokens: 'design', models: 'db', analytics: 'analytics', api: 'backend', payments: 'payments', push: 'push' }[gen]]?.out?.[id]
   if (override) return { file: path.join(root, override), pkg: config.design?.kotlinPackage }
   const src = exists(dir, 'src') ? 'src' : ''
   const T = {
@@ -120,6 +120,17 @@ export function outputFor(gen, stack, root, config) {
       kmp: () => kt(dir, config, id, 'payments', 'PaymentsCatalog.kt'),
       android: () => kt(dir, config, id, 'data/payments', 'PaymentsCatalog.kt'),
       ios: () => ({ file: path.join(iosAppDir(dir, config), 'Core', 'Payments', 'PaymentsCatalog.swift') }),
+    },
+    push: {
+      nextjs: () => ({ file: path.join(dir, src, 'lib', 'push-messages.ts') }),
+      'react-vite': () => ({ file: path.join(dir, 'src', 'lib', 'push-messages.ts') }),
+      astro: () => ({ file: path.join(dir, 'src', 'lib', 'push-messages.ts') }),
+      nuxt: () => ({ file: path.join(dir, exists(dir, 'app') ? 'app' : '', 'utils', 'push-messages.ts') }),
+      'react-native': () => ({ file: path.join(dir, 'src', 'lib', 'push-messages.ts') }),
+      flutter: () => ({ file: path.join(dir, 'lib', 'generated', 'push_catalog.dart') }),
+      kmp: () => kt(dir, config, id, 'push', 'PushMessages.kt'),
+      android: () => kt(dir, config, id, 'push', 'PushMessages.kt'),
+      ios: () => ({ file: path.join(iosAppDir(dir, config), 'Core', 'Push', 'PushMessages.swift') }),
     },
   }
   return T[gen][id]()

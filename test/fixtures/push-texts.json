@@ -1,0 +1,12 @@
+{
+  "es": {
+    "match_started": { "title": "¡Empieza el partido!", "body": "{home} ya está jugando (min {minute})" },
+    "goals_summary": { "title": "Goles", "body": "{count, plural, =0 {Sin goles} one {# gol} other {# goles}}" },
+    "weekly_offer": { "title": "Oferta", "body": "Solo esta semana" }
+  },
+  "en": {
+    "match_started": { "title": "Kick-off!", "body": "{home} is playing" },
+    "goals_summary": { "title": "Goals", "body": "{count, plural, one {# goal} other {# goals}}" },
+    "weekly_offer": { "title": "Offer", "body": "This week only" }
+  }
+}
