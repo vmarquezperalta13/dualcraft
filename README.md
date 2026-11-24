@@ -4,9 +4,10 @@ Web + mobile development workflow for Claude Code — **Next.js ⇄ Flutter** �
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.8)
+## What it does (v0.9)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
+- **Decisions that stick**: ADR-style decisions by area; all decisions in force are loaded at session start and the ones related to each request are injected automatically; conflicts are raised before acting; superseding keeps the history.
 - **Work modes**: before working, DualCraft asks whether it's a *bug / short task*, a *new development* or a *refactor*. The mode drives the flow, the commit type and the version impact.
 - **Parked work**: finished development that must wait for a later version is kept on a `parked/*` branch or behind a feature flag, with its target version recorded.
 - **Commits**: Conventional Commits derived from the mode, linked to brain ids, with `CHANGELOG.md`.
@@ -43,6 +44,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:help` | List all commands |
 | `/dualcraft:start` | Set up the project, load context, choose the work mode |
 | `/dualcraft:brain` | Capture and query tasks, bugs, decisions, notes, ideas |
+| `/dualcraft:decisions` | Record, consult, check and supersede decisions |
 | `/dualcraft:park` | Park finished work for a later version |
 | `/dualcraft:commit` | Mode-aware Conventional Commit + CHANGELOG |
 | `/dualcraft:map` | Visual map of the brain (nodes + dependencies) |

@@ -12,9 +12,11 @@ import { fileURLToPath } from 'node:url'
 const SELF = fileURLToPath(import.meta.url).replace(/\\/g, '/')
 const TYPES = { task: 'T', bug: 'B', decision: 'D', note: 'N', idea: 'I' }
 const PREFIX_TO_TYPE = Object.fromEntries(Object.entries(TYPES).map(([k, v]) => [v, k]))
-const STATUSES = ['todo', 'doing', 'done', 'parked', 'dropped']
+const STATUSES = ['todo', 'doing', 'done', 'parked', 'dropped', 'superseded']
 const MODES = ['bugfix', 'feature', 'refactor']
-const FIELD_ORDER = ['id', 'type', 'title', 'status', 'priority', 'target', 'depends_on', 'related', 'branch', 'flag', 'spec', 'plan', 'tags', 'created', 'updated']
+const AREAS = ['architecture', 'data', 'design', 'security', 'product', 'process', 'web', 'mobile', 'backend', 'infra', 'marketing', 'legal']
+const FIELD_ORDER = ['id', 'type', 'title', 'status', 'area', 'superseded_by', 'priority', 'target', 'depends_on', 'related', 'branch', 'flag', 'spec', 'plan', 'tags', 'created', 'updated']
+const isActiveDecision = (n) => n.type === 'decision' && n.status === 'done'
 
 // ---------- helpers ----------
 const today = () => new Date().toISOString().slice(0, 10)
@@ -115,8 +117,17 @@ function check(notes) {
     if (!(n.type in TYPES)) errors.push(`${n.id}: unknown type "${n.type}"`)
     if (!STATUSES.includes(n.status)) errors.push(`${n.id}: unknown status "${n.status}"`)
     if (n.status === 'parked' && !n.target) errors.push(`${n.id}: parked without target version`)
+    if (n.status === 'superseded' && n.type !== 'decision') errors.push(`${n.id}: only decisions can be superseded (use dropped)`)
+    if (n.type === 'decision' && ['todo', 'doing', 'parked'].includes(n.status)) errors.push(`${n.id}: a decision is in force (done), superseded or dropped — not ${n.status}`)
+    if (n.area && !AREAS.includes(n.area)) errors.push(`${n.id}: unknown area "${n.area}" (${AREAS.join(', ')})`)
   }
   for (const n of notes) for (const d of n.depends_on) if (!ids.has(d)) errors.push(`${n.id}: depends on missing ${d}`)
+  for (const n of notes.filter((x) => x.status === 'superseded')) {
+    const by = ids.get(n.superseded_by)
+    if (!n.superseded_by) errors.push(`${n.id}: superseded without superseded_by`)
+    else if (!by) errors.push(`${n.id}: superseded_by missing ${n.superseded_by}`)
+    else if (by.type !== 'decision' || by.status !== 'done') errors.push(`${n.id}: superseded_by ${by.id} is not a decision in force`)
+  }
   // cycle detection
   const seen = new Set(); const stack = new Set()
   const visit = (id, trail) => {
@@ -163,8 +174,11 @@ const commands = {
     const id = `${prefix}-${String(max + 1).padStart(3, '0')}`
     const status = opt.status || (type === 'decision' || type === 'note' ? 'done' : 'todo')
     if (!STATUSES.includes(status)) die(`status must be one of: ${STATUSES.join(', ')}`)
+    if (opt.area && !AREAS.includes(opt.area)) die(`area must be one of: ${AREAS.join(', ')}`)
+    if (type === 'decision' && !opt.area) console.error(`dualcraft: tip — give decisions an --area (${AREAS.join(', ')}) so they're grouped and found`)
     const data = {
       id, type, title, status,
+      area: opt.area || '',
       priority: opt.priority || (type === 'task' || type === 'bug' ? 'medium' : ''),
       target: opt.target || '',
       depends_on: list(opt.depends),
@@ -172,7 +186,10 @@ const commands = {
       tags: list(opt.tags),
       created: today(), updated: today(),
     }
-    const body = opt.body ? String(opt.body).replace(/\\n/g, '\n') + '\n' : '\n## Context\n\n## Details\n\n## Log\n- ' + today() + ': created\n'
+    const template = type === 'decision'
+      ? '\n## Context\n\n## Decision\n\n## Alternatives considered\n\n## Consequences\n\n## Log\n- ' + today() + ': created\n'
+      : '\n## Context\n\n## Details\n\n## Log\n- ' + today() + ': created\n'
+    const body = opt.body ? String(opt.body).replace(/\\n/g, '\n') + '\n' : template
     fs.mkdirSync(brain, { recursive: true })
     const file = path.join(brain, `${id}-${slugify(title)}.md`)
     fs.writeFileSync(file, serialize(data, body))
@@ -243,6 +260,7 @@ const commands = {
     for (const n of notes) {
       for (const d of n.depends_on) edges.push({ from: n.id, to: d, kind: 'depends_on' })
       for (const r of n.related) edges.push({ from: n.id, to: r, kind: 'related' })
+      if (n.superseded_by && !n.related.includes(n.superseded_by)) edges.push({ from: n.id, to: n.superseded_by, kind: 'related' })
     }
     console.log(JSON.stringify({ project: config.name, version: config.version, generated: new Date().toISOString(), nodes, edges }, null, 2))
   },
@@ -288,6 +306,70 @@ const commands = {
     fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify(config, null, 2) + '\n')
   },
 
+  decisions(pos, opt) {
+    const { brain } = ctx()
+    const all = loadNotes(brain).filter((n) => n.type === 'decision')
+    let list = opt.all ? all : all.filter(isActiveDecision)
+    if (opt.area) list = list.filter((n) => (n.area || 'general') === opt.area)
+    if (!list.length) return console.log(opt.area ? `(no decisions in area ${opt.area})` : '(no decisions in force)')
+    const groups = {}
+    for (const n of list) (groups[n.area || 'general'] ||= []).push(n)
+    for (const [area, arr] of Object.entries(groups).sort()) {
+      console.log(`## ${area} (${arr.length})`)
+      for (const n of arr) console.log(`- ${n.id} ${n.title}${n.status === 'superseded' ? `  [superseded by ${n.superseded_by}]` : n.status === 'dropped' ? '  [dropped]' : ''}`)
+    }
+  },
+
+  supersede(pos, opt) {
+    const { brain } = ctx()
+    const [oldId, newId] = pos
+    const notes = loadNotes(brain)
+    const o = notes.find((n) => n.id === oldId) || die(`note ${oldId} not found`)
+    const nw = notes.find((n) => n.id === newId) || die(`note ${newId} not found — create the new decision first`)
+    if (o.type !== 'decision' || nw.type !== 'decision') die('both notes must be decisions')
+    if (!isActiveDecision(nw)) die(`${newId} is not in force`)
+    const upd = (note, fn, log) => {
+      const { data, body } = parseNote(fs.readFileSync(note.file, 'utf8'))
+      fn(data); data.updated = today()
+      const b = /## Log/.test(body) ? body.replace(/\s*$/, '') + `\n- ${today()}: ${log}\n` : body.replace(/\s*$/, '') + `\n\n## Log\n- ${today()}: ${log}\n`
+      fs.writeFileSync(note.file, serialize(data, b))
+    }
+    upd(o, (d) => { d.status = 'superseded'; d.superseded_by = newId }, `superseded by ${newId}${opt.why ? ' — ' + opt.why : ''}`)
+    upd(nw, (d) => { const r = [].concat(d.related || []); if (!r.includes(oldId)) r.push(oldId); d.related = r; if (!d.area && o.area) d.area = o.area }, `supersedes ${oldId}`)
+    console.log(`${oldId} superseded by ${newId}`)
+  },
+
+  relevant(pos, opt) {
+    // Decisions (and notes) related to a text. --hook: read the UserPromptSubmit JSON from stdin, print context or nothing.
+    let text = pos.join(' ')
+    if (opt.hook) {
+      if (!findRoot()) return
+      try { const j = JSON.parse(fs.readFileSync(0, 'utf8') || '{}'); text = String(j.prompt || j.user_prompt || '') } catch { return }
+    }
+    const { brain } = ctx()
+    const STOP = new Set('the and for with that this from into have what when where which would could should about there their them they then than your yours para por con que los las del una uno unos unas como pero mas más este esta esto estos estas ese esa eso esos esas aqui aquí hay ser son esta está están estar tiene tienen hacer haz hazlo quiero quieres puedes puede poder todo toda todos todas cada cosa cosas algo nada muy bien mal sobre entre hasta desde donde cuando porque cual cuál qué cómo tambien también solo sólo ahora luego antes despues después nuevo nueva nuevos nuevas añade añadir cambia cambiar mira revisa vamos sigue seguimos'.split(' '))
+    const tok = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !STOP.has(w))
+    const q = [...new Set(tok(text))]
+    if (!q.length) return opt.hook ? undefined : console.log('(nothing to match)')
+    const match = (a, b) => a === b || (a.length >= 5 && b.length >= 5 && a.slice(0, 5) === b.slice(0, 5))
+    const score = (words, w) => q.reduce((s, x) => s + (words.some((y) => match(x, y)) ? w : 0), 0)
+    const notes = loadNotes(brain).filter((n) => isActiveDecision(n) || (n.type === 'note' && n.status === 'done'))
+    const ranked = notes.map((n) => {
+      const s = score(tok(n.title), 3) + score(tok([...(n.tags || []), n.area || ''].join(' ')), 2) + score(tok(n.body), 1)
+      return { n, s: n.type === 'note' ? s * 0.7 : s }
+    }).filter((x) => x.s >= 3).sort((a, b) => b.s - a.s).slice(0, Number(opt.limit) || 5)
+    if (!ranked.length) return opt.hook ? undefined : console.log('(no related decisions or notes)')
+    const excerpt = (n) => {
+      const sec = n.body.match(/## (?:Decision|Decisión)\s*\n([\s\S]*?)(?:\n## |$)/)
+      return (sec ? sec[1] : n.body.replace(/^## .*$/gm, '')).replace(/\s+/g, ' ').trim().slice(0, 220)
+    }
+    const out = []
+    out.push(opt.hook ? '## DualCraft — decisions and notes related to this request' : '## Related decisions and notes')
+    if (opt.hook) out.push('Respect the decisions. If the request contradicts one, say so to the user before acting and offer to supersede it (dualcraft:decisions).')
+    for (const { n } of ranked) out.push(`- ${n.id} ${n.type === 'decision' ? `[decision${n.area ? '/' + n.area : ''}]` : '[note]'} ${n.title}${excerpt(n) ? ' — ' + excerpt(n) : ''}`)
+    console.log(out.join('\n'))
+  },
+
   summary(pos, opt) {
     const root = findRoot()
     if (!root) {
@@ -303,7 +385,7 @@ const commands = {
     const next = notes.filter((n) => n.type === 'task' && n.status === 'todo')
       .sort((a, b) => cmpVer(a.target || '999', b.target || '999') || ({ high: 0, medium: 1, low: 2 }[a.priority] ?? 1) - ({ high: 0, medium: 1, low: 2 }[b.priority] ?? 1))
     const parked = notes.filter((n) => n.status === 'parked').sort((a, b) => cmpVer(a.target, b.target))
-    const decisions = notes.filter((n) => n.type === 'decision' && n.status !== 'dropped').sort((a, b) => String(b.updated).localeCompare(String(a.updated)))
+    const decisions = notes.filter(isActiveDecision)
     const ideas = notes.filter((n) => n.type === 'idea' && open(n))
     const errors = check(notes)
     const stacks = Object.entries(config.stacks || {}).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(' · ')
@@ -320,7 +402,19 @@ const commands = {
     sec('Open bugs', bugs)
     sec('Next tasks', next)
     sec('Parked (done, waiting for a later version)', parked)
-    sec('Recent decisions — respect them', decisions, 6)
+    if (decisions.length) {
+      out.push(`\n## Decisions in force (${decisions.length}) — respect them; if a request contradicts one, say so before acting`)
+      const groups = {}
+      for (const n of decisions) (groups[n.area || 'general'] ||= []).push(n)
+      let shown = 0
+      for (const [area, arr] of Object.entries(groups).sort()) {
+        if (shown >= 40) break
+        const items = arr.slice(0, 40 - shown); shown += items.length
+        out.push(`- ${area}: ${items.map((n) => `${n.id} ${n.title}`).join(' · ')}`)
+      }
+      if (decisions.length > shown) out.push(`- … ${decisions.length - shown} more: run "decisions"`)
+      out.push('Full text: "show <ID>"; decisions related to each request are added automatically.')
+    }
     sec('Ideas', ideas, 5)
     if (errors.length) out.push(`\n⚠ Brain has ${errors.length} problem(s): ${errors.slice(0, 3).join(' | ')} — run "check".`)
     out.push('\nUse the DualCraft skills (dualcraft:*) for this project. Capture out-of-scope tasks, ideas and decisions in the brain instead of doing or forgetting them.')
@@ -330,7 +424,7 @@ const commands = {
   help() {
     console.log(`DualCraft brain CLI
   init --name N --version V [--web nextjs] [--mobile flutter] [--lang es] [--commit-lang en]
-  new <task|bug|decision|note|idea> <title> [--target 1.3.0] [--depends T-001,D-002] [--related I-004] [--priority high|medium|low] [--tags a,b] [--status s] [--body "text"]
+  new <task|bug|decision|note|idea> <title> [--area architecture|data|design|security|product|…] [--target 1.3.0] [--depends T-001,D-002] [--related I-004] [--priority high|medium|low] [--tags a,b] [--status s] [--body "text"]
   set <ID> key=value ... [--log "message"]      e.g. set T-004 status=done
   list [--type t] [--status s] [--target v] [--tag x] [--open]
   show <ID>
@@ -339,6 +433,9 @@ const commands = {
   check                                          validate ids, statuses, dependencies, cycles
   mode [bugfix|feature|refactor|clear] [--task T-001,T-002] [--scope web|mobile|both]
   config [get key] | set key=value ... | unset key   e.g. config set design.system=https://claude.ai/artifact/…
+  decisions [--area a] [--all]                   decisions in force grouped by area (--all: also superseded/dropped)
+  supersede <OLD> <NEW> [--why "…"]              mark OLD decision as replaced by NEW (history kept)
+  relevant "<text>" [--limit 5]                  decisions/notes related to a text (--hook: UserPromptSubmit)
   summary                                        project context for the session`)
   },
 }

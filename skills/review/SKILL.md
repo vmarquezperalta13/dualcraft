@@ -8,9 +8,11 @@ description: Code review for Next.js and Flutter changes - correctness, lifecycl
 What to review: by default the current changes (`git diff` + `git diff --staged`; or the branch vs its base: `git diff <base>...HEAD`). The user may name files, a commit, a branch or a PR.
 
 ## Read context first
-The brain decisions (`D-xxx`) and notes for the touched areas, the spec/plan of the task if any, the schema. A review that ignores agreed decisions is noise.
+The spec/plan of the task if any, the schema, and the decisions that apply: `node "${CLAUDE_PLUGIN_ROOT}/scripts/brain.mjs" relevant "<summary of the change and touched areas>"` (+ `decisions --area <area>` for each touched area). A review that ignores agreed decisions is noise.
 
 ## Checklist
+**Decisions** — the change follows every decision in force that applies. A contradiction is 🟠 Importante (🔴 if it's a security/data decision): quote the decision id and rule; the fix is either changing the code or superseding the decision with the user (`dualcraft:decisions`), never ignoring it.
+
 **Correctness** — does it do what the task/spec says? Edge cases: empty, null, errors, offline, double taps, concurrent edits, time zones, pagination ends.
 
 **Flutter**

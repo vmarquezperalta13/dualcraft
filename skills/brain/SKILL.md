@@ -12,20 +12,21 @@ description: The DualCraft project brain - capture and query tasks, bugs, decisi
 |---|---|---|---|
 | `task` | T-001 | work to do | todo |
 | `bug` | B-001 | a defect, with how to reproduce | todo |
-| `decision` | D-001 | a choice made and **why** (architecture, library, convention, product rule) | done |
+| `decision` | D-001 | a choice made and **why** — managed with `dualcraft:decisions` (area, ADR body, supersede) | done (= in force) |
 | `note` | N-001 | knowledge worth keeping: a workaround, a gotcha, how an integration works | done |
 | `idea` | I-001 | something maybe worth doing, not committed yet | todo |
 
-Statuses: `todo` · `doing` · `done` · `parked` (finished but held for a later version — use `dualcraft:park`) · `dropped`.
+Statuses: `todo` · `doing` · `done` · `parked` (finished but held for a later version — use `dualcraft:park`) · `dropped` · `superseded` (decisions replaced by a newer one).
 
 ## Capturing
 ```
 $BRAIN new task "Login con Google" --target 1.3.0 --depends D-002 --priority high --tags auth,mobile
-$BRAIN new decision "Usar Riverpod para el estado" --body "## Context\n...\n## Decision\n...\n## Why\n..."
+$BRAIN new idea "Modo oscuro automático por horario" --tags design
+# decisions: see dualcraft:decisions → $BRAIN new decision "<rule>" --area architecture --tags …
 ```
 Then open the created file and fill the body briefly:
 - **task / bug**: Context (why it exists, where it came from), Details (what "done" means; for bugs: steps to reproduce, expected vs actual), and which platform (`web`, `mobile`, `both` tag).
-- **decision**: Context, Decision, Why, Consequences. Decisions are what future sessions must respect — write the *why*.
+- **decision**: use `dualcraft:decisions` (area, Context / Decision / Alternatives / Consequences). Decisions are what future sessions must respect.
 - **note**: the fact and how to use it.
 
 Rules:

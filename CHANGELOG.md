@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.0] - 2026-11-24
+### Added
+- `decisions` skill: ADR-style decisions with area, consult by area or topic, conflict check, supersede with history
+- `UserPromptSubmit` hook: every request gets the decisions and notes related to it added to the context automatically
+- Brain: `area` field, `superseded` status with `superseded_by`, commands `decisions`, `supersede`, `relevant`; decision body template (Context / Decision / Alternatives / Consequences)
+### Changed
+- Session context lists **all** decisions in force grouped by area (was: the 6 most recent), hiding superseded ones
+- `review` and `verify` include a decision-compliance step; the map shows areas and superseded decisions
+
 ## [0.8.0] - 2026-11-24
 ### Added
 - `convert`: web ⇄ mobile conversion feature by feature — inventory, backend/platform touchpoints analysed and decided with the user, platform-neutral spec, native adaptation, generation on the shared schema/tokens/i18n/analytics, verification with shared test cases and screenshots; creates the target project when missing

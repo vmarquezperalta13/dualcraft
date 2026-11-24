@@ -30,7 +30,7 @@ Validate section by section (a few sentences each, not a wall): flows · screens
 ## 5. Save
 1. Brain: make sure there is a task for it (`$BRAIN new task "<title>" --target <version>`), or use the existing one.
 2. Write the agreed design to `.dualcraft/specs/<ID>-<slug>.md` (title, goal, platforms, flows, screens, data, rules, edge cases, out of scope, open questions) and link it: `$BRAIN set <ID> spec=.dualcraft/specs/<ID>-<slug>.md`.
-3. **Everything left out** goes to the brain: future parts → tasks with a later `--target` and `--depends <ID>`; maybe-someday → ideas; choices made (and why) → decisions. Tell the user the ids in one line.
+3. **Everything left out** goes to the brain: future parts → tasks with a later `--target` and `--depends <ID>`; maybe-someday → ideas; choices made (and why) → decisions via `dualcraft:decisions` (with area and tags). Tell the user the ids in one line.
 
 ## 6. Next
 - Data changes → `dualcraft:schema` first.

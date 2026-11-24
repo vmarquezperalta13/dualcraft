@@ -19,6 +19,7 @@
     { "name": "commit", "pack": "core", "phase": 1, "es": "Commit con Conventional Commits según el modo, enlazado a las tareas y con CHANGELOG" },
 
     { "name": "brain", "pack": "brain", "phase": 1, "es": "Apunta y consulta tareas, bugs, decisiones, notas e ideas del proyecto" },
+    { "name": "decisions", "pack": "brain", "phase": 8, "es": "Decisiones del proyecto (ADR): registrar, consultar por área, comprobar conflictos y sustituir con historial" },
     { "name": "park", "pack": "brain", "phase": 1, "es": "Aparca un desarrollo ya hecho para una versión posterior (rama o feature flag)" },
     { "name": "map", "pack": "brain", "phase": 2, "es": "Mapa visual de nodos del brain con sus dependencias" },
     { "name": "roadmap", "pack": "brain", "phase": 2, "es": "Vista roadmap: tareas agrupadas por versión" },

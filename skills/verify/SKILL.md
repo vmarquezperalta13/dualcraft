@@ -20,7 +20,8 @@ In this order, stopping to fix at the first failure:
 1. Static: analyzer / type-check / lint (+ format check if CI does it)
 2. Tests: the new/changed tests first, then the whole suite of the affected platform
 3. Build: `flutter build apk --debug` and/or `next build` when the change could affect it (routing, config, dependencies, server/client code, native setup, generated code)
-4. Behaviour: for UI, run it and look — widget/integration test, screenshot on emulator, or the page in a browser. For a bug: the reproduction from `dualcraft:debug` now passes.
+4. Decisions: `node "${CLAUDE_PLUGIN_ROOT}/scripts/brain.mjs" relevant "<what changed>"` — confirm the change complies with each matching decision in force (report "cumple D-xxx" or the conflict).
+5. Behaviour: for UI, run it and look — widget/integration test, screenshot on emulator, or the page in a browser. For a bug: the reproduction from `dualcraft:debug` now passes.
 
 Read the output. Count failures and warnings — exit code 0 with new warnings is still something to report.
 
@@ -34,6 +35,7 @@ Verificación
 ✓ npm test — 52 pasan
 – Build iOS: no se puede en Windows (no ejecutado)
 ✗ e2e: 1 falla — login.spec.ts:42 (ver abajo)
+✓ Decisiones: cumple D-002 (Provider), D-004 (solo tokens)
 ```
 - Everything not run says so and why. Never round "not run" up to "passed".
 - Failures: show the relevant lines and either fix them (back to the right skill) or ask the user.
