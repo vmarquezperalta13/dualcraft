@@ -16,7 +16,7 @@
     "legal": "Legal y privacidad",
     "security": "Seguridad",
     "marketing": "Marketing y lanzamiento",
-    "convert": "Conversor web ⇄ móvil"
+    "convert": "Conversor entre stacks y lenguajes"
   },
   "commands": [
     { "name": "help", "pack": "core", "phase": 1, "es": "Lista todos los comandos de DualCraft (disponibles y próximos)" },
@@ -80,6 +80,7 @@
     { "name": "screenshots", "pack": "marketing", "phase": 9, "es": "Capturas para tiendas: por deep link en emulador/simulador/navegador, enmarcadas a tamaño Play/App Store con textos por idioma" },
     { "name": "release", "pack": "marketing", "phase": 7, "es": "Cierra versión: checklist, versión en config/pubspec/package.json, CHANGELOG, tag, notas de tienda por idioma y lanzamiento" },
 
-    { "name": "convert", "pack": "convert", "phase": 8, "es": "Convierte entre cualquier stack (web ⇄ móvil o mismo tipo) por funcionalidades: inventario, decisiones de backend preguntadas, spec neutra, adaptación nativa y verificación" }
+    { "name": "convert", "pack": "convert", "phase": 8, "es": "Convierte entre cualquier stack (web ⇄ móvil o mismo tipo) por funcionalidades: inventario, decisiones de backend preguntadas, spec neutra, adaptación nativa y verificación" },
+    { "name": "port", "pack": "convert", "phase": 10, "es": "Conversión profunda entre lenguajes (Dart, Kotlin, Swift, TypeScript; Flutter, Compose Android/KMP, SwiftUI, React Native): equivalencias lado a lado compiladas, mapeo de dependencias, plan de archivos y comprobación de paridad de tipos, miembros y tests" }
   ]
 }

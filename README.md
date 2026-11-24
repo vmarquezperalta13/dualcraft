@@ -55,7 +55,7 @@ The installer asks which **agents** (Claude Code, Gemini CLI, Codex CLI), which 
 | shared | i18n, analytics, cross-platform refactor |
 | security | global / web / mobile audits |
 | release | release and marketing |
-| convert | converter between stacks |
+| convert | converter between stacks + deep language port (Dart ⇄ Kotlin ⇄ Swift ⇄ TS) |
 
 Other commands: `add <stack|pack>…`, `remove <stack|pack>…`, `list`, `update`, `doctor`, `uninstall`. Non-interactive: `install --agents claude,gemini --stacks nextjs,flutter --packs design,data --yes` (`--all-packs`, `--packs none`).
 
@@ -109,6 +109,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:marketing` | Launch copy, ASO, campaigns, growth ideas |
 | `/dualcraft:screenshots` | Store screenshots framed per language and size |
 | `/dualcraft:convert` | Convert web ⇄ mobile, feature by feature |
+| `/dualcraft:port` | Deep language port (Flutter → Kotlin/KMP/SwiftUI and back, TS ⇄ Dart/Kotlin): idioms, deps, file plan, parity |
 
 ## Development
 
@@ -149,7 +150,8 @@ CI compiles the generated code for real on every push: TypeScript, Flutter, Kotl
   architecture/   web.md / mobile.md structure maps
   store/listing.json  store listing texts per language
   release/<version>.json  store release notes per language
-  convert/        inventory, status (features + backend decisions), neutral spec
+  convert/        inventory, status (features + backend decisions), neutral spec,
+                  port plans (files/<feature>.json), deps.json, port-<a>-<b>.md cheat sheets
   db/layout.json  saved ER diagram positions (optional)
   db/snapshot.json  schema as of the last generated SQL migration
   specs/          agreed designs (from brainstorm)

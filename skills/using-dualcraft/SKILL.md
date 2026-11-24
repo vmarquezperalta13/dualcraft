@@ -75,6 +75,7 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 | Share the roadmap or map as a page | `dualcraft:share` |
 | Communicate an update, ASO, social, campaigns, growth ideas | `dualcraft:marketing` |
 | Turn the web into an app or the app into a web, migrate to another stack, conversion progress | `dualcraft:convert` |
+| Port code to another language (Flutter → Kotlin/KMP/Swift, Kotlin/Swift → Flutter, TS ⇄ Dart/Kotlin), library equivalents | `dualcraft:port` |
 | "¿qué comandos hay?", help | `dualcraft:help` |
 
 **Data rule:** in a project with `.dualcraft/db/schema.dbml`, any change to stored data starts in the schema (`dualcraft:schema`) and models/types are regenerated — never hand-edit generated files.

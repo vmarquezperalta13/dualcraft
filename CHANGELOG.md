@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.23.0] - 2026-11-24
+### Added
+- Deep language port: `/dualcraft:port` and `scripts/port.mjs` (idioms, deps, files, parity) — Dart ⇄ Kotlin ⇄ Swift ⇄ TypeScript and Flutter ⇄ Compose (Android/KMP) ⇄ SwiftUI ⇄ React Native, in every direction
+  - `references/port/`: side-by-side idioms as real code with the same `@idiom` ids in every language — basics, types, collections, async, errors; UI layout, lists, state (Riverpod/Bloc → ViewModel + StateFlow / @Observable / zustand + TanStack Query), navigation (go_router → type-safe Navigation Compose / NavigationStack / React Navigation), forms and feedback
+  - semantic pitfalls per language pair (equality, Int sizes, division, string length, eager vs lazy async, threads, value vs reference collections, JSON strictness, dates) and per UI framework
+  - `deps`: reads pubspec, package.json, Gradle (version catalog + build files), Package.swift / Xcode / Podfile and Swift framework imports; maps ~60 concepts to the target ecosystem with install lines; choices kept in `.dualcraft/convert/deps.json`
+  - `files <feature>`: follows imports/references from the feature's screens, classifies each file (model, repository, state, screen, widget, util, test, generated) and plans its target path and renames per stack (`.dualcraft/convert/files/<feature>.json`)
+  - `parity <feature>`: every type, member, enum case, top-level function and test of the source exists in the target (renames, sealed → enum cases, widget class → composable function, intentional drops with `ignore`)
+- CI compiles every idiom: Dart/Flutter (Riverpod, Bloc, go_router), Kotlin + Compose Multiplatform (lifecycle ViewModel, type-safe navigation, Coil), Swift + SwiftUI (macOS and iOS), TypeScript, React Native against the real library types
+### Changed
+- convert skill hands language-level work to `dualcraft:port` when the source and target languages differ
+### Fixed
+- `deploy secrets` no longer calls `process.exit()` after `fetch` (intermittent Node crash on Windows)
+
 ## [0.22.0] - 2026-11-24
 ### Added
 - Legal and privacy pack: `/dualcraft:legal` and `scripts/legal.mjs` (scan, gen, check) — EU/Spain (GDPR, LOPDGDD, LSSI-CE, ePrivacy) plus App Store and Google Play rules; everything generated is a draft for professional review

@@ -181,9 +181,10 @@
     },
     "convert": {
       "name": "Conversor",
-      "description": "Convertir entre stacks (web ⇄ móvil y migraciones)",
+      "description": "Convertir entre stacks (web ⇄ móvil y migraciones) y entre lenguajes (Dart, Kotlin, Swift, TypeScript)",
       "skills": [
-        "convert"
+        "convert",
+        "port"
       ]
     }
   },

@@ -23,7 +23,7 @@ test('skills: frontmatter is YAML-safe, name matches folder, description present
 })
 
 test('skills: every dualcraft:<name> reference points to an existing skill', () => {
-  const files = [...SKILLS.map((s) => path.join(ROOT, 'skills', s, 'SKILL.md')), ...fs.readdirSync(path.join(ROOT, 'references')).map((f) => path.join(ROOT, 'references', f)), ...fs.readdirSync(path.join(ROOT, 'stacks')).filter((f) => f.endsWith('.md')).map((f) => path.join(ROOT, 'stacks', f))]
+  const files = [...SKILLS.map((s) => path.join(ROOT, 'skills', s, 'SKILL.md')), ...fs.readdirSync(path.join(ROOT, 'references')).filter((f) => f.endsWith('.md')).map((f) => path.join(ROOT, 'references', f)), ...fs.readdirSync(path.join(ROOT, 'stacks')).filter((f) => f.endsWith('.md')).map((f) => path.join(ROOT, 'stacks', f))]
   for (const f of files) for (const m of read(f).matchAll(/dualcraft:([a-z][a-z0-9-]*)/g)) {
     if (['start', 'end'].includes(m[1]) && /<!-- dualcraft:/.test(read(f))) continue
     assert.ok(SKILLS.includes(m[1]), `${path.relative(ROOT, f)} → dualcraft:${m[1]} does not exist`)

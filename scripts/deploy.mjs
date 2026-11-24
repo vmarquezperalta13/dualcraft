@@ -367,7 +367,9 @@ if (cmd === 'secrets') {
   const have = slug && !opt.offline ? await present(slug) : null
   const rows = []
   for (const s of list) for (const env of s.envs) rows.push({ ...s, env, ok: have ? (have[env]?.has(s.name) || (env !== 'repo' && have.repo.has(s.name))) : null })
-  if (opt.json) { console.log(JSON.stringify({ repo: slug, checked: !!have, rows, environments: have ? Object.fromEntries(Object.entries(have).map(([k, v]) => [k, { protected: !!v.protected }])) : null }, null, 2)); process.exit(0) }
+  // no process.exit() after fetch: on Windows it can crash Node while keep-alive sockets are still open
+  if (opt.json) console.log(JSON.stringify({ repo: slug, checked: !!have, rows, environments: have ? Object.fromEntries(Object.entries(have).map(([k, v]) => [k, { protected: !!v.protected }])) : null }, null, 2))
+  else {
   console.log(`GitHub ${slug || '(no origin)'} — ${have ? 'checked' : 'not checked (no token or --offline)'}`)
   for (const r of rows) console.log(`  ${r.ok === null ? '·' : r.ok ? '✓' : '✗'} ${(r.kind === 'secret' ? 'secret ' : 'var    ') + r.name.padEnd(28)} ${r.env.padEnd(11)} ${r.why}`)
   if (have) {
@@ -375,10 +377,11 @@ if (cmd === 'secrets') {
     if (have.production && !have.production.protected) console.log('  ⚠ environment "production" has no required reviewers — anyone who pushes a tag deploys to prod')
   }
   console.log('\nSet them with the GitHub CLI, e.g.: gh secret set NAME --env production < file  ·  gh variable set NAME --env dev --body value')
-  process.exit(have && rows.some((r) => r.ok === false) ? 1 : 0)
+  process.exitCode = have && rows.some((r) => r.ok === false) ? 1 : 0
+  }
 }
 
-// check
+if (cmd === 'check') {
 const p = load()
 const { errors, warnings } = validate(p)
 const issues = [...errors.map((m) => ({ level: 'error', m })), ...warnings.map((m) => ({ level: 'warn', m }))]
@@ -419,3 +422,4 @@ else {
   console.log(n ? `${n} error(s), ${issues.length - n} warning(s)` : `deploy OK — ${workflows(p).length} workflow(s), ${issues.length} warning(s)`)
 }
 process.exit(issues.some((i) => i.level === 'error') ? 1 : 0)
+}

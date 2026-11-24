@@ -35,7 +35,12 @@ jobs:
         with:
           node-version: 22
       - run: node test/compile/generate.mjs out
-      - run: npx -y -p typescript@5.6.3 tsc --noEmit --strict --target es2020 --lib es2020 --moduleResolution node out/ts/*.ts
+      - run: npx -y -p typescript@5.6.3 tsc --noEmit --strict --target es2020 --lib es2020 --moduleResolution node out/ts/*.ts out/ts/port/*.ts
+      - name: React Native port idioms (real react-native, React Navigation, zustand and TanStack Query types)
+        working-directory: out/ui-rn
+        run: |
+          npm install --no-audit --no-fund --ignore-scripts
+          npx tsc -p .
       - name: Cloud Functions scaffolds and payments (real firebase-functions, Google and Apple types)
         run: |
           for d in out/functions out/functions-rc; do
@@ -128,6 +133,13 @@ jobs:
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios17.0-simulator ./*.swift
           python3 -c "import json; json.load(open('DualCraft.xcstrings'))"
           plutil -lint ./PrivacyInfo-*.xcprivacy
+      - name: Port idioms (Swift language + SwiftUI)
+        working-directory: out/swift
+        run: |
+          for dir in port-lang port-ui; do
+            xcrun swiftc -typecheck -target arm64-apple-macos14.0 "$dir"/*.swift
+            xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios17.0-simulator "$dir"/*.swift
+          done
 
   sql:
     name: Apply SQL migrations (Postgres) and validate Prisma

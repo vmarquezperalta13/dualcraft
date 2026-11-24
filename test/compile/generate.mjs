@@ -9,6 +9,8 @@
 //   <out>/functions-rc → same, RevenueCat mode
 //   <out>/web-server  → tsc (Next.js route handlers + Nuxt server routes with a small h3 shim)
 //   <out>/deno        → deno check (Supabase Edge Functions)
+//   <out>/ui-rn       → npm install && tsc (React Native idioms of references/port against the real library types)
+//   references/port idioms are also copied into dart/lib/port, kotlin/idioms, swift/port-{lang,ui} and ts/port
 import fs from 'node:fs'
 import path from 'node:path'
 import { run, makeMultiProject, makeProject, write, read, ROOT } from '../helpers.mjs'
@@ -122,7 +124,7 @@ export const check = async () => [e, coins, ids, found, entitlements.premium, (a
 const K = (...p) => M('kmp', 'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'test', 'app', ...p)
 for (const [f, to] of [[K('theme', 'DsTokens.kt'), 'theme/DsTokens.kt'], [K('model', 'DbModels.kt'), 'model/DbModels.kt'], [K('analytics', 'AnalyticsEvents.kt'), 'analytics/AnalyticsEvents.kt'], [K('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [K('payments', 'PaymentsCatalog.kt'), 'payments/PaymentsCatalog.kt'], [K('push', 'PushMessages.kt'), 'push/PushMessages.kt']]) copy(f, path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', to))
 write(path.join(OUT, 'kotlin', 'settings.gradle.kts'), 'pluginManagement { repositories { gradlePluginPortal(); mavenCentral(); google() } }\ndependencyResolutionManagement { repositories { mavenCentral(); google() } }\nrootProject.name = "dualcraft-kotlin-check"\n')
-write(path.join(OUT, 'kotlin', 'build.gradle.kts'), 'plugins {\n    kotlin("jvm") version "2.0.21"\n    kotlin("plugin.serialization") version "2.0.21"\n    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"\n    id("org.jetbrains.compose") version "1.7.0"\n    application\n}\ndependencies {\n    implementation(compose.desktop.currentOs)\n    implementation(compose.material3)\n    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")\n}\napplication { mainClass.set("check.MainKt") }\n')
+write(path.join(OUT, 'kotlin', 'build.gradle.kts'), 'plugins {\n    kotlin("jvm") version "2.0.21"\n    kotlin("plugin.serialization") version "2.0.21"\n    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"\n    id("org.jetbrains.compose") version "1.7.0"\n    application\n}\ndependencies {\n    implementation(compose.desktop.currentOs)\n    implementation(compose.material3)\n    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")\n    implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")\n    implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.8.3")\n    implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")\n    implementation("io.coil-kt.coil3:coil-compose:3.0.4")\n}\napplication { mainClass.set("check.MainKt") }\n')
 write(path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'check', 'Main.kt'), `package check
 import com.test.app.model.*
 import com.test.app.analytics.*
@@ -172,7 +174,7 @@ write(path.join(OUT, 'swift', 'Use.swift'), 'import SwiftUI\nfunc dualcraftCheck
 
 // ---------- Flutter project (hockey schema) ----------
 const fl = makeProject({ mobile: 'flutter', paths: { mobile: 'app' }, schema: 'hockey' })
-write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\n  in_app_purchase: any\n  firebase_messaging: ">=17.0.0"\n  flutter_local_notifications: any\nflutter:\n  generate: true\n')
+write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\n  in_app_purchase: any\n  firebase_messaging: ">=17.0.0"\n  flutter_local_notifications: any\n  flutter_riverpod: any\n  flutter_bloc: any\n  go_router: any\nflutter:\n  generate: true\n')
 write(path.join(fl, 'app', 'l10n.yaml'), 'arb-dir: lib/l10n\ntemplate-arb-file: app_es.arb\noutput-localization-file: app_localizations.dart\n')
 for (const s of ['tokens.mjs', 'gen.mjs', 'analytics.mjs', 'i18n.mjs']) must(run(s, s === 'tokens.mjs' || s === 'gen.mjs' ? ['all'] : ['gen'], fl), `flutter ${s}`)
 backend(fl, 'firebase', COMMON)
@@ -258,6 +260,19 @@ fs.mkdirSync(path.join(fl, 'app', 'ios', 'Runner.xcworkspace'), { recursive: tru
 write(path.join(fl, 'app', 'android', 'app', 'build.gradle.kts'), 'android { defaultConfig { applicationId = "com.acme.hockey" } }\n')
 must(run('deploy.mjs', ['init'], fl), 'deploy init flutter')
 fs.cpSync(path.join(fl, '.github', 'workflows'), path.join(OUT, 'workflows', 'flutter'), { recursive: true })
+
+// ---------- port idioms (references/port): every language and UI framework compiles ----------
+const PR = path.join(ROOT, 'references', 'port')
+fs.cpSync(path.join(PR, 'lang', 'dart'), path.join(OUT, 'dart', 'lib', 'port', 'lang'), { recursive: true })
+fs.cpSync(path.join(PR, 'ui', 'flutter'), path.join(OUT, 'dart', 'lib', 'port', 'ui'), { recursive: true })
+fs.cpSync(path.join(PR, 'lang', 'kotlin'), path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'idioms', 'lang'), { recursive: true })
+fs.cpSync(path.join(PR, 'ui', 'compose'), path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'idioms', 'ui'), { recursive: true })
+fs.cpSync(path.join(PR, 'lang', 'swift'), path.join(OUT, 'swift', 'port-lang'), { recursive: true })
+fs.cpSync(path.join(PR, 'ui', 'swiftui'), path.join(OUT, 'swift', 'port-ui'), { recursive: true })
+fs.cpSync(path.join(PR, 'lang', 'ts'), path.join(OUT, 'ts', 'port'), { recursive: true })
+fs.cpSync(path.join(PR, 'ui', 'react-native'), path.join(OUT, 'ui-rn', 'src'), { recursive: true })
+write(path.join(OUT, 'ui-rn', 'package.json'), JSON.stringify({ name: 'ui-rn-check', private: true, dependencies: { typescript: '5.6.3', react: '18.3.1', '@types/react': '18.3.12', 'react-native': '0.76.5', '@react-navigation/native': '7.0.14', '@react-navigation/native-stack': '7.2.0', '@react-navigation/bottom-tabs': '7.2.0', zustand: '5.0.2', '@tanstack/react-query': '5.62.8' } }, null, 2))
+write(path.join(OUT, 'ui-rn', 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true, noEmit: true, jsx: 'react-jsx', target: 'es2022', lib: ['es2022'], module: 'esnext', moduleResolution: 'bundler', skipLibCheck: true, types: ['react-native'] }, include: ['src/*.tsx'] }, null, 2))
 
 console.log(`compile fixtures → ${OUT}`)
 for (const d of fs.readdirSync(OUT)) console.log(`  ${d}: ${fs.readdirSync(path.join(OUT, d)).length} entries`)
