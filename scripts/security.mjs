@@ -70,6 +70,26 @@ if (want('backend')) {
     each(/match\s+\/\{(document|path|allPaths)=\*\*\}\s*\{[^}]*allow\s+(read|write|read,\s*write)[^;]*request\.auth\s*!=\s*null\s*;/g, (m, l) => add('high', 'rules.any-signed-in', f, l, `${kind}: any signed-in user can ${m[2]} everything`, 'Scope rules per collection with ownership/role checks'))
     each(/allow\s+(write|create|update)[^;]*;/g, (m, l) => { if (!/request\.resource\.data|keys\(\)|is\s+(string|int|number|bool|timestamp|map|list)/.test(m[0]) && !/if\s+false/.test(m[0]) && !/valid\w*\(/.test(m[0])) add('medium', 'rules.no-validation', f, l, `${kind} write without data validation: "${m[0].slice(0, 90)}"`, 'Validate shape and types (hasOnly/hasAll, types, sizes) — see firestore.rules.generated from /dualcraft:schema') })
   }
+  // Supabase / Postgres migrations: every table needs RLS; write policies must not be open
+  const migs = files.filter((x) => /[\\/]supabase[\\/]migrations[\\/].*\.sql$/.test(x)).sort()
+  if (migs.length) {
+    const all = migs.map((f) => text(f)).join('\n')
+    const norm = (n) => n.replace(/"/g, '').replace(/^public\./, '').toLowerCase()
+    const rlsOn = new Set([...all.matchAll(/alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?([\w."]+)\s+enable\s+row\s+level\s+security/gi)].map((m) => norm(m[1])))
+    for (const f of migs) {
+      const s = text(f)
+      for (const m of s.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?([\w."]+)/gi)) {
+        const name = norm(m[1]); if (name.includes('.') && !name.startsWith('public.')) continue
+        if (!rlsOn.has(name)) add('high', 'supabase.no-rls', f, lineOf(s, m.index), `Table ${name} has no Row Level Security — with the anon key anyone can read/write it through the API`, `alter table ${name} enable row level security; then add explicit policies`)
+      }
+      for (const m of s.matchAll(/create\s+policy[\s\S]*?for\s+(insert|update|delete|all)[\s\S]*?(?:using|with\s+check)\s*\(\s*true\s*\)[\s\S]*?;/gi)) add('high', 'supabase.open-write-policy', f, lineOf(s, m.index), `Policy allows ${m[1]} for everyone (true)`, 'Restrict to the owner/role: (select auth.uid()) = user_id, or a role check')
+    }
+  }
+  for (const f of files.filter((x) => /(^|[\\/])\.env[^\\/]*$/.test(x) || /\.(tsx?|jsx?|vue|astro|dart|kt|swift)$/.test(x))) {
+    const s = text(f)
+    for (const m of s.matchAll(/(NEXT_PUBLIC_|VITE_|EXPO_PUBLIC_|PUBLIC_|NUXT_PUBLIC_)[A-Z0-9_]*SERVICE_ROLE[A-Z0-9_]*/g)) add('critical', 'supabase.service-role-public', f, lineOf(s, m.index), `${m[0]}: the Supabase service_role key bypasses RLS and is exposed to clients`, 'Use the anon key in clients; keep service_role only in server code/secrets and rotate it now')
+    if (/\.(dart|kt|swift)$/.test(f) || /^\s*['"]use client['"]/m.test(s)) for (const m of s.matchAll(/service_role|SUPABASE_SERVICE_ROLE_KEY/g)) add('critical', 'supabase.service-role-client', f, lineOf(s, m.index), 'Supabase service_role referenced in client code', 'Clients use the anon key + RLS; privileged operations go to an Edge Function/server')
+  }
   for (const f of files.filter((x) => /(^|[\\/])functions[\\/](src[\\/])?.*\.(ts|js)$/.test(x) && !/\.d\.ts$|test|spec/.test(x))) {
     const s = text(f)
     for (const m of s.matchAll(/\bonCall\s*\(/g)) {

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0] - 2026-11-24
+### Added
+- `database` skill: provider choice (Firebase, Supabase, PostgreSQL + Prisma), local + dev + prod environments with each provider's CLI, schema → provider artifacts, apply per environment, safe dev → prod promotion
+- `database.mjs`: `doctor` (CLIs and files), `status`, `migration` (Postgres/Supabase SQL — full schema first, then only the difference since the last snapshot, RLS with owner policies, destructive changes flagged instead of generated), `sql`, `prisma` (schema.prisma with named relations) — validated on Postgres (PGlite) and `prisma validate`
+- Security scan: Supabase tables without RLS, open write policies, service_role key in public env vars or client code
+- Schema check warns when a foreign key's type differs from the referenced column
+
 ## [0.10.0] - 2026-11-24
 ### Added
 - Multi-stack support (stage A): stack registry and reference sheets for Next.js, React + Vite, Astro, Vue/Nuxt, Flutter, React Native (Expo), Kotlin Multiplatform, Android native (Compose) and iOS native (SwiftUI); backends Firebase, Supabase, PostgreSQL + Prisma

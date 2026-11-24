@@ -219,6 +219,10 @@ function resolve(model) {
     r.fk = { table: fkEnd.table, field: fkEnd.field }
     r.required = !!f?.notNull
     if (f) f.fk = true
+    const otherEnd = fkEnd === r.a ? r.b : r.a
+    const of = byName.get(otherEnd.table)?.fields.find((x) => x.name === otherEnd.field)
+    const norm = (t) => String(t || '').toLowerCase().replace(/\(.*\)/, '').replace(/^(integer|int4|serial)$/, 'int').replace(/^(varchar|text|string|char)$/, 'string')
+    if (f && of && norm(f.baseType) !== norm(of.baseType)) model.warnings.push(`Ref line ${r.line}: ${fkEnd.table}.${fkEnd.field} (${f.type}) and ${otherEnd.table}.${otherEnd.field} (${of.type}) have different types`)
   }
   for (const t of model.tables) for (const f of t.fields) f.isEnum = enumNames.has(f.baseType)
   for (const g of model.groups) for (const n of g.tables) if (!byName.has(n)) model.warnings.push(`TableGroup ${g.name}: unknown table "${n}"`)

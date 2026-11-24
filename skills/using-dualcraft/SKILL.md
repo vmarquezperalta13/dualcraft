@@ -38,6 +38,7 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 | What goes in which version, progress | `dualcraft:roadmap` |
 | See the database model as a diagram | `dualcraft:er` |
 | Define/change stored data, generate models/types/rules | `dualcraft:schema` |
+| Create the database, environments, migrations, deploy rules | `dualcraft:database` |
 | New idea, "quiero añadir…", design before code | `dualcraft:brainstorm` |
 | Work with several steps / both platforms | `dualcraft:plan` |
 | Writing implementation code | `dualcraft:tdd` |

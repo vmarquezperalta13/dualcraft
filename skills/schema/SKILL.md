@@ -16,7 +16,7 @@ Paths: `$ER` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/er.mjs"`, `$GEN` = `node "${
 
 ## DBML conventions in DualCraft
 ```dbml
-Project app { database_type: 'Firestore' }   // or 'PostgreSQL', 'MySQL', 'SQLite'
+Project app { database_type: 'Firestore' }   // or 'PostgreSQL' (Supabase, Prisma), 'MySQL', 'SQLite'
 
 Enum role { admin  member }
 
@@ -34,7 +34,7 @@ Table Session [note: 'path: users/{userId}/sessions'] {   // subcollection
   teamName string [note: 'denormalized from Team.name']
 }
 ```
-- Table names: singular PascalCase (they become class/interface names). Field names exactly as stored.
+- Table names: singular PascalCase for Firestore (they become class/interface names); for SQL providers (Supabase, Postgres) prefer `snake_case` tables and columns — SQL works better unquoted. Field names exactly as stored. Supabase user ownership: a `user_id uuid` column (it gets owner RLS policies).
 - `[not null]` for required fields — anything without it is nullable (and optional in rules).
 - Relations: `ref: > T.id` (many-to-one), `<` (one-to-many), `-` (one-to-one), `<>` (many-to-many). Firestore has no joins: still declare references so the diagram and docs show them; mark denormalized copies with a note.
 - Firestore types: `string int double bool timestamp map geopoint reference` + arrays. SQL types work as usual (`varchar`, `int`, `uuid`…).
@@ -52,3 +52,4 @@ Table Session [note: 'path: users/{userId}/sessions'] {   // subcollection
 5. Run the project's analyzer/type-check on the generated files if available (`dart analyze`, `npx tsc --noEmit`).
 6. Record important modelling choices (denormalization, why a subcollection, id strategy) as decisions in the brain.
 7. Offer `dualcraft:er` to see the result.
+8. Apply the change to the database with `dualcraft:database` (Supabase migration, Prisma migration or Firestore rules/indexes, per environment).

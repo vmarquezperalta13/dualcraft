@@ -35,6 +35,7 @@
     { "name": "docs", "pack": "process", "phase": 3, "es": "Actualiza el documento funcional del proyecto (docs/FUNCTIONAL.md)" },
 
     { "name": "er", "pack": "db", "phase": 2, "es": "Diagrama ER visual del esquema de base de datos" },
+    { "name": "database", "pack": "db", "phase": 2, "es": "Crea la BD: Firebase, Supabase o Postgres+Prisma; entornos local+dev+prod por CLI; migraciones SQL con RLS, Prisma, reglas e índices; dev → prod" },
     { "name": "schema", "pack": "db", "phase": 2, "es": "Crea o edita el esquema (fuente de verdad) y genera modelos Dart, tipos TS y reglas de Firestore" },
 
     { "name": "design-system", "pack": "design", "phase": 4, "es": "Crea el design system del proyecto en claude.ai (desde cero o desde el código) y lo enlaza" },

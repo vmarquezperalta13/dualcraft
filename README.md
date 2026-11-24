@@ -6,7 +6,7 @@ Web + mobile development workflow for Claude Code built around a **project brain
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.10)
+## What it does (v0.11)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **New projects**: a full intake form (idea, type, platforms, stacks, backend, design, MVP features) creates the brief, decisions, MVP tasks and functional document, and scaffolds each stack with its CLI.
@@ -23,6 +23,7 @@ You talk to it in your language (Spanish by default); commands are in English.
 - **Security**: global, web and mobile audits with a static scanner (secrets, Firebase rules, Cloud Functions, Next.js endpoints and headers, Android/iOS config, payments) and a dated report; findings become brain bugs.
 - **Release & marketing**: a readiness checklist across brain, security, texts, analytics and docs; one command bumps every version and closes the CHANGELOG; store notes validated against Play/App Store limits; launch copy, campaign plan and growth ideas for each update.
 - **Web ⇄ mobile converter**: feature-by-feature conversion through a platform-neutral spec; every backend or native dependency is analysed and decided with you (share, expose as API, move to Cloud Functions, alternative, or skip); the target is native, built on the shared sources, and verified against the source.
+- **Databases**: Firebase, Supabase or PostgreSQL + Prisma with local + dev + prod environments set up through each CLI; the schema becomes SQL migrations (incremental, with RLS), a Prisma schema or Firestore rules — applied per environment and promoted to prod safely.
 - **Database schema as source of truth**: `.dualcraft/db/schema.dbml` ([DBML](https://dbml.dbdiagram.io/docs)) → ER diagram with crow's-foot notation (PNG/SVG export) and generated Dart models, TypeScript types and a Firestore rules skeleton.
 
 Run `/dualcraft:help` to see every command, available and upcoming.
@@ -55,6 +56,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:map` | Visual map of the brain (nodes + dependencies) |
 | `/dualcraft:roadmap` | Work grouped by target version |
 | `/dualcraft:er` | ER diagram of the database schema |
+| `/dualcraft:database` | Create the database and environments; migrations, rules, deploys |
 | `/dualcraft:schema` | Edit the schema; generate Dart / TS / Firestore rules |
 | `/dualcraft:brainstorm` | Explore an idea and agree the design |
 | `/dualcraft:plan` | Step-by-step implementation plan |
@@ -103,6 +105,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
   release/<version>.json  store release notes per language
   convert/        inventory, status (features + backend decisions), neutral spec
   db/layout.json  saved ER diagram positions (optional)
+  db/snapshot.json  schema as of the last generated SQL migration
   specs/          agreed designs (from brainstorm)
   plans/          implementation plans
   out/            generated views: map.html, roadmap.html, er.html (gitignored)
