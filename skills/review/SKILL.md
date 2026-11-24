@@ -32,7 +32,7 @@ The brain decisions (`D-xxx`) and notes for the touched areas, the spec/plan of 
 
 **Data & backend** — stored data matches `.dualcraft/db/schema.dbml` (no fields invented in code); Firestore queries have the needed indexes; rules still protect the change; writes can't be abused (mass writes, client-trusted values like prices or scores).
 
-**Security basics** — input validation, authz on every write path, no secrets in code/logs, safe storage of tokens. (Deep audits: the security pack.)
+**Security basics** — input validation, authz on every write path, no secrets in code/logs, safe storage of tokens. (Quick automated pass: `node "${CLAUDE_PLUGIN_ROOT}/scripts/security.mjs" --min medium` on the changed area; deep audits: `dualcraft:security-global`.)
 
 **Accessibility**
 - Mobile: `Semantics`/labels on icon buttons and images, tap targets ≥ 48dp, text scales with system font size, contrast ≥ 4.5:1, focus order.

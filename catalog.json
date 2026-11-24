@@ -56,9 +56,9 @@
     { "name": "refactor-mobile", "pack": "refactor", "phase": 5, "es": "Refactorización específica de la app" },
     { "name": "refactor-global", "pack": "refactor", "phase": 5, "es": "Refactorización de ambos + lógica duplicada entre plataformas" },
 
-    { "name": "security-global", "pack": "security", "phase": 6, "es": "Auditoría de seguridad de todo el proyecto" },
-    { "name": "security-web", "pack": "security", "phase": 6, "es": "Auditoría de seguridad de la web" },
-    { "name": "security-mobile", "pack": "security", "phase": 6, "es": "Auditoría de seguridad de la app" },
+    { "name": "security-global", "pack": "security", "phase": 6, "es": "Auditoría completa: modelo de amenazas, escáner, reglas de Firestore, Functions, pagos, abuso, privacidad; informe y bugs en el brain" },
+    { "name": "security-web", "pack": "security", "phase": 6, "es": "Seguridad de Next.js: auth, endpoints y server actions, XSS/CSRF/SSRF, cabeceras y CSP, secretos" },
+    { "name": "security-mobile", "pack": "security", "phase": 6, "es": "Seguridad de Flutter (MASVS): almacenamiento, red, deep links, manifest, release, IAP, App Check" },
 
     { "name": "marketing", "pack": "marketing", "phase": 7, "es": "Ideas de marketing para cada actualización (campañas, redes, ASO, SEO)" },
     { "name": "release", "pack": "marketing", "phase": 7, "es": "Cierra versión: sube la versión, CHANGELOG, notas para tiendas y checklist de lanzamiento" },

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0] - 2026-11-24
+### Added
+- Security pack: `security-global` (threat model, scan, manual review of rules/functions/payments/abuse/privacy, dated report, brain bugs), `security-web` (Next.js), `security-mobile` (Flutter, MASVS)
+- `security.mjs`: zero-dependency static scan — secrets and key files, open/test-mode/unvalidated Firestore & Storage rules, Cloud Functions without auth/App Check/with open CORS, NEXT_PUBLIC_ secrets, server code in client components, unauthenticated route handlers and server actions, XSS/SSRF/open-redirect patterns, missing security headers, Android/iOS insecure config, tokens in SharedPreferences, TLS bypass, client-only IAP; optional npm audit
+### Changed
+- `review` runs a quick security scan on the changed area
+
 ## [0.5.0] - 2026-11-24
 ### Added
 - Web pack: `web-architecture`, `web-build`, `web-test`, `web-browser`, `web-seo`
