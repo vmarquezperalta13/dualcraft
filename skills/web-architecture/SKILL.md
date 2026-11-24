@@ -5,6 +5,8 @@ description: Understands and documents the structure of the project's Next.js ap
 
 # DualCraft web architecture
 
+> **Stack:** examples here are Next.js. If the project's web stack (`config.stacks.web`) is React + Vite, Astro or Vue/Nuxt, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense (e.g. a SPA has no server routes; Astro is mostly static).
+
 `$DETECT` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"`, `$BRAIN` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/brain.mjs"`.
 
 ## Map it (first time, or when it's stale)

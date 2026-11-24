@@ -5,6 +5,8 @@ description: Runs the Next.js app and checks it in a real browser - starts the d
 
 # DualCraft web browser
 
+> **Stack:** examples here are Next.js. If the project's web stack (`config.stacks.web`) is React + Vite, Astro or Vue/Nuxt, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense (e.g. a SPA has no server routes; Astro is mostly static).
+
 ## 1. Run the app
 From the web folder: `pm run dev` **in the background**; read its output for the URL/port and wait until it's ready (poll the URL; don't sleep blindly). If a server is already running on the port, reuse it. Production-like check: `pm run build && pm run start`.
 

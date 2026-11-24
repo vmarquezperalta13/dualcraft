@@ -5,6 +5,8 @@ description: Writes and runs tests for the Next.js app - unit (Vitest/Jest), com
 
 # DualCraft web tests
 
+> **Stack:** examples here are Next.js. If the project's web stack (`config.stacks.web`) is React + Vite, Astro or Vue/Nuxt, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense (e.g. a SPA has no server routes; Astro is mostly static).
+
 Commands: `${CLAUDE_PLUGIN_ROOT}/references/stack-commands.md`. Process: `dualcraft:tdd`. Project facts: `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"`.
 
 ## Pick the level

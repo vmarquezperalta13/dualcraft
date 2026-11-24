@@ -5,6 +5,8 @@ description: Security review of the Next.js web app - authentication and session
 
 # DualCraft security — web
 
+> **Stack:** examples here are Next.js. If the project's web stack (`config.stacks.web`) is React + Vite, Astro or Vue/Nuxt, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense (e.g. a SPA has no server routes; Astro is mostly static).
+
 `$SEC` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/security.mjs" --scope web` (+ `--deps`). Confirm each finding in the code; never print secret values.
 
 ## Checklist

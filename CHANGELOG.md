@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.10.0] - 2026-11-24
+### Added
+- Multi-stack support (stage A): stack registry and reference sheets for Next.js, React + Vite, Astro, Vue/Nuxt, Flutter, React Native (Expo), Kotlin Multiplatform, Android native (Compose) and iOS native (SwiftUI); backends Firebase, Supabase, PostgreSQL + Prisma
+- `new-project`: full intake form for a new project (idea, type, platforms, audience, monetization, stacks, backend, auth, design style, MVP features, languages, constraints) → brief, decisions, MVP tasks, functional document, scaffolding with each stack's CLI
+- `stacks` skill and `stacks.mjs` (list, show, scaffold command, project stacks)
+- `detect.mjs` recognises all nine stacks (several mobile apps per project, e.g. Android + iOS native), Supabase and Prisma; ignores platform folders inside Flutter/React Native projects
+### Changed
+- `start` sends empty folders to `new-project` and detects every stack; web/mobile/refactor/security skills read the project's stack sheet
+
 ## [0.9.0] - 2026-11-24
 ### Added
 - `decisions` skill: ADR-style decisions with area, consult by area or topic, conflict check, supersede with history

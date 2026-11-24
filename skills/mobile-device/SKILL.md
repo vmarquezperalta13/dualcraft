@@ -5,6 +5,8 @@ description: Works with Android emulators/devices (and the iOS Simulator on macO
 
 # DualCraft mobile device
 
+> **Stack:** examples here are Flutter. If the project's mobile stack (`config.stacks.mobile`) is React Native (Expo), Kotlin Multiplatform, Android native or iOS native, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense. iOS builds and simulators need macOS.
+
 Work in the scratchpad for screenshots/dumps. Never wipe data or uninstall without asking.
 
 ## Devices

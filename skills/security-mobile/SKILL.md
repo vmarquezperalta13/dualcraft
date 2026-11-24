@@ -5,6 +5,8 @@ description: Security review of the Flutter app (OWASP MASVS) - secure storage o
 
 # DualCraft security — mobile
 
+> **Stack:** examples here are Flutter. If the project's mobile stack (`config.stacks.mobile`) is React Native (Expo), Kotlin Multiplatform, Android native or iOS native, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense. iOS builds and simulators need macOS.
+
 `$SEC` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/security.mjs" --scope mobile`. Confirm each finding in the code; never print secret values. If the project has its own mobile/Firebase security skill, apply it as well.
 
 Mindset: **the app binary is public and can be modified.** Anything in it (API keys, logic, flags) can be read and changed; protection lives on the server (rules, functions). The app's job is to protect the user's data on the device and talk to the server safely.

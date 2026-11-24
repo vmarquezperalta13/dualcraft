@@ -1,12 +1,15 @@
 # DualCraft
 
-Web + mobile development workflow for Claude Code — **Next.js ⇄ Flutter** — built around a **project brain**.
+Web + mobile development workflow for Claude Code built around a **project brain**.
+
+**Stacks** — web: Next.js · React + Vite · Astro · Vue/Nuxt — mobile: Flutter · React Native (Expo) · Kotlin Multiplatform · Android (Compose) · iOS (SwiftUI) — backends: Firebase · Supabase · PostgreSQL + Prisma.
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.9)
+## What it does (v0.10)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
+- **New projects**: a full intake form (idea, type, platforms, stacks, backend, design, MVP features) creates the brief, decisions, MVP tasks and functional document, and scaffolds each stack with its CLI.
 - **Decisions that stick**: ADR-style decisions by area; all decisions in force are loaded at session start and the ones related to each request are injected automatically; conflicts are raised before acting; superseding keeps the history.
 - **Work modes**: before working, DualCraft asks whether it's a *bug / short task*, a *new development* or a *refactor*. The mode drives the flow, the commit type and the version impact.
 - **Parked work**: finished development that must wait for a later version is kept on a `parked/*` branch or behind a feature flag, with its target version recorded.
@@ -42,6 +45,8 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | Command | |
 |---|---|
 | `/dualcraft:help` | List all commands |
+| `/dualcraft:new-project` | Intake form + setup for a brand-new project |
+| `/dualcraft:stacks` | Supported stacks; add one to the project |
 | `/dualcraft:start` | Set up the project, load context, choose the work mode |
 | `/dualcraft:brain` | Capture and query tasks, bugs, decisions, notes, ideas |
 | `/dualcraft:decisions` | Record, consult, check and supersede decisions |

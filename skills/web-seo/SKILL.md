@@ -5,6 +5,8 @@ description: SEO and performance for the Next.js site - metadata and Open Graph,
 
 # DualCraft web SEO & performance
 
+> **Stack:** examples here are Next.js. If the project's web stack (`config.stacks.web`) is React + Vite, Astro or Vue/Nuxt, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense (e.g. a SPA has no server routes; Astro is mostly static).
+
 Project facts: `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"` (shows sitemap/robots presence).
 
 ## Audit checklist

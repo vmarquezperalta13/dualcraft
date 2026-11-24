@@ -5,6 +5,8 @@ description: Refactors the Flutter code safely - improves structure without chan
 
 # DualCraft refactor — mobile
 
+> **Stack:** examples here are Flutter. If the project's mobile stack (`config.stacks.mobile`) is React Native (Expo), Kotlin Multiplatform, Android native or iOS native, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense. iOS builds and simulators need macOS.
+
 Architecture map: `.dualcraft/architecture/mobile.md` (`dualcraft:mobile-architecture` if missing). Commands: `${CLAUDE_PLUGIN_ROOT}/references/stack-commands.md`. If the project has its own widget-decomposition skill or rules, follow them.
 
 ## Safety first

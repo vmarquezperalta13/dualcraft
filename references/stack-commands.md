@@ -1,5 +1,7 @@
 # Stack commands (Next.js · Flutter)
 
+Other stacks (React + Vite, Astro, Nuxt, React Native, Kotlin Multiplatform, Android, iOS): commands in `stacks/<id>.md` (same folder level as `references/`).
+
 Always prefer what the project itself defines (package.json scripts, Makefile, melos, CI workflow files under `.github/workflows/`) over these defaults — CI is the best evidence of how the project is really checked. Run commands from the stack's folder (`config.paths.web` / `config.paths.mobile`).
 
 ## Next.js (web)

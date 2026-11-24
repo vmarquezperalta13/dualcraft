@@ -9,13 +9,15 @@ description: Starts DualCraft work in a project - sets the project up the first 
 
 ## 1. Set up the project (first time only)
 Run `$BRAIN summary`. If it says there is no DualCraft project:
+0. **No code yet** (empty folder, or only docs/assets) → this is a new project: use `dualcraft:new-project` (full intake form, then scaffolding) and stop here.
 1. Detect the stacks yourself, don't ask what you can read — `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"` reports both:
-   - Web: a `package.json` with `next` → `nextjs` (note its folder if not the root).
-   - Mobile: a `pubspec.yaml` with `flutter` → `flutter` (note its folder).
+   - Web: Next.js, React + Vite, Astro or Nuxt (`web.stack` in the detector output; note its folder if not the root).
+   - Mobile: Flutter, React Native, Kotlin Multiplatform, Android native or iOS native (`mobileAll[].stack`; two native apps → `--mobile android,ios`, then `config set paths.android=… paths.ios=…`).
+   - Supported stacks: `node "${CLAUDE_PLUGIN_ROOT}/scripts/stacks.mjs" list`; each has a reference sheet in `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md`.
    - Version: from `pubspec.yaml` (`version: 1.2.3+4` → `1.2.3`) or `package.json`; else `0.1.0`.
 2. Ask the user only what you couldn't detect, plus the commit language (English or Spanish — recommend English).
 3. Run from the project root:
-   `$BRAIN init --name "<name>" --version <v> [--web nextjs --web-path <dir>] [--mobile flutter --mobile-path <dir>] --lang es --commit-lang <en|es>`
+   `$BRAIN init --name "<name>" --version <v> [--web <web-stack-id> --web-path <dir>] [--mobile <mobile-stack-id> --mobile-path <dir>] --lang es --commit-lang <en|es>`
 4. Make sure `.dualcraft/` is committed with the project (only `state.json` is ignored — init does that).
 5. Offer to map the architecture (`dualcraft:web-architecture` / `dualcraft:mobile-architecture`) so later work follows the project's patterns.
 6. Offer, in one line, to seed the brain from existing sources (TODO/FIXME comments, open issues, notes the user pastes). Do it only if they accept, via `dualcraft:brain`.

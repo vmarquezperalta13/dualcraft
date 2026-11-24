@@ -15,6 +15,8 @@
   },
   "commands": [
     { "name": "help", "pack": "core", "phase": 1, "es": "Lista todos los comandos de DualCraft (disponibles y próximos)" },
+    { "name": "new-project", "pack": "core", "phase": 1, "es": "Proyecto nuevo: formulario completo (idea, tipo, plataformas, stacks, backend, diseño, funciones MVP) → brief, decisiones, tareas, documento y scaffold" },
+    { "name": "stacks", "pack": "core", "phase": 1, "es": "Stacks soportados (Next.js, React+Vite, Astro, Nuxt, Flutter, React Native, KMP, Android, iOS) y añadir uno al proyecto" },
     { "name": "start", "pack": "core", "phase": 1, "es": "Inicia el trabajo: carga el contexto y pregunta el modo (bug/tarea corta, nuevo desarrollo, refactor)" },
     { "name": "commit", "pack": "core", "phase": 1, "es": "Commit con Conventional Commits según el modo, enlazado a las tareas y con CHANGELOG" },
 

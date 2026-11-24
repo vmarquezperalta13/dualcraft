@@ -5,6 +5,8 @@ description: Builds the Next.js app and fixes build problems - dependency instal
 
 # DualCraft web build
 
+> **Stack:** examples here are Next.js. If the project's web stack (`config.stacks.web`) is React + Vite, Astro or Vue/Nuxt, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense (e.g. a SPA has no server routes; Astro is mostly static).
+
 Commands: `${CLAUDE_PLUGIN_ROOT}/references/stack-commands.md` (package manager from the lockfile — never mix managers). Project facts: `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"`.
 
 ## Build

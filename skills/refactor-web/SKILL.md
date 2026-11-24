@@ -5,6 +5,8 @@ description: Refactors the Next.js code safely - improves structure without chan
 
 # DualCraft refactor — web
 
+> **Stack:** examples here are Next.js. If the project's web stack (`config.stacks.web`) is React + Vite, Astro or Vue/Nuxt, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense (e.g. a SPA has no server routes; Astro is mostly static).
+
 Architecture map: `.dualcraft/architecture/web.md` (`dualcraft:web-architecture` if missing). Commands: `${CLAUDE_PLUGIN_ROOT}/references/stack-commands.md`.
 
 ## Safety first

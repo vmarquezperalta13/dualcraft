@@ -5,6 +5,8 @@ description: Analyses mobile crashes and errors from any source - Flutter/Dart s
 
 # DualCraft mobile crash
 
+> **Stack:** examples here are Flutter. If the project's mobile stack (`config.stacks.mobile`) is React Native (Expo), Kotlin Multiplatform, Android native or iOS native, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense. iOS builds and simulators need macOS.
+
 `$BRAIN` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/brain.mjs"`. Then the fix goes through `dualcraft:debug` → `dualcraft:tdd` → `dualcraft:verify`.
 
 ## 1. Collect

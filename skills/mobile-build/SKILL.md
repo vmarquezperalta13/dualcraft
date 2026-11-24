@@ -5,6 +5,8 @@ description: Builds the Flutter app and fixes build problems - pub dependencies 
 
 # DualCraft mobile build
 
+> **Stack:** examples here are Flutter. If the project's mobile stack (`config.stacks.mobile`) is React Native (Expo), Kotlin Multiplatform, Android native or iOS native, first read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` and use its commands, structure and conventions — the checklist below still applies where it makes sense. iOS builds and simulators need macOS.
+
 Commands: `${CLAUDE_PLUGIN_ROOT}/references/stack-commands.md`. Project facts: `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"` (flavors, entrypoints, platforms).
 
 ## Build

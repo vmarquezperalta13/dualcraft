@@ -5,7 +5,7 @@ description: Use at the start of any conversation in a project that has a .dualc
 
 # Using DualCraft
 
-DualCraft is a web + mobile workflow (Next.js ⇄ Flutter) built around a **project brain**: every task, bug, decision, note and idea lives as a small file in `.dualcraft/brain/`, so context survives between conversations.
+DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nuxt · mobile: Flutter, React Native, Kotlin Multiplatform, Android, iOS) built around a **project brain**: every task, bug, decision, note and idea lives as a small file in `.dualcraft/brain/`, so context survives between conversations.
 
 ## Language rule
 - Talk to the user in the project's `lang` (from `.dualcraft/config.json`, Spanish by default) — or in whatever language the user writes in.
@@ -27,7 +27,9 @@ DualCraft is a web + mobile workflow (Next.js ⇄ Flutter) built around a **proj
 ## Routing
 | Situation | Skill |
 |---|---|
+| Brand-new project, "empezamos de cero" | `dualcraft:new-project` |
 | Starting work / choosing what to do | `dualcraft:start` |
+| Supported stacks, add a stack to the project | `dualcraft:stacks` |
 | "apunta", "déjalo para luego", backlog questions | `dualcraft:brain` |
 | "hemos decidido…", "a partir de ahora…", "¿qué decidimos sobre…?", changing a decision | `dualcraft:decisions` |
 | Finished work that must wait for a later version | `dualcraft:park` |
@@ -71,6 +73,8 @@ DualCraft is a web + mobile workflow (Next.js ⇄ Flutter) built around a **proj
 **Design rule:** the claude.ai Design System (`design.system` in config) is the source of truth for colors, typography, spacing and radius. Code uses only the generated tokens — never raw hex colors or magic sizes; a missing value is a Design System change.
 
 **Shared-sources rule:** texts come from `.dualcraft/i18n/` and analytics events from `.dualcraft/analytics/events.json` — both platforms use the generated files, never hard-coded strings or ad-hoc event names. Project facts: `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"`; per-platform maps in `.dualcraft/architecture/`.
+
+**Stack rule:** the project's stacks are in `config.stacks`. For any stack other than Next.js/Flutter, read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` before working in it — it replaces the Next.js/Flutter examples of the general skills.
 
 **Process rules:** no code before an agreed design for new features; no fix before a root cause; no "done" without fresh verification evidence.
 
