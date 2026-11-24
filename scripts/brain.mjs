@@ -147,7 +147,7 @@ const commands = {
       createdAt: today(),
     }
     fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify(config, null, 2) + '\n')
-    fs.writeFileSync(path.join(dir, '.gitignore'), 'state.json\n')
+    fs.writeFileSync(path.join(dir, '.gitignore'), 'state.json\nout/\n')
     console.log(`DualCraft initialised in ${dir.replace(/\\/g, '/')}`)
     console.log(JSON.stringify(config, null, 2))
   },
@@ -238,7 +238,7 @@ const commands = {
   graph() {
     const { brain, config } = ctx()
     const notes = loadNotes(brain)
-    const nodes = notes.map(({ file, body, ...n }) => ({ ...n, file: path.basename(file), summary: body.replace(/^#+.*$/gm, '').replace(/\s+/g, ' ').trim().slice(0, 300) }))
+    const nodes = notes.map(({ file, body, ...n }) => ({ ...n, file: path.basename(file), body: body.trim().slice(0, 6000) }))
     const edges = []
     for (const n of notes) {
       for (const d of n.depends_on) edges.push({ from: n.id, to: d, kind: 'depends_on' })

@@ -4,12 +4,14 @@ Web + mobile development workflow for Claude Code — **Next.js ⇄ Flutter** �
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.1)
+## What it does (v0.2)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **Work modes**: before working, DualCraft asks whether it's a *bug / short task*, a *new development* or a *refactor*. The mode drives the flow, the commit type and the version impact.
 - **Parked work**: finished development that must wait for a later version is kept on a `parked/*` branch or behind a feature flag, with its target version recorded.
 - **Commits**: Conventional Commits derived from the mode, linked to brain ids, with `CHANGELOG.md`.
+- **Visual brain**: an offline HTML map of notes as nodes linked by their dependencies, plus a roadmap board by version.
+- **Database schema as source of truth**: `.dualcraft/db/schema.dbml` ([DBML](https://dbml.dbdiagram.io/docs)) → ER diagram with crow's-foot notation (PNG/SVG export) and generated Dart models, TypeScript types and a Firestore rules skeleton.
 
 Run `/dualcraft:help` to see every command, available and upcoming.
 
@@ -35,11 +37,15 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:brain` | Capture and query tasks, bugs, decisions, notes, ideas |
 | `/dualcraft:park` | Park finished work for a later version |
 | `/dualcraft:commit` | Mode-aware Conventional Commit + CHANGELOG |
+| `/dualcraft:map` | Visual map of the brain (nodes + dependencies) |
+| `/dualcraft:roadmap` | Work grouped by target version |
+| `/dualcraft:er` | ER diagram of the database schema |
+| `/dualcraft:schema` | Edit the schema; generate Dart / TS / Firestore rules |
 
 ## Roadmap
 
 1. ✅ Core: brain, work modes, parked work, commits, help
-2. Visual brain map (nodes + dependencies), roadmap view, ER diagram and schema as source of truth
+2. ✅ Visual brain map (nodes + dependencies), roadmap view, ER diagram and schema as source of truth
 3. Process: brainstorm, plan, TDD, debug, verify, review, functional document
 4. Design: claude.ai Design → shared tokens → React / Flutter
 5. Web and mobile packs, refactoring, i18n, analytics
@@ -54,7 +60,10 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 .dualcraft/
   config.json     name, version, stacks, languages
   brain/          one note per file
+  db/schema.dbml  database schema (source of truth)
+  db/layout.json  saved ER diagram positions (optional)
+  out/            generated views: map.html, roadmap.html, er.html (gitignored)
   state.json      current work mode (local, gitignored)
 ```
 
-The brain CLI can also be used directly: `node scripts/brain.mjs help`.
+Scripts can be used directly: `node scripts/brain.mjs help`, `node scripts/er.mjs help`, `node scripts/gen.mjs help`, `node scripts/map.mjs --open`.

@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root {
+  --bg: #f5f5f3; --dot: #dcdcd6; --chrome: #ffffff; --border: #e2e2dd; --text: #1f2328; --muted: #6b6f76; --btn: #f1f1ee; --btn-hover: #e6e6e1;
+  --edge: #9aa0a8; --edge-hi: #1f2328; --card: #ffffff; --panel: #ffffff; --bar: #e6e6e1; --done: #2f9e44; --warn: #d64545;
+  --task: #2f6fdb; --bug: #d64545; --decision: #7b4fd6; --note: #6b7280; --idea: #c98a00;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #18191b; --dot: #2b2d30; --chrome: #202124; --border: #33363a; --text: #e8e8e6; --muted: #9a9ea5; --btn: #2a2c30; --btn-hover: #35383d;
+    --edge: #5f656d; --edge-hi: #e8e8e6; --card: #232427; --panel: #232427; --bar: #33363a; --done: #51cf66; --warn: #ff6b6b;
+    --task: #5b93f0; --bug: #ff6b6b; --decision: #a07ef0; --note: #9aa0a8; --idea: #f0b429;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #18191b; --dot: #2b2d30; --chrome: #202124; --border: #33363a; --text: #e8e8e6; --muted: #9a9ea5; --btn: #2a2c30; --btn-hover: #35383d;
+  --edge: #5f656d; --edge-hi: #e8e8e6; --card: #232427; --panel: #232427; --bar: #33363a; --done: #51cf66; --warn: #ff6b6b;
+  --task: #5b93f0; --bug: #ff6b6b; --decision: #a07ef0; --note: #9aa0a8; --idea: #f0b429;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+header { position: fixed; inset: 0 0 auto 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 16px; background: var(--chrome); border-bottom: 1px solid var(--border); z-index: 5; }
+header h1 { font-size: 15px; margin: 0; white-space: nowrap; }
+.meta { color: var(--muted); font-size: 12px; }
+.spacer { flex: 1; }
+.tabs { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+.tabs button { border: 0; border-radius: 0; }
+.tabs button.on { background: var(--text); color: var(--bg); }
+button, select, input { font: inherit; font-size: 13px; color: var(--text); background: var(--btn); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; }
+button { cursor: pointer; } button:hover { background: var(--btn-hover); }
+input[type=search] { width: 170px; background: var(--card); }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; font-size: 12.5px; cursor: pointer; user-select: none; border: 1px solid var(--border); background: var(--card); }
+.chip.off { opacity: .4; }
+.chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+#mapView { position: fixed; inset: 0; background-color: var(--bg); background-image: radial-gradient(var(--dot) 1px, transparent 1px); background-size: 22px 22px; touch-action: none; cursor: grab; }
+#mapView.panning { cursor: grabbing; }
+#mapView svg { width: 100%; height: 100%; display: block; }
+.node { cursor: pointer; }
+.node rect.body { fill: var(--card); stroke-width: 1.6; }
+.node text { fill: var(--text); font-size: 12.5px; }
+.node text.id { font-weight: 700; font-size: 11.5px; }
+.node.doing rect.body { stroke-width: 3; }
+.node.parked rect.body { stroke-dasharray: 5 3; }
+.node.done { opacity: .6; }
+.node.dropped { opacity: .3; }
+.node.dropped text.title { text-decoration: line-through; }
+.node.dim { opacity: .12; }
+.node.hi rect.body { stroke-width: 3.2; }
+.edge { fill: none; stroke: var(--edge); stroke-width: 1.5; }
+.edge.rel { stroke-dasharray: 4 4; }
+.edge.dim { opacity: .1; }
+.edge.hi { stroke: var(--edge-hi); stroke-width: 2.2; }
+#arrow path { fill: var(--edge); } #arrowHi path { fill: var(--edge-hi); }
+#roadView { position: fixed; inset: 0; overflow: auto; padding: 16px; display: none; }
+.cols { display: flex; gap: 14px; align-items: flex-start; min-height: 100%; }
+.col { flex: 0 0 290px; background: var(--chrome); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.col h2 { font-size: 15px; margin: 0; display: flex; justify-content: space-between; align-items: baseline; }
+.col h2 small { color: var(--muted); font-weight: 400; font-size: 12px; }
+.col .tag { font-size: 11px; color: var(--bg); background: var(--text); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
+.prog { height: 6px; border-radius: 3px; background: var(--bar); margin: 8px 0 10px; overflow: hidden; }
+.prog b { display: block; height: 100%; background: var(--done); }
+.card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--c); border-radius: 7px; padding: 7px 9px; margin-bottom: 7px; cursor: pointer; }
+.card:hover { border-color: var(--c); }
+.card .top { display: flex; justify-content: space-between; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.card .ttl { margin-top: 2px; }
+.card.done .ttl { text-decoration: line-through; color: var(--muted); }
+.card .dep { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.badge { font-size: 11px; border-radius: 4px; padding: 0 5px; border: 1px solid var(--border); white-space: nowrap; }
+.badge.blocked { color: var(--warn); border-color: var(--warn); }
+.badge.parked { border-style: dashed; }
+#panel { position: fixed; right: 16px; top: 70px; bottom: 16px; width: min(400px, calc(100vw - 32px)); overflow: auto; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; box-shadow: 0 8px 28px rgba(0,0,0,.2); display: none; z-index: 6; }
+#panel h2 { margin: 2px 0 8px; font-size: 16px; }
+#panel .x { float: right; background: none; border: 0; font-size: 20px; padding: 0 4px; }
+#panel dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 13px; margin: 0 0 10px; }
+#panel dt { color: var(--muted); }
+#panel dd { margin: 0; }
+#panel a { color: var(--task); cursor: pointer; text-decoration: underline; }
+#panel .md { border-top: 1px solid var(--border); padding-top: 8px; font-size: 13px; }
+#panel .md h3 { font-size: 13.5px; margin: 10px 0 4px; }
+#panel .md ul { padding-left: 18px; margin: 4px 0; }
+#panel .md code { background: var(--btn); padding: 0 4px; border-radius: 3px; }
+#legend { position: fixed; left: 16px; bottom: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font-size: 12px; color: var(--muted); z-index: 4; max-width: calc(100vw - 32px); }
+#empty { position: fixed; inset: 0; display: none; place-items: center; color: var(--muted); text-align: center; padding: 16px; }
+@media (max-width: 700px) { .meta, #legend { display: none; } input[type=search] { width: 120px; } }
+</style>
+</head>
+<body>
+<div id="mapView"><svg id="svg" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="arrowHi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <g id="vp"><g id="gEdges"></g><g id="gNodes"></g></g>
+</svg></div>
+<div id="roadView"><div class="cols" id="cols"></div></div>
+<div id="empty"></div>
+<header>
+  <h1 id="title"></h1><span class="meta" id="meta"></span>
+  <span class="tabs"><button id="tabMap" class="on">Mapa</button><button id="tabRoad">Roadmap</button></span>
+  <span class="spacer"></span>
+  <span id="chips"></span>
+  <select id="status" aria-label="Estado">
+    <option value="all">Todos los estados</option><option value="open" selected>Abiertos</option><option value="todo">Pendiente</option><option value="doing">En curso</option><option value="parked">Aparcado</option><option value="done">Hecho</option><option value="dropped">Descartado</option>
+  </select>
+  <select id="version" aria-label="Versión"></select>
+  <input type="search" id="q" placeholder="Buscar…">
+  <button id="relayout" title="Recolocar los nodos">Reordenar</button>
+</header>
+<div id="legend">Flecha <b>A → B</b>: B depende de A · línea discontinua: relacionado · borde grueso: en curso · discontinuo: aparcado · ● rojo: bloqueado</div>
+<div id="panel"></div>
+<script>
+/*__DATA__*/
+(() => {
+  const NS = 'http://www.w3.org/2000/svg'
+  const TYPES = { task: 'Tarea', bug: 'Bug', decision: 'Decisión', note: 'Nota', idea: 'Idea' }
+  const STATUS = { todo: 'Pendiente', doing: 'En curso', done: 'Hecho', parked: 'Aparcado', dropped: 'Descartado' }
+  const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} } }
+  const KEY = 'dualcraft-map:' + DATA.project
+  const $ = (id) => document.getElementById(id)
+  const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue('--' + n).trim()
+  const cmpVer = (a, b) => { const pa = String(a).split(/[.+-]/).map(Number), pb = String(b).split(/[.+-]/).map(Number); for (let i = 0; i < 3; i++) { const d = (pa[i] || 0) - (pb[i] || 0); if (d) return d } return 0 }
+
+  const nodes = DATA.nodes.map((n) => ({ ...n }))
+  const byId = Object.fromEntries(nodes.map((n) => [n.id, n]))
+  const edges = DATA.edges.filter((e) => byId[e.from] && byId[e.to])
+  const finished = (n) => n.status === 'done' || n.status === 'dropped'
+  for (const n of nodes) {
+    n.blocked = !finished(n) && n.depends_on.some((d) => byId[d] && !finished(byId[d]) && byId[d].type !== 'decision' && byId[d].type !== 'note')
+    n.requiredBy = nodes.filter((m) => m.depends_on.includes(n.id)).map((m) => m.id)
+  }
+  $('title').textContent = 'Brain · ' + DATA.project
+  $('meta').textContent = `v${DATA.version} · ${nodes.length} notas · ${edges.length} enlaces`
+
+  // ---------- filters ----------
+  const state = { types: new Set(Object.keys(TYPES)), status: INITIAL_VIEW === 'road' ? 'open' : 'all', version: 'all', q: '', view: 'map' }
+  const chips = $('chips')
+  for (const [t, label] of Object.entries(TYPES)) {
+    const c = document.createElement('span'); c.className = 'chip'; c.innerHTML = `<i style="background:var(--${t})"></i>${label}`
+    c.onclick = () => { state.types.has(t) ? state.types.delete(t) : state.types.add(t); c.classList.toggle('off'); refresh() }
+    chips.appendChild(c)
+  }
+  const versions = [...new Set(nodes.map((n) => n.target).filter(Boolean))].sort(cmpVer)
+  $('version').innerHTML = `<option value="all">Todas las versiones</option>${versions.map((v) => `<option>${esc(v)}</option>`).join('')}<option value="none">Sin versión</option>`
+  $('status').value = state.status
+  $('status').onchange = (e) => { state.status = e.target.value; refresh() }
+  $('version').onchange = (e) => { state.version = e.target.value; refresh() }
+  $('q').oninput = (e) => { state.q = e.target.value.toLowerCase(); refresh() }
+  const visible = (n) => state.types.has(n.type)
+    && (state.status === 'all' || (state.status === 'open' ? !finished(n) : n.status === state.status))
+    && (state.version === 'all' || (state.version === 'none' ? !n.target : n.target === state.version))
+    && (!state.q || (n.id + ' ' + n.title + ' ' + (n.tags || []).join(' ') + ' ' + (n.body || '')).toLowerCase().includes(state.q))
+
+  // ---------- map: force layout ----------
+  const ctx = document.createElement('canvas').getContext('2d')
+  const measure = (s, font) => { ctx.font = font; return ctx.measureText(s).width }
+  const trunc = (s, n = 30) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
+  for (const n of nodes) {
+    n.label = (n.status === 'done' ? '✓ ' : n.status === 'parked' ? '⏸ ' : '') + trunc(n.title)
+    n.idW = measure(n.id, '700 11.5px system-ui, sans-serif')
+    n.w = Math.ceil(23 + n.idW + 6 + measure(n.label, '12.5px system-ui, sans-serif') * 1.04 + (n.blocked ? 24 : 14))
+    n.h = 30
+  }
+  function simulate(list, iters = 420) {
+    const ids = new Set(list.map((n) => n.id))
+    const E = edges.filter((e) => ids.has(e.from) && ids.has(e.to))
+    list.forEach((n, i) => { if (n.x == null) { const a = i * 2.399963; const r = 40 * Math.sqrt(i + 1); n.x = Math.cos(a) * r; n.y = Math.sin(a) * r } n.vx = 0; n.vy = 0 })
+    for (let it = 0; it < iters; it++) {
+      const alpha = 1 - it / iters
+      for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+        const a = list[i], b = list[j]; let dx = b.x - a.x, dy = b.y - a.y; let d2 = dx * dx + dy * dy || 0.01
+        const minX = (a.w + b.w) / 2 + 24, minY = (a.h + b.h) / 2 + 22
+        let f = 14000 / d2
+        if (Math.abs(dx) < minX && Math.abs(dy) < minY) f += 2.5
+        const d = Math.sqrt(d2); dx /= d; dy /= d
+        a.vx -= dx * f; a.vy -= dy * f; b.vx += dx * f; b.vy += dy * f
+      }
+      for (const e of E) {
+        const a = byId[e.from], b = byId[e.to]; const dx = b.x - a.x, dy = b.y - a.y; const d = Math.sqrt(dx * dx + dy * dy) || 1
+        const L = e.kind === 'related' ? 230 : 190; const k = (d - L) * 0.035
+        a.vx += dx / d * k; a.vy += dy / d * k; b.vx -= dx / d * k; b.vy -= dy / d * k
+        if (e.kind === 'depends_on') { a.vy -= 0.6; b.vy += 0.6 } // prerequisites drift up
+      }
+      for (const n of list) {
+        if (n.fixed) { n.vx = n.vy = 0; continue }
+        n.vx -= n.x * 0.004; n.vy -= n.y * 0.004
+        const step = Math.min(30, 0.5 + alpha * 8)
+        const sp = Math.hypot(n.vx, n.vy); if (sp > step) { n.vx = n.vx / sp * step; n.vy = n.vy / sp * step }
+        n.x += n.vx; n.y += n.vy; n.vx *= 0.55; n.vy *= 0.55
+      }
+    }
+  }
+  const saved = store.get(KEY) || {}
+  let anySaved = false
+  for (const n of nodes) if (saved[n.id]) { n.x = saved[n.id].x; n.y = saved[n.id].y; anySaved = true }
+  if (!anySaved) simulate(nodes)
+  else { const fresh = nodes.filter((n) => n.x == null); if (fresh.length) { nodes.forEach((n) => (n.fixed = n.x != null)); simulate(nodes, 200); nodes.forEach((n) => (n.fixed = false)) } }
+  const save = () => store.set(KEY, Object.fromEntries(nodes.map((n) => [n.id, { x: Math.round(n.x), y: Math.round(n.y) }])))
+
+  const gN = $('gNodes'), gE = $('gEdges')
+  const nodeEls = new Map(), edgeEls = []
+  function buildMap() {
+    gN.innerHTML = ''; gE.innerHTML = ''; nodeEls.clear(); edgeEls.length = 0
+    for (const e of edges) { const p = el('path', { class: 'edge' + (e.kind === 'related' ? ' rel' : '') }, gE); if (e.kind === 'depends_on') p.setAttribute('marker-end', 'url(#arrow)'); edgeEls.push({ e, p }) }
+    for (const n of nodes) {
+      const g = el('g', { class: `node ${n.status}`, 'data-id': n.id }, gN)
+      el('rect', { class: 'body', x: -n.w / 2, y: -n.h / 2, width: n.w, height: n.h, rx: 15, stroke: `var(--${n.type})` }, g)
+      el('circle', { cx: -n.w / 2 + 13, cy: 0, r: 5, fill: `var(--${n.type})` }, g)
+      const tid = el('text', { class: 'id', x: -n.w / 2 + 23, y: 4.5 }, g); tid.textContent = n.id
+      const tt = el('text', { class: 'title', x: -n.w / 2 + 29 + n.idW, y: 4.5 }, g); tt.textContent = n.label
+      if (n.blocked) el('circle', { cx: n.w / 2 - 11, cy: 0, r: 4, fill: 'var(--warn)' }, g)
+      const tl = el('title', {}, g); tl.textContent = `${n.id} · ${TYPES[n.type]} · ${STATUS[n.status]}${n.target ? ' · ' + n.target : ''}\n${n.title}${n.blocked ? '\nBloqueado por dependencias sin terminar' : ''}`
+      nodeEls.set(n.id, g)
+    }
+    position()
+  }
+  function edgePath(a, b) {
+    // from the border of a to the border of b
+    const clip = (n, tx, ty) => { const dx = tx - n.x, dy = ty - n.y; const sx = (n.w / 2 + 3) / Math.abs(dx || 1e-6), sy = (n.h / 2 + 3) / Math.abs(dy || 1e-6); const s = Math.min(sx, sy, 1); return [n.x + dx * s, n.y + dy * s] }
+    const [x1, y1] = clip(a, b.x, b.y), [x2, y2] = clip(b, a.x, a.y)
+    return `M${x1.toFixed(1)},${y1.toFixed(1)} L${x2.toFixed(1)},${y2.toFixed(1)}`
+  }
+  function position() {
+    for (const n of nodes) nodeEls.get(n.id).setAttribute('transform', `translate(${n.x.toFixed(1)},${n.y.toFixed(1)})`)
+    // depends_on: arrow from the prerequisite (to) to the dependent (from)
+    for (const { e, p } of edgeEls) p.setAttribute('d', e.kind === 'depends_on' ? edgePath(byId[e.to], byId[e.from]) : edgePath(byId[e.from], byId[e.to]))
+  }
+  let hover = null, selected = null
+  function refreshMap() {
+    const focus = hover || selected
+    const near = new Set()
+    if (focus) { near.add(focus); for (const e of edges) { if (e.from === focus) near.add(e.to); if (e.to === focus) near.add(e.from) } }
+    for (const n of nodes) {
+      const g = nodeEls.get(n.id); const vis = visible(n)
+      g.style.display = vis ? '' : 'none'
+      g.classList.toggle('dim', !!focus && !near.has(n.id)); g.classList.toggle('hi', n.id === focus)
+    }
+    for (const { e, p } of edgeEls) {
+      const vis = visible(byId[e.from]) && visible(byId[e.to])
+      p.style.display = vis ? '' : 'none'
+      const on = !!focus && (e.from === focus || e.to === focus)
+      p.classList.toggle('hi', on); p.classList.toggle('dim', !!focus && !on)
+      if (e.kind === 'depends_on') p.setAttribute('marker-end', on ? 'url(#arrowHi)' : 'url(#arrow)')
+    }
+  }
+
+  // ---------- pan / zoom / drag ----------
+  const svg = $('svg'), vp = $('vp'), mapView = $('mapView')
+  let view = { x: 0, y: 0, k: 1 }
+  const applyView = () => vp.setAttribute('transform', `translate(${view.x},${view.y}) scale(${view.k})`)
+  const toWorld = (cx, cy) => { const b = svg.getBoundingClientRect(); return [(cx - b.left - view.x) / view.k, (cy - b.top - view.y) / view.k] }
+  function fit() {
+    const vis = nodes.filter(visible); const list = vis.length ? vis : nodes
+    if (!list.length) return
+    const x1 = Math.min(...list.map((n) => n.x - n.w / 2)) - 40, x2 = Math.max(...list.map((n) => n.x + n.w / 2)) + 40
+    const y1 = Math.min(...list.map((n) => n.y - n.h / 2)) - 40, y2 = Math.max(...list.map((n) => n.y + n.h / 2)) + 40
+    const r = svg.getBoundingClientRect(), top = document.querySelector('header').offsetHeight
+    const k = Math.min(1.3, r.width / (x2 - x1), (r.height - top) / (y2 - y1))
+    view = { k, x: (r.width - (x2 - x1) * k) / 2 - x1 * k, y: top + (r.height - top - (y2 - y1) * k) / 2 - y1 * k }
+    applyView()
+  }
+  let drag = null
+  mapView.addEventListener('pointerdown', (e) => {
+    const g = e.target.closest('.node')
+    if (g) { const n = byId[g.dataset.id]; const [wx, wy] = toWorld(e.clientX, e.clientY); drag = { n, dx: wx - n.x, dy: wy - n.y, moved: false } }
+    else { drag = { pan: true, sx: e.clientX - view.x, sy: e.clientY - view.y, moved: false }; mapView.classList.add('panning') }
+    mapView.setPointerCapture(e.pointerId)
+  })
+  mapView.addEventListener('pointermove', (e) => {
+    if (!drag) { const g = e.target.closest('.node'); const h = g ? g.dataset.id : null; if (h !== hover) { hover = h; refreshMap() } return }
+    drag.moved = true
+    if (drag.pan) { view.x = e.clientX - drag.sx; view.y = e.clientY - drag.sy; applyView(); return }
+    const [wx, wy] = toWorld(e.clientX, e.clientY); drag.n.x = wx - drag.dx; drag.n.y = wy - drag.dy; position()
+  })
+  mapView.addEventListener('pointerup', () => {
+    if (!drag) return
+    mapView.classList.remove('panning')
+    if (drag.n && drag.moved) save()
+    if (!drag.moved) open(drag.n ? drag.n.id : null)
+    drag = null
+  })
+  mapView.addEventListener('wheel', (e) => {
+    e.preventDefault()
+    const b = svg.getBoundingClientRect(); const cx = e.clientX - b.left, cy = e.clientY - b.top
+    const k = Math.min(3, Math.max(0.15, view.k * Math.exp(-e.deltaY * 0.0015)))
+    view.x = cx - (cx - view.x) * (k / view.k); view.y = cy - (cy - view.y) * (k / view.k); view.k = k; applyView()
+  }, { passive: false })
+  $('relayout').onclick = () => { try { localStorage.removeItem(KEY) } catch {} nodes.forEach((n) => { n.x = n.y = null }); simulate(nodes); position(); fit() }
+
+  // ---------- roadmap ----------
+  function buildRoad() {
+    const list = nodes.filter((n) => ['task', 'bug', 'idea'].includes(n.type) && visible(n))
+    const groups = {}
+    for (const n of list) (groups[n.target || 'none'] ||= []).push(n)
+    const keys = Object.keys(groups).sort((a, b) => (a === 'none') - (b === 'none') || cmpVer(a, b))
+    const next = keys.find((k) => k !== 'none' && cmpVer(k, DATA.version) > 0)
+    const order = { doing: 0, todo: 1, parked: 2, done: 3, dropped: 4 }
+    $('cols').innerHTML = keys.map((k) => {
+      const g = groups[k].sort((a, b) => order[a.status] - order[b.status] || a.id.localeCompare(b.id))
+      const all = nodes.filter((n) => ['task', 'bug', 'idea'].includes(n.type) && (n.target || 'none') === k && n.status !== 'dropped')
+      const done = all.filter((n) => n.status === 'done').length
+      const pct = all.length ? Math.round(done / all.length * 100) : 0
+      return `<section class="col"><h2><span>${k === 'none' ? 'Sin versión' : 'v' + esc(k)}${k === next ? '<span class="tag">siguiente</span>' : ''}</span><small>${done}/${all.length}</small></h2>
+        <div class="prog"><b style="width:${pct}%"></b></div>
+        ${g.map((n) => `<div class="card ${n.status}" style="--c:var(--${n.type})" data-id="${esc(n.id)}">
+          <div class="top"><span>${esc(n.id)} · ${TYPES[n.type]}</span><span>${n.blocked ? '<span class="badge blocked">bloqueado</span> ' : ''}<span class="badge ${n.status}">${STATUS[n.status]}</span></span></div>
+          <div class="ttl">${esc(n.title)}</div>
+          ${n.depends_on.length ? `<div class="dep">depende de ${n.depends_on.map(esc).join(', ')}</div>` : ''}
+        </div>`).join('')}</section>`
+    }).join('')
+    $('cols').querySelectorAll('.card').forEach((c) => (c.onclick = () => open(c.dataset.id)))
+  }
+
+  // ---------- detail panel ----------
+  function md(s) {
+    const lines = esc(s).split('\n'); let html = '', inList = false
+    for (const l of lines) {
+      const li = l.match(/^\s*[-*]\s+(.*)$/)
+      if (li) { if (!inList) { html += '<ul>'; inList = true } html += `<li>${inline(li[1])}</li>`; continue }
+      if (inList) { html += '</ul>'; inList = false }
+      const h = l.match(/^#{1,6}\s+(.*)$/)
+      if (h) html += `<h3>${inline(h[1])}</h3>`
+      else if (l.trim()) html += `<p>${inline(l)}</p>`
+    }
+    return html + (inList ? '</ul>' : '')
+  }
+  const inline = (s) => s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\b([TBDNI]-\d{3,})\b/g, (m) => byId[m] ? `<a data-go="${m}">${m}</a>` : m)
+  const link = (id) => byId[id] ? `<a data-go="${id}">${id}</a> ${esc(trunc(byId[id].title, 40))}` : esc(id)
+  function open(id) {
+    selected = id; refreshMap()
+    const p = $('panel')
+    if (!id) { p.style.display = 'none'; return }
+    const n = byId[id]
+    p.innerHTML = `<button class="x" aria-label="Cerrar">×</button>
+      <div class="meta">${esc(n.id)} · ${TYPES[n.type]}</div><h2>${esc(n.title)}</h2>
+      <dl><dt>Estado</dt><dd>${STATUS[n.status]}${n.blocked ? ' · <span style="color:var(--warn)">bloqueado</span>' : ''}</dd>
+      ${n.target ? `<dt>Versión</dt><dd>${esc(n.target)}</dd>` : ''}${n.priority ? `<dt>Prioridad</dt><dd>${esc(n.priority)}</dd>` : ''}
+      ${n.branch ? `<dt>Rama</dt><dd><code>${esc(n.branch)}</code></dd>` : ''}${n.flag ? `<dt>Flag</dt><dd><code>${esc(n.flag)}</code></dd>` : ''}
+      ${n.tags?.length ? `<dt>Tags</dt><dd>${n.tags.map(esc).join(', ')}</dd>` : ''}
+      ${n.depends_on.length ? `<dt>Depende de</dt><dd>${n.depends_on.map(link).join('<br>')}</dd>` : ''}
+      ${n.requiredBy.length ? `<dt>Necesaria para</dt><dd>${n.requiredBy.map(link).join('<br>')}</dd>` : ''}
+      ${n.related?.length ? `<dt>Relacionado</dt><dd>${n.related.map(link).join('<br>')}</dd>` : ''}
+      <dt>Archivo</dt><dd><code>.dualcraft/brain/${esc(n.file)}</code></dd></dl>
+      <div class="md">${md(n.body || '')}</div>`
+    p.style.display = 'block'
+    p.querySelector('.x').onclick = () => open(null)
+    p.querySelectorAll('[data-go]').forEach((a) => (a.onclick = () => { open(a.dataset.go); if (state.view === 'map') center(a.dataset.go) }))
+  }
+  function center(id) { const n = byId[id]; const r = svg.getBoundingClientRect(); view.x = r.width / 2 - 200 - n.x * view.k; view.y = r.height / 2 - n.y * view.k; applyView() }
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') open(null) })
+
+  // ---------- views ----------
+  function setView(v) {
+    state.view = v
+    $('tabMap').classList.toggle('on', v === 'map'); $('tabRoad').classList.toggle('on', v === 'road')
+    $('mapView').style.display = v === 'map' ? '' : 'none'; $('roadView').style.display = v === 'road' ? 'block' : 'none'
+    $('legend').style.display = v === 'map' ? '' : 'none'; $('relayout').style.display = v === 'map' ? '' : 'none'
+    $('roadView').style.paddingTop = document.querySelector('header').offsetHeight + 16 + 'px'
+    refresh()
+    if (v === 'map') fit()
+  }
+  function refresh() {
+    const any = nodes.some(visible)
+    $('empty').style.display = nodes.length && any ? 'none' : 'grid'
+    $('empty').textContent = nodes.length ? 'Ninguna nota coincide con los filtros.' : 'El brain está vacío. Apunta tareas, decisiones o ideas con /dualcraft:brain.'
+    if (state.view === 'map') refreshMap(); else buildRoad()
+  }
+  $('tabMap').onclick = () => setView('map'); $('tabRoad').onclick = () => setView('road')
+  buildMap()
+  setView(INITIAL_VIEW === 'road' ? 'road' : 'map')
+  window.addEventListener('resize', () => { if (state.view === 'map') fit() })
+})()
+</script>
+</body>
+</html>

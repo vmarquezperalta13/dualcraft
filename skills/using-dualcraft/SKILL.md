@@ -30,6 +30,12 @@ DualCraft is a web + mobile workflow (Next.js ⇄ Flutter) built around a **proj
 | "apunta", "déjalo para luego", "¿qué decidimos sobre…?", backlog questions | `dualcraft:brain` |
 | Finished work that must wait for a later version | `dualcraft:park` |
 | Committing, writing commit messages, CHANGELOG | `dualcraft:commit` |
+| See the brain as a network of nodes | `dualcraft:map` |
+| What goes in which version, progress | `dualcraft:roadmap` |
+| See the database model as a diagram | `dualcraft:er` |
+| Define/change stored data, generate models/types/rules | `dualcraft:schema` |
 | "¿qué comandos hay?", help | `dualcraft:help` |
 
-More packs (map, ER, process, design, web, mobile, refactor, security, marketing, converter) are listed by `dualcraft:help` and are added phase by phase.
+**Data rule:** in a project with `.dualcraft/db/schema.dbml`, any change to stored data starts in the schema (`dualcraft:schema`) and models/types are regenerated — never hand-edit generated files.
+
+More packs (process, design, web, mobile, refactor, security, marketing, converter) are listed by `dualcraft:help` and are added phase by phase.

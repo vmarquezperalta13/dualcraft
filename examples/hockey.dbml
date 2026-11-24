@@ -1,0 +1,101 @@
+// Example: hockey playoff pool (the ER example DualCraft was designed from)
+Project hockey_pool {
+  database_type: 'PostgreSQL'
+  Note: 'Playoff pool: users pick scores and stat leaders per round'
+}
+
+Table PlayoffRound {
+  id int [pk, increment]
+  team1Id int [not null, ref: > HockeyTeam.id]
+  team2Id int [not null, ref: > HockeyTeam.id]
+  startTime timestamp
+  endTime timestamp
+  roundNum int [not null]
+}
+
+Table HockeyGame {
+  id int [pk, increment]
+  roundId int [not null, ref: > PlayoffRound.id]
+  startTime timestamp [not null]
+  description varchar
+  team1Id int [not null, ref: > HockeyTeam.id]
+  team2Id int [not null, ref: > HockeyTeam.id]
+}
+
+Table GameScores {
+  id int [pk, ref: - HockeyGame.id]
+  team1Score int [not null, default: 0]
+  team2Score int [not null, default: 0]
+}
+
+Table RoundStats {
+  id int [pk, ref: - PlayoffRound.id]
+  numShutouts int
+  goalLeaderId int [ref: > HockeyTeamPlayer.id]
+  assistLeaderId int [ref: > HockeyTeamPlayer.id]
+  penaltyLeaderId int [ref: > HockeyTeamPlayer.id]
+  plusMinusLeaderId int [ref: > HockeyTeamPlayer.id]
+  faceoffsWonLeaderId int [ref: > HockeyTeamPlayer.id]
+  sogLeaderId int [ref: > HockeyTeamPlayer.id]
+}
+
+Table HockeyTeam {
+  id int [pk, increment]
+  name varchar [not null, unique]
+  logo varchar
+}
+
+Table HockeyTeamPlayer {
+  id int [pk, increment]
+  hockeyTeamId int [not null, ref: > HockeyTeam.id]
+  firstName varchar [not null]
+  lastName varchar [not null]
+  jerseyNum int
+  position position
+}
+
+Enum position {
+  C [note: 'Center']
+  LW
+  RW
+  D
+  G
+}
+
+Table User {
+  id int [pk, increment]
+  username varchar [not null, unique]
+  password varchar [not null, note: 'bcrypt hash, never plain text']
+}
+
+Table UserInfo {
+  id int [pk, ref: - User.id]
+  firstName varchar
+  lastName varchar
+  email varchar [not null, unique]
+  round1Points int [default: 0]
+  round2Points int [default: 0]
+  round3Points int [default: 0]
+  round4Points int [default: 0]
+}
+
+Table UserStatsPicks {
+  id int [pk, increment]
+  userId int [not null, ref: > User.id]
+  roundId int [not null, ref: > PlayoffRound.id]
+  goalLeaderId int [ref: > HockeyTeamPlayer.id]
+  assistLeaderId int [ref: > HockeyTeamPlayer.id]
+  penaltyLeaderId int [ref: > HockeyTeamPlayer.id]
+  plusMinusLeaderId int [ref: > HockeyTeamPlayer.id]
+  faceoffsWonLeaderId int [ref: > HockeyTeamPlayer.id]
+  sogLeaderId int [ref: > HockeyTeamPlayer.id]
+  numShutouts int
+}
+
+Table UserScorePicks {
+  id int [pk, increment]
+  userId int [not null, ref: > User.id]
+  hockeyGameId int [not null, ref: > HockeyGame.id]
+  team1score int [not null]
+  team2score int [not null]
+}

@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root {
+  --bg: #f4f4f2; --dot: #d9d9d4; --chrome: #ffffff; --chrome-border: #e2e2dd; --text: #1f2328; --muted: #6b6f76;
+  --edge: #5b5f66; --edge-hi: #d9480f; --btn: #f1f1ee; --btn-hover: #e6e6e1; --accent: #d9480f; --panel: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #18191b; --dot: #2c2e31; --chrome: #202124; --chrome-border: #33363a; --text: #e8e8e6; --muted: #9a9ea5;
+    --edge: #a6abb3; --edge-hi: #ff8a50; --btn: #2a2c30; --btn-hover: #35383d; --accent: #ff8a50; --panel: #232427;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #18191b; --dot: #2c2e31; --chrome: #202124; --chrome-border: #33363a; --text: #e8e8e6; --muted: #9a9ea5;
+  --edge: #a6abb3; --edge-hi: #ff8a50; --btn: #2a2c30; --btn-hover: #35383d; --accent: #ff8a50; --panel: #232427;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+header { position: fixed; inset: 0 0 auto 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 16px; background: var(--chrome); border-bottom: 1px solid var(--chrome-border); z-index: 5; }
+header h1 { font-size: 15px; margin: 0 8px 0 0; white-space: nowrap; }
+header .meta { color: var(--muted); font-size: 12px; margin-right: auto; }
+button, label.tg { font: inherit; font-size: 13px; color: var(--text); background: var(--btn); border: 1px solid var(--chrome-border); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+button:hover, label.tg:hover { background: var(--btn-hover); }
+label.tg input { margin: 0 4px 0 0; vertical-align: -1px; }
+#stage { position: fixed; inset: 0; background-color: var(--bg); background-image: radial-gradient(var(--dot) 1px, transparent 1px); background-size: 20px 20px; cursor: grab; touch-action: none; }
+#stage.panning { cursor: grabbing; }
+svg { width: 100%; height: 100%; display: block; }
+.tbl { cursor: move; }
+.tbl.dim, .edge.dim { opacity: .18; }
+.edge path.line { fill: none; stroke: var(--edge); stroke-width: 1.4; }
+.edge .mk { fill: none; stroke: var(--edge); stroke-width: 1.4; }
+.edge .mk.o { fill: var(--bg); }
+.edge.hi path.line, .edge.hi .mk { stroke: var(--edge-hi); stroke-width: 2; }
+.edge .hit { fill: none; stroke: transparent; stroke-width: 10; cursor: help; }
+#panel { position: fixed; right: 16px; bottom: 16px; width: min(360px, calc(100vw - 32px)); max-height: 60vh; overflow: auto; background: var(--panel); border: 1px solid var(--chrome-border); border-radius: 10px; padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.18); display: none; z-index: 6; }
+#panel h2 { margin: 0 0 4px; font-size: 15px; }
+#panel .note { color: var(--muted); margin: 0 0 8px; white-space: pre-wrap; }
+#panel table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+#panel td { padding: 3px 4px; border-top: 1px solid var(--chrome-border); vertical-align: top; }
+#panel td.t { color: var(--muted); }
+#panel .x { float: right; background: none; border: 0; font-size: 18px; padding: 0 4px; }
+#panel ul { padding-left: 18px; margin: 6px 0 0; font-size: 12.5px; }
+#tip { position: fixed; pointer-events: none; background: var(--panel); border: 1px solid var(--chrome-border); border-radius: 6px; padding: 4px 8px; font-size: 12px; display: none; z-index: 7; }
+#legend { position: fixed; left: 16px; bottom: 16px; background: var(--panel); border: 1px solid var(--chrome-border); border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--muted); z-index: 4; }
+#legend svg { width: 44px; height: 16px; vertical-align: middle; display: inline-block; }
+#legend span { margin-right: 10px; white-space: nowrap; }
+#toast { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 6px 12px; border-radius: 6px; font-size: 13px; display: none; z-index: 8; }
+@media (max-width: 640px) { header .meta { display: none; } #legend { display: none; } }
+</style>
+</head>
+<body>
+<div id="stage"><svg id="svg" xmlns="http://www.w3.org/2000/svg"><g id="vp"><g id="edges"></g><g id="tables"></g></g></svg></div>
+<header>
+  <h1 id="title"></h1><span class="meta" id="meta"></span>
+  <label class="tg"><input type="checkbox" id="showTypes" checked>Tipos</label>
+  <button id="fit" title="Ajustar a la pantalla">Ajustar</button>
+  <button id="relayout" title="Volver a la distribución automática">Reordenar</button>
+  <button id="copyLayout" title="Copia las posiciones para guardarlas en .dualcraft/db/layout.json">Copiar layout</button>
+  <button id="png">PNG</button>
+  <button id="svgBtn">SVG</button>
+</header>
+<div id="legend"></div>
+<div id="panel"></div>
+<div id="tip"></div>
+<div id="toast"></div>
+<script>
+/*__DATA__*/
+(() => {
+  const NS = 'http://www.w3.org/2000/svg'
+  const HEAD = 30, ROW = 22, PADX = 12, GAP_X = 90, GAP_Y = 80, STUB = 26
+  const DEFAULT_HEAD = '#F4B6A4', HEAD_BORDER = '#E39A86', ROW_A = '#EAEAEA', ROW_B = '#F6F6F6', BORDER = '#B9B9B9', INK = '#2B2B2B', INK_MUTED = '#8A8A8A'
+  const FONT = '13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+  const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} }, del(k) { try { localStorage.removeItem(k) } catch {} } }
+  const KEY = 'dualcraft-er:' + META.project
+  const $ = (id) => document.getElementById(id)
+  const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+
+  $('title').textContent = 'ER · ' + META.project
+  $('meta').textContent = `${MODEL.tables.length} tablas · ${MODEL.refs.length} relaciones${MODEL.database ? ' · ' + MODEL.database : ''} · ${META.source}`
+
+  // ---------- measure ----------
+  const ctx = document.createElement('canvas').getContext('2d')
+  const textW = (s, bold) => { ctx.font = (bold ? '600 ' : '') + FONT; return ctx.measureText(s).width }
+  let showTypes = true
+  const tables = MODEL.tables.map((t) => ({ ...t, x: 0, y: 0, w: 0, h: HEAD + t.fields.length * ROW }))
+  const byName = Object.fromEntries(tables.map((t) => [t.name, t]))
+  const sizeTables = () => {
+    for (const t of tables) {
+      let w = textW(t.name, true) + PADX * 2
+      for (const f of t.fields) {
+        const badge = f.pk ? 'PK' : f.fk ? 'FK' : ''
+        const right = (showTypes ? f.type : '') + (badge ? '  ' + badge : '')
+        w = Math.max(w, textW(f.name, f.pk) + (right ? textW(right) + 24 : 0) + PADX * 2)
+      }
+      t.w = Math.ceil(Math.max(150, w))
+    }
+  }
+  sizeTables()
+
+  // ---------- auto layout: parents above children, barycentric ordering ----------
+  function autoLayout() {
+    const parents = new Map(tables.map((t) => [t.name, new Set()]))
+    for (const r of MODEL.refs) {
+      const child = r.fk.table, parent = r.fk.table === r.a.table && r.fk.field === r.a.field ? r.b.table : r.a.table
+      if (child !== parent) parents.get(child).add(parent)
+    }
+    const rank = new Map(); const visiting = new Set()
+    const rk = (n) => { if (rank.has(n)) return rank.get(n); if (visiting.has(n)) return 0; visiting.add(n); let r = 0; for (const p of parents.get(n)) r = Math.max(r, rk(p) + 1); visiting.delete(n); rank.set(n, r); return r }
+    tables.forEach((t) => rk(t.name))
+    const layers = []
+    for (const t of tables) (layers[rank.get(t.name)] ||= []).push(t)
+    const cols = Math.max(3, Math.ceil(Math.sqrt(tables.length)) + 1)
+    const order = new Map()
+    layers.forEach((L) => L.forEach((t, i) => order.set(t.name, i)))
+    for (let pass = 0; pass < 3; pass++) for (const L of layers) {
+      if (!L) continue
+      for (const t of L) { const ps = [...parents.get(t.name)]; t._bc = ps.length ? ps.reduce((s, p) => s + (order.get(p) ?? 0), 0) / ps.length : order.get(t.name) }
+      L.sort((a, b) => a._bc - b._bc).forEach((t, i) => order.set(t.name, i))
+    }
+    let y = 40
+    for (const L of layers) {
+      if (!L) continue
+      for (let i = 0; i < L.length; i += cols) {
+        const row = L.slice(i, i + cols); let x = 40
+        for (const t of row) { t.x = x; t.y = y; x += t.w + GAP_X }
+        y += Math.max(...row.map((t) => t.h)) + GAP_Y
+      }
+    }
+  }
+  function applyLayout(pos) { let any = false; for (const t of tables) if (pos && pos[t.name]) { t.x = pos[t.name].x; t.y = pos[t.name].y; any = true } return any }
+  autoLayout()
+  applyLayout(LAYOUT?.positions || LAYOUT)
+  applyLayout(store.get(KEY))
+  const savePositions = () => store.set(KEY, Object.fromEntries(tables.map((t) => [t.name, { x: Math.round(t.x), y: Math.round(t.y) }])))
+
+  // ---------- render tables ----------
+  const gT = $('tables'), gE = $('edges')
+  const tableEls = new Map()
+  function renderTables() {
+    gT.innerHTML = ''
+    for (const t of tables) {
+      const g = el('g', { class: 'tbl', 'data-name': t.name }, gT)
+      el('rect', { x: 1.5, y: 2.5, width: t.w, height: t.h, rx: 4, fill: 'rgba(0,0,0,.10)' }, g)
+      const head = t.headercolor || DEFAULT_HEAD
+      el('rect', { x: 0, y: 0, width: t.w, height: t.h, rx: 4, fill: ROW_B, stroke: BORDER }, g)
+      el('path', { d: `M0,${HEAD} V4 a4,4 0 0 1 4,-4 H${t.w - 4} a4,4 0 0 1 4,4 V${HEAD} Z`, fill: head, stroke: t.headercolor ? 'rgba(0,0,0,.18)' : HEAD_BORDER }, g)
+      const title = el('text', { x: PADX, y: HEAD / 2 + 4.5, fill: INK, 'font-weight': 600, 'font-size': 13.5 }, g); title.textContent = t.name
+      t.fields.forEach((f, i) => {
+        const y = HEAD + i * ROW
+        el('rect', { x: 0.5, y, width: t.w - 1, height: ROW, fill: i % 2 ? ROW_B : ROW_A }, g)
+        const n = el('text', { x: PADX, y: y + ROW / 2 + 4.5, fill: INK, 'font-size': 13, 'font-weight': f.pk ? 600 : 400, 'text-decoration': f.pk ? 'underline' : 'none' }, g); n.textContent = f.name
+        const badge = f.pk ? 'PK' : f.fk ? 'FK' : ''
+        const right = (showTypes ? f.type + (f.notNull || f.pk ? '' : '?') : '') + (badge ? '  ' + badge : '')
+        if (right) { const r = el('text', { x: t.w - PADX, y: y + ROW / 2 + 4.5, fill: INK_MUTED, 'font-size': 11.5, 'text-anchor': 'end' }, g); r.textContent = right }
+      })
+      el('rect', { x: 0, y: 0, width: t.w, height: t.h, rx: 4, fill: 'none', stroke: BORDER }, g)
+      g.setAttribute('transform', `translate(${t.x},${t.y})`)
+      tableEls.set(t.name, g)
+    }
+  }
+
+  // ---------- edges with crow's foot notation ----------
+  const fieldY = (t, field) => { const i = t.fields.findIndex((f) => f.name === field); return t.y + (i < 0 ? HEAD / 2 : HEAD + i * ROW + ROW / 2) }
+  function ends(r) {
+    // returns markers for a-end and b-end: 'many' (zero-or-many), 'one' (exactly one), 'zeroOne'
+    const fkIsA = r.fk.table === r.a.table && r.fk.field === r.a.field
+    const parentMarker = r.required ? 'one' : 'zeroOne'
+    if (r.aMany && r.bMany) return ['many', 'many']
+    if (r.aMany) return ['many', parentMarker]
+    if (r.bMany) return [parentMarker, 'many']
+    return fkIsA ? ['zeroOne', parentMarker] : [parentMarker, 'zeroOne']
+  }
+  function marker(g, x, y, d, kind) {
+    // d = +1 the line leaves to the right of x, -1 to the left
+    const line = (x1, y1, x2, y2) => el('line', { x1, y1, x2, y2, class: 'mk' }, g)
+    if (kind === 'many') { line(x + d * 13, y, x, y - 7); line(x + d * 13, y, x, y + 7); line(x + d * 13, y, x, y) }
+    else line(x + d * 13, y - 7, x + d * 13, y + 7)
+    if (kind === 'one') line(x + d * 19, y - 7, x + d * 19, y + 7)
+    else el('circle', { cx: x + d * 21, cy: y, r: 4, class: 'mk o' }, g)
+  }
+  const pairCount = new Map()
+  function route(r, k) {
+    const A = byName[r.a.table], B = byName[r.b.table]
+    const ya = fieldY(A, r.a.field), yb = fieldY(B, r.b.field)
+    let sa, sb
+    if (A === B) { sa = sb = 1 }
+    else if (A.x + A.w + 2 * STUB <= B.x) { sa = 1; sb = -1 }
+    else if (B.x + B.w + 2 * STUB <= A.x) { sa = -1; sb = 1 }
+    else { const right = Math.abs((A.x + A.w) - (B.x + B.w)) < Math.abs(A.x - B.x) || A.x + A.w / 2 >= B.x + B.w / 2; sa = sb = right ? 1 : -1 }
+    const xa = sa > 0 ? A.x + A.w : A.x, xb = sb > 0 ? B.x + B.w : B.x
+    const off = ((k % 9) - 4) * 7
+    let pts
+    if (sa !== sb) {
+      const mx = (xa + sa * STUB + xb + sb * STUB) / 2 + off
+      pts = [[xa, ya], [xa + sa * STUB, ya], [mx, ya], [mx, yb], [xb + sb * STUB, yb], [xb, yb]]
+    } else {
+      const x = sa > 0 ? Math.max(xa, xb) + STUB + 12 + Math.abs(off) * 2 : Math.min(xa, xb) - STUB - 12 - Math.abs(off) * 2
+      pts = [[xa, ya], [x, ya], [x, yb], [xb, yb]]
+    }
+    return { pts, xa, ya, sa, xb, yb, sb }
+  }
+  const pathD = (pts) => pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')
+  const edgeEls = []
+  function renderEdges() {
+    gE.innerHTML = ''; edgeEls.length = 0; pairCount.clear()
+    MODEL.refs.forEach((r) => {
+      // spread vertical segments that meet the same target table so they don't share a corridor
+      const key = r.b.table; const k = pairCount.get(key) || 0; pairCount.set(key, k + 1)
+      const g = el('g', { class: 'edge' }, gE)
+      const R = route(r, k)
+      el('path', { d: pathD(R.pts), class: 'line' }, g)
+      const [ma, mb] = ends(r)
+      marker(g, R.xa, R.ya, R.sa, ma); marker(g, R.xb, R.yb, R.sb, mb)
+      const hit = el('path', { d: pathD(R.pts), class: 'hit' }, g)
+      const card = r.aMany && r.bMany ? 'N:M' : r.aMany ? 'N:1' : r.bMany ? '1:N' : '1:1'
+      hit.addEventListener('mousemove', (e) => tip(e, `${r.a.table}.${r.a.field} → ${r.b.table}.${r.b.field} (${card}${r.required ? ', obligatoria' : ', opcional'})`))
+      hit.addEventListener('mouseleave', () => tip())
+      edgeEls.push({ r, g })
+    })
+    applyFocus()
+  }
+
+  // ---------- pan / zoom / drag ----------
+  const svg = $('svg'), vp = $('vp'), stage = $('stage')
+  let view = { x: 0, y: 0, k: 1 }
+  const applyView = () => vp.setAttribute('transform', `translate(${view.x},${view.y}) scale(${view.k})`)
+  const toWorld = (cx, cy) => { const b = svg.getBoundingClientRect(); return [(cx - b.left - view.x) / view.k, (cy - b.top - view.y) / view.k] }
+  function bounds() {
+    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity
+    for (const t of tables) { x1 = Math.min(x1, t.x); y1 = Math.min(y1, t.y); x2 = Math.max(x2, t.x + t.w); y2 = Math.max(y2, t.y + t.h) }
+    return { x1: x1 - 60, y1: y1 - 40, x2: x2 + 60, y2: y2 + 40 }
+  }
+  function fit() {
+    const b = bounds(), r = svg.getBoundingClientRect(), top = $('header')?.offsetHeight || document.querySelector('header').offsetHeight
+    const k = Math.min(1.4, Math.min(r.width / (b.x2 - b.x1), (r.height - top) / (b.y2 - b.y1)))
+    view = { k, x: (r.width - (b.x2 - b.x1) * k) / 2 - b.x1 * k, y: top + (r.height - top - (b.y2 - b.y1) * k) / 2 - b.y1 * k }
+    applyView()
+  }
+  let drag = null
+  stage.addEventListener('pointerdown', (e) => {
+    const tg = e.target.closest('.tbl')
+    if (tg) {
+      const t = byName[tg.dataset.name]; const [wx, wy] = toWorld(e.clientX, e.clientY)
+      drag = { t, dx: wx - t.x, dy: wy - t.y, moved: false }
+    } else drag = { pan: true, sx: e.clientX - view.x, sy: e.clientY - view.y, moved: false }
+    stage.setPointerCapture(e.pointerId); if (drag.pan) stage.classList.add('panning')
+  })
+  stage.addEventListener('pointermove', (e) => {
+    if (!drag) return
+    drag.moved = true
+    if (drag.pan) { view.x = e.clientX - drag.sx; view.y = e.clientY - drag.sy; applyView(); return }
+    const [wx, wy] = toWorld(e.clientX, e.clientY)
+    drag.t.x = Math.round((wx - drag.dx) / 10) * 10; drag.t.y = Math.round((wy - drag.dy) / 10) * 10
+    tableEls.get(drag.t.name).setAttribute('transform', `translate(${drag.t.x},${drag.t.y})`)
+    renderEdges()
+  })
+  stage.addEventListener('pointerup', (e) => {
+    if (!drag) return
+    stage.classList.remove('panning')
+    if (drag.t && drag.moved) savePositions()
+    if (!drag.moved) select(drag.t ? drag.t.name : null)
+    drag = null
+  })
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault()
+    const b = svg.getBoundingClientRect(); const cx = e.clientX - b.left, cy = e.clientY - b.top
+    const k = Math.min(3, Math.max(0.15, view.k * Math.exp(-e.deltaY * 0.0015)))
+    view.x = cx - (cx - view.x) * (k / view.k); view.y = cy - (cy - view.y) * (k / view.k); view.k = k; applyView()
+  }, { passive: false })
+
+  // ---------- selection & panel ----------
+  let focus = null
+  function applyFocus() {
+    const rel = new Set()
+    for (const { r, g } of edgeEls) {
+      const on = focus && (r.a.table === focus || r.b.table === focus)
+      g.classList.toggle('hi', !!on); g.classList.toggle('dim', !!focus && !on)
+      if (on) { rel.add(r.a.table); rel.add(r.b.table) }
+    }
+    for (const [n, g] of tableEls) g.classList.toggle('dim', !!focus && n !== focus && !rel.has(n))
+  }
+  function select(name) {
+    focus = name; applyFocus()
+    const p = $('panel')
+    if (!name) { p.style.display = 'none'; return }
+    const t = byName[name]
+    const rels = MODEL.refs.filter((r) => r.a.table === name || r.b.table === name)
+      .map((r) => `<li>${esc(r.a.table)}.${esc(r.a.field)} ${r.aMany && r.bMany ? '⇄' : '→'} ${esc(r.b.table)}.${esc(r.b.field)}</li>`).join('')
+    const enumOf = (f) => f.isEnum ? ' = ' + (MODEL.enums.find((e) => e.name === f.baseType)?.values.map((v) => v.name).join(' | ') || '') : ''
+    p.innerHTML = `<button class="x" aria-label="Cerrar">×</button><h2>${esc(t.name)}</h2>${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
+      <table>${t.fields.map((f) => `<tr><td><b>${esc(f.name)}</b>${f.pk ? ' PK' : ''}${f.fk ? ' FK' : ''}</td><td class="t">${esc(f.type)}${f.notNull ? '' : '?'}${f.unique ? ' · única' : ''}${f.default != null ? ' · = ' + esc(f.default) : ''}${esc(enumOf(f))}${f.note ? '<br>' + esc(f.note) : ''}</td></tr>`).join('')}</table>
+      ${rels ? `<ul>${rels}</ul>` : ''}`
+    p.style.display = 'block'
+    p.querySelector('.x').onclick = () => select(null)
+  }
+  function tip(e, text) { const t = $('tip'); if (!e) { t.style.display = 'none'; return } t.textContent = text; t.style.display = 'block'; t.style.left = e.clientX + 12 + 'px'; t.style.top = e.clientY + 12 + 'px' }
+  const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => (t.style.display = 'none'), 2200) }
+
+  // ---------- legend ----------
+  const lg = (kind, label) => {
+    const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 44 16')
+    const g = el('g', { class: 'edge' }, s); el('path', { d: 'M4,8 H40', class: 'line' }, g); marker(g, 4, 8, 1, kind)
+    return `<span>${s.outerHTML} ${label}</span>`
+  }
+  $('legend').innerHTML = lg('one', 'uno (obligatorio)') + lg('zeroOne', 'cero o uno') + lg('many', 'cero o muchos')
+
+  // ---------- export ----------
+  function exportSvg() {
+    const b = bounds(), w = b.x2 - b.x1, h = b.y2 - b.y1
+    const clone = svg.cloneNode(true)
+    clone.setAttribute('viewBox', `${b.x1} ${b.y1} ${w} ${h}`); clone.setAttribute('width', w); clone.setAttribute('height', h)
+    clone.querySelector('#vp').removeAttribute('transform')
+    clone.querySelectorAll('.dim').forEach((n) => n.classList.remove('dim'))
+    clone.querySelectorAll('.hi').forEach((n) => n.classList.remove('hi'))
+    clone.querySelectorAll('.hit').forEach((n) => n.remove())
+    clone.querySelectorAll('.line, .mk').forEach((n) => { n.setAttribute('stroke', '#555'); n.setAttribute('stroke-width', '1.4'); n.setAttribute('fill', n.classList.contains('o') ? '#ffffff' : 'none'); n.removeAttribute('class') })
+    const bg = document.createElementNS(NS, 'rect'); bg.setAttribute('x', b.x1); bg.setAttribute('y', b.y1); bg.setAttribute('width', w); bg.setAttribute('height', h); bg.setAttribute('fill', '#ffffff')
+    clone.insertBefore(bg, clone.firstChild)
+    clone.setAttribute('font-family', 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif')
+    return { text: '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone), w, h }
+  }
+  const download = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000) }
+  const fileBase = 'er-' + META.project.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  $('svgBtn').onclick = () => download(new Blob([exportSvg().text], { type: 'image/svg+xml' }), fileBase + '.svg')
+  $('png').onclick = () => {
+    const { text, w, h } = exportSvg(); const scale = 2
+    const img = new Image()
+    img.onload = () => { const c = document.createElement('canvas'); c.width = w * scale; c.height = h * scale; const cx = c.getContext('2d'); cx.scale(scale, scale); cx.drawImage(img, 0, 0); c.toBlob((b) => download(b, fileBase + '.png')) }
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(text)
+  }
+  $('copyLayout').onclick = async () => {
+    const json = JSON.stringify({ positions: Object.fromEntries(tables.map((t) => [t.name, { x: Math.round(t.x), y: Math.round(t.y) }])) }, null, 2)
+    try { await navigator.clipboard.writeText(json); toast('Layout copiado: pégalo en .dualcraft/db/layout.json') } catch { prompt('Copia este JSON en .dualcraft/db/layout.json', json) }
+  }
+  $('relayout').onclick = () => { store.del(KEY); autoLayout(); renderTables(); renderEdges(); fit() }
+  $('fit').onclick = fit
+  $('showTypes').onchange = (e) => { showTypes = e.target.checked; sizeTables(); renderTables(); renderEdges() }
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') select(null) })
+
+  renderTables(); renderEdges(); fit()
+  window.addEventListener('resize', fit)
+})()
+</script>
+</body>
+</html>
