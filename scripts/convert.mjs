@@ -11,11 +11,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { project, parseArgs, die, posix } from './lib/project.mjs'
 import { parseDbml } from './lib/dbml.mjs'
+import { projectStacks } from './lib/targets.mjs'
 
 const [cmd = 'help', ...rest] = process.argv.slice(2)
 const { pos, opt } = parseArgs(rest)
 const CMDS = ['inventory', 'init', 'status', 'set', 'backend', 'spec-check']
-if (cmd === 'help' || !CMDS.includes(cmd)) { console.log('node convert.mjs inventory --from web|mobile | init --from web|mobile [--target dir] | status | set <feature> <state> | backend <id> <decision> [--why …] | spec-check'); process.exit(cmd === 'help' ? 0 : 1) }
+if (cmd === 'help' || !CMDS.includes(cmd)) { console.log('node convert.mjs inventory --from <stack|web|mobile> [--to <stack>] | init --from <stack|web|mobile> --to <stack> [--target dir] [--force] | status | set <feature> <state> | backend <id> <decision> [--why …] | spec-check'); console.log('  stacks: nextjs react-vite astro nuxt flutter react-native kmp android ios'); process.exit(cmd === 'help' ? 0 : 1) }
 
 const { root, dir, config } = project()
 const cdir = path.join(dir, 'convert')
@@ -43,102 +44,254 @@ const planFile = path.join(dir, 'analytics', 'events.json')
 const plan = fs.existsSync(planFile) ? JSON.parse(read(planFile)) : { events: [] }
 const camel = (s) => s.split('_').map((w, i) => (i ? w[0].toUpperCase() + w.slice(1) : w)).join('')
 const eventByCamel = Object.fromEntries((plan.events || []).map((e) => [camel(e.name), e.name]))
-const usage = (s, platform) => ({
+const LANG_OF = { nextjs: 'js', 'react-vite': 'js', astro: 'js', nuxt: 'js', 'react-native': 'js', flutter: 'dart', kmp: 'kotlin', android: 'kotlin', ios: 'swift' }
+const usage = (s, lang) => ({
   entities: entities.filter((n) => new RegExp(`\\b${n}\\b`).test(s)),
-  i18n: platform === 'web'
-    ? uniq([...s.matchAll(/\bt\(\s*['"]([\w.]+)['"]/g)].map((m) => m[1]))
-    : uniq([...s.matchAll(/(?:AppLocalizations\.of\([^)]*\)!?|\bl10n|\bloc)\.(\w+)/g)].map((m) => m[1])),
-  events: uniq([...s.matchAll(/(?:analyticsEvents|AnalyticsEvents)\.(\w+)\(/g)].map((m) => eventByCamel[m[1]] || m[1])),
+  i18n: uniq([...s.matchAll(
+    lang === 'js' ? /(?:\$t|\bt|i18n\.t)\(\s*['"]([\w.]+)['"]/g
+      : lang === 'dart' ? /(?:AppLocalizations\.of\([^)]*\)!?|\bl10n|\bloc)\.(\w+)/g
+        : lang === 'kotlin' ? /(?:R|Res)\.(?:string|plurals)\.(\w+)/g
+          : /(?:String\(localized:\s*|NSLocalizedString\(\s*)"([\w.]+)"/g)].map((m) => m[1])),
+  events: uniq([...s.matchAll(/[Aa]nalyticsEvents\.(\w+)\(/g)].map((m) => eventByCamel[m[1]] || m[1])),
 })
+const screenId = (route, fallback) => (route === '/' ? 'home' : route ? route.replace(/^\//, '').replace(/[/:*]+/g, '-').replace(/-+$/, '') : fallback)
+const kebab = (s) => s.replace(/(Screen|Page|View)$/, '').replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()
+const BK = new Map() // backend/platform touchpoints of the current inventory, by id
+const addB = (b) => { if (!BK.has(b.id)) BK.set(b.id, b) }
 
-// ---------- inventory: web ----------
-function inventoryWeb() {
-  const web = stackDir('web')
-  const appDir = ['src/app', 'app'].map((d) => path.join(web, d)).find((d) => fs.existsSync(d))
-  const pagesDir = ['src/pages', 'pages'].map((d) => path.join(web, d)).find((d) => fs.existsSync(d))
-  const screens = []; const backend = []
-  const toRoute = (segs) => '/' + segs.filter((s) => !/^\(.*\)$/.test(s) && !s.startsWith('@')).map((s) => s.replace(/^\[\[?\.\.\.(\w+)\]?\]$/, '*$1').replace(/^\[(\w+)\]$/, ':$1')).join('/')
+// shared detection of data clients in any language
+function dataTouchpoints(s, lang, toKind) {
+  const ids = []
+  const firestore = lang === 'js' ? /(?:collection|doc)\(\s*\w+\s*,\s*['"]([\w-]+)['"]/g : /collection\(\s*['"]([\w-]+)['"]/g
+  for (const m of s.matchAll(firestore)) { const id = `firestore:${m[1]}`; ids.push(id); addB({ id, kind: 'firestore', options: ['shared', 'expose-api'], recommended: 'shared', note: `Both apps use the same collection with their Firebase SDK; rules must cover the ${toKind} client too` }) }
+  for (const m of s.matchAll(/\.from\(\s*['"]([\w-]+)['"]\s*\)/g)) { const id = `supabase:${m[1]}`; ids.push(id); addB({ id, kind: 'supabase-table', options: ['shared', 'expose-api'], recommended: 'shared', note: 'Same table through the Supabase SDK with the anon key; RLS must cover the new client' }) }
+  for (const m of s.matchAll(/httpsCallable\(\s*(?:\w+\s*,\s*)?['"]([\w-]+)['"]/g)) { const id = `function:${m[1]}`; ids.push(id); addB({ id, kind: 'cloud-function', options: ['shared'], recommended: 'shared', note: 'Callable from every Firebase SDK; check App Check/CORS for the new client' }) }
+  for (const m of s.matchAll(/(?:fetch|axios\.\w+|\$fetch|useFetch|client\.(?:get|post|put|delete)|URL\(string:)\s*\(?\s*[`'"](https?:\/\/[^/`'"]+)/g)) { const id = `external:${m[1].replace(/^https?:\/\//, '')}`; ids.push(id); addB({ id, kind: 'external-api', options: ['shared', 'expose-api', 'skip'], recommended: 'shared', note: 'Third-party API: check the new client can call it (CORS on web, keys must not ship in client code)' }) }
+  return ids
+}
+
+// native capabilities with no direct equivalent on the other kind of platform
+const CAPABILITIES = {
+  toWeb: [
+    [/in_app_purchase|purchases_flutter|react-native-iap|react-native-purchases|expo-in-app-purchases|billingclient|com\.android\.billingclient|\bimport StoreKit/, 'payments-iap', 'web checkout (Stripe) for goods allowed outside the stores, or keep purchases app-only'],
+    [/firebase_messaging|expo-notifications|@react-native-firebase\/messaging|firebase-messaging|\bimport UserNotifications/, 'push', 'Web Push (FCM for web + service worker), or email'],
+    [/mobile_scanner|expo-camera|expo-barcode-scanner|camerax|barcode-scanning|\bimport (AVFoundation|VisionKit)/, 'camera-scanner', 'getUserMedia + a web QR/barcode library, or skip on desktop'],
+    [/image_picker|expo-image-picker|PhotosUI/, 'image-picker', '<input type="file" accept="image/*" capture>'],
+    [/geolocator|expo-location|play-services-location|\bimport CoreLocation/, 'location', 'Geolocation API (permission prompt in context)'],
+    [/local_auth|expo-local-authentication|androidx\.biometric|\bimport LocalAuthentication/, 'biometrics', 'WebAuthn / passkeys, or skip'],
+    [/google_mobile_ads|react-native-google-mobile-ads|play-services-ads|GoogleMobileAds/, 'ads', 'AdSense / web ad network, or skip'],
+    [/in_app_review|expo-store-review|play-review|SKStoreReviewController|requestReview/, 'store-review', 'skip (web has no store review prompt)'],
+    [/flutter_secure_storage|expo-secure-store|security-crypto|EncryptedSharedPreferences|Keychain/, 'secure-storage', 'httpOnly cookies / server session (never localStorage for tokens)'],
+    [/health|HealthKit|sensors_plus|expo-sensors/, 'device-sensors', 'skip (no web equivalent)'],
+    [/firebase_crashlytics|firebase-crashlytics|@react-native-firebase\/crashlytics|FirebaseCrashlytics|sentry/i, 'crash-reporting', 'web error tracking (e.g. Sentry for the browser)'],
+  ],
+  toMobile: [
+    [/from\s+['"]stripe['"]|@stripe\/|stripe\.com/, 'payments-web', 'digital goods inside a store app must use in-app purchases; physical goods/services may keep Stripe (decide with the user)'],
+    [/navigator\.serviceWorker|web-push|PushManager/, 'web-push', 'native push (FCM / APNs) with a permission prompt in context'],
+    [/navigator\.geolocation/, 'geolocation-web', 'native location API with permission rationale'],
+    [/getUserMedia|BarcodeDetector/, 'camera-web', 'native camera / scanner'],
+    [/document\.cookie|cookies\(\)/, 'cookies-session', 'mobile apps use SDK session persistence + secure storage, not cookies'],
+  ],
+}
+function capabilityTouchpoints(text, fromKind) {
+  const list = fromKind === 'mobile' ? CAPABILITIES.toWeb : CAPABILITIES.toMobile
+  const ids = []
+  for (const [re, key, alt] of list) if (re.test(text)) { const id = `capability:${key}`; ids.push(id); addB({ id, kind: 'platform-capability', options: ['alternative', 'skip'], recommended: /^skip/.test(alt) ? 'skip' : 'alternative', note: alt }) }
+  return ids
+}
+const analyticsShared = (text) => { if (/firebase_analytics|@react-native-firebase\/analytics|firebase-analytics|FirebaseAnalytics|gtag\(|posthog/.test(text)) addB({ id: 'service:analytics', kind: 'analytics', options: ['shared', 'skip'], recommended: 'shared', note: 'Same tracking plan (dualcraft:analytics) on both platforms' }) }
+
+// ---------- web sources ----------
+const fileRoute = (relPath, { dynamic = /^\[(\w+)\]$/, catchAll = /^\[\.\.\.(\w+)\]$/ } = {}) => '/' + relPath.split(/[\\/]/).filter((seg) => !/^\(.*\)$/.test(seg) && !seg.startsWith('@')).map((seg) => seg.replace(/^\[\[?\.\.\.(\w+)\]?\]$/, '*$1').replace(dynamic, ':$1').replace(catchAll, '*$1')).join('/')
+function inventoryNext(dir) {
+  const appDir = ['src/app', 'app'].map((d) => path.join(dir, d)).find((d) => fs.existsSync(d))
+  const pagesDir = ['src/pages', 'pages'].map((d) => path.join(dir, d)).find((d) => fs.existsSync(d))
+  const screens = []
   if (appDir) {
     for (const f of walk(appDir, (p) => /[\\/]page\.(tsx|jsx|ts|js)$/.test(p))) {
-      const segs = path.relative(appDir, path.dirname(f)).split(path.sep).filter(Boolean)
-      const route = toRoute(segs).replace(/\/$/, '') || '/'
+      const segs = path.relative(appDir, path.dirname(f))
+      const route = fileRoute(segs).replace(/\/$/, '') || '/'
       const s = read(f)
-      const feature = segs.filter((x) => !/^[([@]/.test(x))[0] || 'home'
-      screens.push({ id: (route === '/' ? 'home' : route.slice(1).replace(/[/:*]+/g, '-').replace(/-+$/, '')), route, feature, file: rel(f), client: /^\s*['"]use client['"]/m.test(s), ...usage(s, 'web'), calls: uniq([...s.matchAll(/fetch\(\s*[`'"](\/api\/[^`'"?]+)/g)].map((m) => m[1])) })
+      screens.push({ id: screenId(route), route, feature: segs.split(path.sep).filter((x) => x && !/^[([@]/.test(x))[0] || 'home', file: rel(f), client: /^\s*['"]use client['"]/m.test(s), ...usage(s, 'js'), calls: uniq([...s.matchAll(/fetch\(\s*[`'"](\/api\/[^`'"?]+)/g)].map((m) => m[1])), backend: [...dataTouchpoints(s, 'js', 'mobile'), ...capabilityTouchpoints(s, 'web')] })
     }
     for (const f of walk(appDir, (p) => /[\\/]route\.(ts|js)$/.test(p))) {
-      const segs = path.relative(appDir, path.dirname(f)).split(path.sep).filter(Boolean)
-      const route = toRoute(segs); const s = read(f)
-      const methods = uniq([...s.matchAll(/export\s+(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE)/g)].map((m) => m[1]))
-      const admin = /firebase-admin/.test(s); const secrets = uniq([...s.matchAll(/process\.env\.(?!NEXT_PUBLIC_)(\w+)/g)].map((m) => m[1]))
-      backend.push({ id: `api:${route}`, kind: 'route-handler', file: rel(f), methods, usesAdmin: admin, secrets, options: ['expose-api', 'move-to-functions', 'skip'], recommended: admin ? 'move-to-functions' : 'expose-api' })
+      const route = fileRoute(path.relative(appDir, path.dirname(f))); const s = read(f)
+      const admin = /firebase-admin|service_role|SERVICE_ROLE/.test(s)
+      addB({ id: `api:${route}`, kind: 'route-handler', file: rel(f), methods: uniq([...s.matchAll(/export\s+(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE)/g)].map((m) => m[1])), options: ['expose-api', 'move-to-functions', 'skip'], recommended: admin ? 'move-to-functions' : 'expose-api' })
     }
   }
   if (pagesDir) for (const f of walk(pagesDir, (p) => /\.(tsx|jsx|ts|js)$/.test(p) && !/[\\/]_(app|document|error)\./.test(p))) {
     const r = '/' + path.relative(pagesDir, f).replace(/\\/g, '/').replace(/\.(tsx|jsx|ts|js)$/, '').replace(/(^|\/)index$/, '').replace(/\[(\w+)\]/g, ':$1')
-    if (r.startsWith('/api')) { backend.push({ id: `api:${r.replace(/^\/api/, '/api')}`, kind: 'api-route', file: rel(f), options: ['expose-api', 'move-to-functions', 'skip'], recommended: 'expose-api' }); continue }
-    const s = read(f); screens.push({ id: r === '/' ? 'home' : r.slice(1).replace(/[/:]+/g, '-'), route: r || '/', feature: r.split('/')[1] || 'home', file: rel(f), ...usage(s, 'web'), calls: [] })
+    if (r.startsWith('/api')) { addB({ id: `api:${r}`, kind: 'api-route', file: rel(f), options: ['expose-api', 'move-to-functions', 'skip'], recommended: 'expose-api' }); continue }
+    const s = read(f); screens.push({ id: screenId(r || '/'), route: r || '/', feature: r.split('/')[1] || 'home', file: rel(f), ...usage(s, 'js'), calls: [], backend: dataTouchpoints(s, 'js', 'mobile') })
   }
-  for (const f of walk(web, (p) => /\.(ts|tsx|js)$/.test(p) && !/[\\/]node_modules[\\/]/.test(p))) {
+  for (const f of walk(dir, (p) => /\.(ts|tsx|js)$/.test(p))) {
     const s = read(f)
-    if (/^\s*['"]use server['"]/m.test(s)) {
-      const fns = uniq([...s.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g)].map((m) => m[1]))
-      backend.push({ id: `action:${rel(f)}`, kind: 'server-action', file: rel(f), functions: fns, usesAdmin: /firebase-admin/.test(s), options: ['move-to-functions', 'expose-api', 'duplicate', 'skip'], recommended: /firebase-admin|process\.env\.(?!NEXT_PUBLIC_)/.test(s) ? 'move-to-functions' : 'duplicate' })
-    }
-    if (/from\s+['"]stripe['"]|@stripe\//.test(s)) backend.push({ id: `service:stripe:${rel(f)}`, kind: 'payments', file: rel(f), options: ['alternative', 'shared', 'skip'], recommended: 'alternative', note: 'Digital goods inside a store app must use in-app purchases; physical goods/services may keep Stripe' })
+    if (/^\s*['"]use server['"]/m.test(s)) addB({ id: `action:${rel(f)}`, kind: 'server-action', file: rel(f), functions: uniq([...s.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g)].map((m) => m[1])), options: ['move-to-functions', 'expose-api', 'duplicate', 'skip'], recommended: /firebase-admin|process\.env\.(?!NEXT_PUBLIC_)/.test(s) ? 'move-to-functions' : 'duplicate' })
   }
-  for (const sc of screens) sc.backend = backend.filter((b) => sc.calls?.some((c) => b.id === `api:${c}` || b.id.startsWith(`api:${c}`))).map((b) => b.id)
-  return { screens, backend }
+  for (const sc of screens) sc.backend.push(...[...BK.keys()].filter((id) => sc.calls?.some((c) => id === `api:${c}` || id.startsWith(`api:${c}`))))
+  return screens
+}
+function inventoryReactVite(dir) {
+  const files = walk(path.join(dir, 'src'), (p) => /\.(tsx|jsx)$/.test(p))
+  const routes = {}
+  for (const f of files) {
+    const s = read(f)
+    for (const m of s.matchAll(/path:\s*['"]([^'"]+)['"][^}]*?(?:element:\s*<(\w+)|Component:\s*(\w+)|lazy:)/g)) if (m[2] || m[3]) routes[m[2] || m[3]] = m[1]
+    for (const m of s.matchAll(/<Route[^>]*path=["']([^"']+)["'][^>]*element=\{\s*<(\w+)/g)) routes[m[2]] = m[1]
+  }
+  const screens = []
+  for (const f of files) {
+    const s = read(f); const base = path.basename(f).replace(/\.(tsx|jsx)$/, '')
+    const comps = uniq([...s.matchAll(/(?:export\s+default\s+)?function\s+([A-Z]\w*)|const\s+([A-Z]\w*)\s*=\s*\(/g)].map((m) => m[1] || m[2]))
+    const routed = comps.filter((c) => routes[c] !== undefined)
+    const isPage = /[\\/](pages|routes|screens)[\\/]/.test(f) || routed.length
+    if (!isPage) continue
+    const name = routed[0] || comps.find((c) => c === base) || base
+    const route = routes[name] ?? null
+    const parts = path.relative(path.join(dir, 'src'), f).split(path.sep)
+    screens.push({ id: route ? screenId(route.startsWith('/') ? route : '/' + route) : kebab(name), route, feature: parts[0] === 'features' && parts[1] ? parts[1] : (route || '').split('/').filter(Boolean)[0] || 'home', file: rel(f), ...usage(s, 'js'), backend: [...dataTouchpoints(s, 'js', 'mobile'), ...capabilityTouchpoints(s, 'web')] })
+  }
+  return screens
+}
+function inventoryAstro(dir) {
+  const pages = path.join(dir, 'src', 'pages'); const screens = []
+  for (const f of walk(pages, (p) => /\.(astro|md|mdx|ts|js)$/.test(p))) {
+    const relp = path.relative(pages, f).replace(/\.(astro|md|mdx|ts|js)$/, '').replace(/(^|[\\/])index$/, '')
+    const route = (fileRoute(relp).replace(/\/$/, '') || '/')
+    if (route.startsWith('/api') || /\.(ts|js)$/.test(f)) { const s = read(f); addB({ id: `endpoint:${route}`, kind: 'astro-endpoint', file: rel(f), options: ['expose-api', 'move-to-functions', 'skip'], recommended: /service_role|firebase-admin|import\.meta\.env\.(?!PUBLIC_)/.test(s) ? 'move-to-functions' : 'expose-api' }); continue }
+    const s = read(f)
+    screens.push({ id: screenId(route), route, feature: route.split('/')[1] || 'home', file: rel(f), content: /\.(md|mdx)$/.test(f), ...usage(s, 'js'), backend: [...dataTouchpoints(s, 'js', 'mobile'), ...capabilityTouchpoints(s, 'web')] })
+  }
+  return screens
+}
+function inventoryNuxt(dir) {
+  const base = fs.existsSync(path.join(dir, 'app', 'pages')) ? path.join(dir, 'app') : dir
+  const pages = path.join(base, 'pages'); const screens = []
+  for (const f of walk(pages, (p) => p.endsWith('.vue'))) {
+    const relp = path.relative(pages, f).replace(/\.vue$/, '').replace(/(^|[\\/])index$/, '')
+    const route = fileRoute(relp).replace(/\/$/, '') || '/'
+    const s = read(f)
+    screens.push({ id: screenId(route), route, feature: route.split('/')[1] || 'home', file: rel(f), ...usage(s, 'js'), backend: [...dataTouchpoints(s, 'js', 'mobile'), ...capabilityTouchpoints(s, 'web'), ...uniq([...s.matchAll(/(?:useFetch|\$fetch)\(\s*[`'"](\/api\/[^`'"?]+)/g)].map((m) => `api:${m[1]}`))] })
+  }
+  for (const f of walk(path.join(dir, 'server', 'api'), (p) => /\.(ts|js)$/.test(p))) {
+    const route = '/api/' + path.relative(path.join(dir, 'server', 'api'), f).replace(/\\/g, '/').replace(/\.(get|post|put|patch|delete)?\.?(ts|js)$/, '').replace(/(^|\/)index$/, '').replace(/\[(\w+)\]/g, ':$1')
+    const s = read(f)
+    addB({ id: `api:${route.replace(/\/$/, '')}`, kind: 'nitro-handler', file: rel(f), options: ['expose-api', 'move-to-functions', 'skip'], recommended: /firebase-admin|service_role|useRuntimeConfig\(\)\.(?!public)/.test(s) ? 'move-to-functions' : 'expose-api' })
+  }
+  return screens
 }
 
-// ---------- inventory: mobile ----------
-const PLUGIN_ALTERNATIVES = {
-  in_app_purchase: 'web checkout (Stripe) for allowed goods, or skip on web', purchases_flutter: 'RevenueCat web billing / Stripe, or skip on web',
-  firebase_messaging: 'Web Push (FCM for web + service worker)', local_auth: 'WebAuthn / passkeys, or skip', camera: '<input capture> / getUserMedia',
-  image_picker: 'file input with accept="image/*"', file_picker: 'file input', geolocator: 'Geolocation API', mobile_scanner: 'web QR scanner library (getUserMedia)',
-  shared_preferences: 'localStorage (non-sensitive)', flutter_secure_storage: 'httpOnly cookies / server session', sqflite: 'IndexedDB or server data',
-  google_mobile_ads: 'AdSense / web ads, or skip', in_app_review: 'skip (web has no equivalent)', share_plus: 'navigator.share / copy link', url_launcher: 'links',
-  firebase_crashlytics: 'web error tracking (Sentry) or skip', firebase_analytics: "shared: Firebase/GA4 web with the same tracking plan", health: 'skip', sensors_plus: 'skip',
-}
-function inventoryMobile() {
-  const mob = stackDir('mobile'); const lib = path.join(mob, 'lib')
+// ---------- mobile sources ----------
+function inventoryFlutter(dir) {
+  const lib = path.join(dir, 'lib')
   const files = walk(lib, (p) => p.endsWith('.dart') && !/\.(g|freezed|gr)\.dart$/.test(p))
   const routes = {}
   for (const f of files) for (const m of read(f).matchAll(/GoRoute\(\s*(?:name:\s*['"][^'"]*['"],\s*)?path:\s*['"]([^'"]+)['"][\s\S]{0,300}?(?:=>|return)\s*(?:const\s+)?(\w+)\(/g)) routes[m[2]] = m[1]
-  const screens = []; const backend = new Map()
+  const screens = []
   for (const f of files) {
     const s = read(f)
     for (const m of s.matchAll(/class\s+(\w+(?:Screen|Page|View))\s+extends\s+(StatelessWidget|StatefulWidget|ConsumerWidget|ConsumerStatefulWidget|HookWidget|HookConsumerWidget)/g)) {
       const relLib = path.relative(lib, f).split(path.sep)
-      const feature = relLib[0] === 'features' && relLib[1] ? relLib[1] : relLib.length > 1 ? relLib[relLib.length - 2] : 'app'
-      const id = m[1].replace(/(Screen|Page|View)$/, '').replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()
-      const cols = uniq([...s.matchAll(/collection\(\s*['"]([\w-]+)['"]/g)].map((x) => x[1]))
-      const fns = uniq([...s.matchAll(/httpsCallable\(\s*['"]([\w-]+)['"]/g)].map((x) => x[1]))
-      screens.push({ id, widget: m[1], route: routes[m[1]] || null, feature, file: rel(f), ...usage(s, 'mobile'), backend: [...cols.map((c) => `firestore:${c}`), ...fns.map((n) => `function:${n}`)] })
+      screens.push({ id: kebab(m[1]), widget: m[1], route: routes[m[1]] || null, feature: relLib[0] === 'features' && relLib[1] ? relLib[1] : relLib.length > 1 ? relLib[relLib.length - 2] : 'app', file: rel(f), ...usage(s, 'dart'), backend: [...dataTouchpoints(s, 'dart', 'web'), ...capabilityTouchpoints(s, 'mobile')] })
     }
-    for (const c of s.matchAll(/collection\(\s*['"]([\w-]+)['"]/g)) backend.set(`firestore:${c[1]}`, { id: `firestore:${c[1]}`, kind: 'firestore', options: ['shared', 'expose-api'], recommended: 'shared', note: 'Web reads/writes the same collection with the Firebase JS SDK; rules must cover the web access too' })
-    for (const c of s.matchAll(/httpsCallable\(\s*['"]([\w-]+)['"]/g)) backend.set(`function:${c[1]}`, { id: `function:${c[1]}`, kind: 'cloud-function', options: ['shared'], recommended: 'shared', note: 'Callable from the web SDK too; check App Check/CORS config for web' })
   }
-  const pub = read(path.join(mob, 'pubspec.yaml'))
-  for (const [plugin, alt] of Object.entries(PLUGIN_ALTERNATIVES)) if (new RegExp(`^\\s{2}${plugin}:`, 'm').test(pub)) backend.set(`plugin:${plugin}`, { id: `plugin:${plugin}`, kind: 'native-plugin', options: /^shared/.test(alt) ? ['shared', 'skip'] : ['alternative', 'skip'], recommended: /^skip/.test(alt) ? 'skip' : /^shared/.test(alt) ? 'shared' : 'alternative', note: alt })
-  for (const sc of screens) for (const b of backend.values()) if (b.kind === 'native-plugin' && new RegExp(b.id.split(':')[1].replace(/_(\w)/g, (_, c) => c.toUpperCase()), 'i').test(read(path.join(root, sc.file)))) sc.backend.push(b.id)
-  return { screens, backend: [...backend.values()] }
+  const pub = read(path.join(dir, 'pubspec.yaml')); capabilityTouchpoints(pub, 'mobile'); analyticsShared(pub)
+  return screens
 }
+function inventoryReactNative(dir) {
+  const appDir = path.join(dir, 'app'); const screens = []
+  const pkg = read(path.join(dir, 'package.json')); capabilityTouchpoints(pkg, 'mobile'); analyticsShared(pkg)
+  if (fs.existsSync(appDir)) {
+    for (const f of walk(appDir, (p) => /\.(tsx|jsx)$/.test(p) && !/[\\/](_layout|\+not-found|\+html)\.(tsx|jsx)$/.test(p))) {
+      const relp = path.relative(appDir, f).replace(/\.(tsx|jsx)$/, '').replace(/(^|[\\/])index$/, '')
+      const route = fileRoute(relp).replace(/\/$/, '') || '/'
+      const s = read(f)
+      screens.push({ id: screenId(route), route, feature: route.split('/')[1] || 'home', file: rel(f), ...usage(s, 'js'), backend: [...dataTouchpoints(s, 'js', 'web'), ...capabilityTouchpoints(s, 'mobile')] })
+    }
+  } else {
+    for (const f of walk(path.join(dir, 'src'), (p) => /\.(tsx|jsx)$/.test(p))) {
+      const s = read(f)
+      for (const m of s.matchAll(/(?:function|const)\s+(\w+Screen)\b/g)) screens.push({ id: kebab(m[1]), widget: m[1], route: null, feature: path.basename(path.dirname(f)), file: rel(f), ...usage(s, 'js'), backend: [...dataTouchpoints(s, 'js', 'web'), ...capabilityTouchpoints(s, 'mobile')] })
+    }
+  }
+  return screens
+}
+function inventoryKotlin(dir) {
+  const files = walk(dir, (p) => p.endsWith('.kt') && !/[\\/](build|test|androidTest|commonTest)[\\/]/.test(p) && !/DbModels|DsTokens|AnalyticsEvents/.test(p))
+  const routes = {}
+  for (const f of files) {
+    const s = read(f)
+    for (const m of s.matchAll(/composable\(\s*(?:route\s*=\s*)?"([^"]+)"[^)]*\)\s*\{[\s\S]{0,300}?(\w+Screen)\(/g)) routes[m[2]] = '/' + m[1].replace(/\{(\w+)\}/g, ':$1').replace(/^\//, '')
+    for (const m of s.matchAll(/composable<(\w+)>\s*(?:\{|\([^)]*\)\s*\{)[\s\S]{0,300}?(\w+Screen)\(/g)) routes[m[2]] = '/' + kebab(m[1])
+  }
+  const screens = []
+  for (const f of files) {
+    const s = read(f)
+    for (const m of s.matchAll(/@Composable\s+(?:internal\s+|private\s+)?fun\s+(\w+Screen)\s*\(/g)) {
+      const next = s.slice(m.index + m[0].length).search(/\n(?:@Composable|(?:private\s+|internal\s+)?fun\s|class\s|object\s)/)
+      const body = next < 0 ? s.slice(m.index) : s.slice(m.index, m.index + m[0].length + next)
+      screens.push({ id: kebab(m[1]), widget: m[1], route: routes[m[1]] || null, feature: kebab(path.basename(path.dirname(f))), file: rel(f), ...usage(body, 'kotlin'), backend: [...dataTouchpoints(body, 'kotlin', 'web'), ...capabilityTouchpoints(body, 'mobile')] })
+    }
+  }
+  const builds = walk(dir, (p) => /(build\.gradle(\.kts)?|libs\.versions\.toml)$/.test(p) && !/[\\/]build[\\/]/.test(p)).map(read).join('\n')
+  capabilityTouchpoints(builds, 'mobile'); analyticsShared(builds)
+  return screens
+}
+function inventoryIos(dir) {
+  const files = walk(dir, (p) => p.endsWith('.swift') && !/Tests?[\\/]|DbModels|DsTokens|AnalyticsEvents/.test(p))
+  const all = files.map(read).join('\n')
+  const screens = []
+  for (const f of files) {
+    const s = read(f)
+    for (const m of s.matchAll(/struct\s+(\w+(?:Screen|View))\s*:\s*(?:some\s+)?View\b/g)) {
+      const mainOfFile = path.basename(f, '.swift') === m[1] && /[\\/](Features|Screens|Scenes)[\\/]/.test(f)
+      const isNavTarget = new RegExp(`(navigationDestination|NavigationLink|TabView|sheet|fullScreenCover)[\\s\\S]{0,200}\\b${m[1]}\\(`).test(all)
+      if (!/Screen$/.test(m[1]) && !mainOfFile && !isNavTarget) continue
+      const next = s.slice(m.index + m[0].length).search(/\n(?:struct|class|enum|extension)\s/)
+      const body = next < 0 ? s.slice(m.index) : s.slice(m.index, m.index + m[0].length + next)
+      screens.push({ id: kebab(m[1]), widget: m[1], route: null, feature: kebab(path.basename(path.dirname(f))), file: rel(f), ...usage(body, 'swift'), backend: [...dataTouchpoints(body, 'swift', 'web'), ...capabilityTouchpoints(body, 'mobile')] })
+    }
+  }
+  capabilityTouchpoints(all, 'mobile'); analyticsShared(all)
+  return screens
+}
+const INVENTORY = { nextjs: inventoryNext, 'react-vite': inventoryReactVite, astro: inventoryAstro, nuxt: inventoryNuxt, flutter: inventoryFlutter, 'react-native': inventoryReactNative, kmp: inventoryKotlin, android: inventoryKotlin, ios: inventoryIos }
 
-function inventory(from) {
-  if (!['web', 'mobile'].includes(from)) die('--from web|mobile')
-  if (!config.stacks?.[from]) die(`the project has no ${from} stack in .dualcraft/config.json`)
-  const inv = from === 'web' ? inventoryWeb() : inventoryMobile()
+/** --from / --to accept a stack id or a kind (web|mobile → the project's stack of that kind). */
+function resolveStack(v, { required = true, exclude } = {}) {
+  const stacks = projectStacks(root, config)
+  if (!v) return null
+  if (v === 'web' || v === 'mobile') { const s = stacks.find((x) => x.kind === v && x.id !== exclude); if (!s && required) die(`the project has no ${v} stack in .dualcraft/config.json`); return s || { id: null, kind: v } }
+  const s = stacks.find((x) => x.id === v)
+  if (s) return s
+  if (!KINDS_OF[v]) die(`unknown stack "${v}" (node stacks.mjs list)`)
+  if (required) die(`stack "${v}" is not in this project (add it with /dualcraft:stacks)`)
+  return { id: v, kind: KINDS_OF[v] }
+}
+const KINDS_OF = { nextjs: 'web', 'react-vite': 'web', astro: 'web', nuxt: 'web', flutter: 'mobile', 'react-native': 'mobile', kmp: 'mobile', android: 'mobile', ios: 'mobile' }
+
+function inventory(fromArg, toArg) {
+  if (!fromArg) die('--from <stack|web|mobile> is required')
+  const src = resolveStack(fromArg)
+  const otherKind = src.kind === 'web' ? 'mobile' : 'web'
+  const dst = toArg ? resolveStack(toArg, { required: false, exclude: src.id }) : (resolveStack(otherKind, { required: false }) || { id: null, kind: otherKind })
+  BK.clear()
+  const screens = INVENTORY[src.id](src.dir)
+  // data access usually lives in services/repositories, not in screen files: scan the whole source tree
+  const EXT = { js: /\.(tsx?|jsx?|vue|astro|mjs)$/, dart: /\.dart$/, kotlin: /\.kt$/, swift: /\.swift$/ }[LANG_OF[src.id]]
+  for (const f of walk(src.dir, (p) => EXT.test(p) && !/\.(g|freezed|d)\.(dart|ts)$/.test(p) && !/DbModels|DsTokens|AnalyticsEvents|analytics[_-]events|ds-tokens|design_tokens|db_models/.test(p))) dataTouchpoints(read(f), LANG_OF[src.id], otherKind)
+  if (dst?.kind === src.kind) for (const b of BK.values()) if (b.kind === 'platform-capability') { b.options = ['alternative', 'skip']; b.recommended = 'alternative'; b.note = `same kind of platform: use ${dst.id ? `the ${dst.id}` : 'the target\'s'} native library for it (stacks/${dst.id || '<target>'}.md)` }
   const features = {}
-  for (const s of inv.screens) (features[s.feature] ||= []).push(s.id)
-  return { from, to: from === 'web' ? 'mobile' : 'web', generated: new Date().toISOString(), features: Object.entries(features).map(([id, screens]) => ({ id, screens })), ...inv }
+  for (const s of screens) (features[s.feature] ||= []).push(s.id)
+  return { from: src.id, fromKind: src.kind, to: dst?.id || null, toKind: dst?.kind || otherKind, generated: new Date().toISOString(), features: Object.entries(features).map(([id, ids]) => ({ id, screens: uniq(ids) })), screens, backend: [...BK.values()] }
 }
 
 // ---------- commands ----------
 if (cmd === 'inventory') {
-  const inv = inventory(String(opt.from || ''))
+  const inv = inventory(opt.from ? String(opt.from) : '', opt.to ? String(opt.to) : null)
   fs.mkdirSync(cdir, { recursive: true }); fs.writeFileSync(invFile, JSON.stringify(inv, null, 2) + '\n')
-  console.log(`Inventory (${inv.from} → ${inv.to}) → ${rel(invFile)}`)
+  console.log(`Inventory (${inv.from} → ${inv.to || inv.toKind + ' — target stack to choose'}) → ${rel(invFile)}`)
   console.log(`${inv.screens.length} screens in ${inv.features.length} features · ${inv.backend.length} backend/platform touchpoints\n`)
   for (const f of inv.features) {
     console.log(`■ ${f.id}`)
@@ -150,15 +303,17 @@ if (cmd === 'inventory') {
   process.exit(0)
 }
 
-const loadStatus = () => (fs.existsSync(statusFile) ? JSON.parse(read(statusFile)) : die('no conversion started — run: convert.mjs init --from web|mobile'))
+const loadStatus = () => (fs.existsSync(statusFile) ? JSON.parse(read(statusFile)) : die('no conversion started — run: convert.mjs init --from <stack|web|mobile> --to <stack>'))
 const saveStatus = (s) => fs.writeFileSync(statusFile, JSON.stringify(s, null, 2) + '\n')
 
 if (cmd === 'init') {
-  const inv = inventory(String(opt.from || ''))
+  const inv = inventory(opt.from ? String(opt.from) : '', opt.to ? String(opt.to) : null)
+  if (!inv.to) die(`choose the target stack: --to <${inv.toKind === 'web' ? 'nextjs|react-vite|astro|nuxt' : 'flutter|react-native|kmp|android|ios'}>`)
   fs.mkdirSync(cdir, { recursive: true }); fs.writeFileSync(invFile, JSON.stringify(inv, null, 2) + '\n')
   const prev = fs.existsSync(statusFile) && !opt.force ? JSON.parse(read(statusFile)) : null
-  if (prev && prev.from !== inv.from) die(`a ${prev.from} → ${prev.to} conversion already exists — finish it or use --force`)
-  const st = prev || { from: inv.from, to: inv.to, target: opt.target ? posix(String(opt.target)) : config.paths?.[inv.to] || null, createdTarget: !config.stacks?.[inv.to], started: new Date().toISOString(), features: [], backend: [] }
+  if (prev && (prev.from !== inv.from || prev.to !== inv.to)) die(`a ${prev.from} → ${prev.to} conversion already exists — finish it or use --force`)
+  const inProject = projectStacks(root, config).find((x) => x.id === inv.to)
+  const st = prev || { from: inv.from, fromKind: inv.fromKind, to: inv.to, toKind: inv.toKind, target: opt.target ? posix(String(opt.target)) : inProject ? rel(inProject.dir) || '.' : null, createdTarget: !inProject, started: new Date().toISOString(), features: [], backend: [] }
   for (const f of inv.features) { const ex = st.features.find((x) => x.id === f.id); if (ex) ex.screens = uniq([...ex.screens, ...f.screens]); else st.features.push({ id: f.id, screens: f.screens, state: 'pending', task: null }) }
   for (const b of inv.backend) if (!st.backend.some((x) => x.id === b.id)) st.backend.push({ id: b.id, kind: b.kind, options: b.options, recommended: b.recommended, decision: 'pending', why: null, note: b.note || null })
   saveStatus(st)

@@ -1,12 +1,14 @@
 ---
 name: convert
-description: Converts the web app into a mobile app or the mobile app into a web app (Next.js ⇄ Flutter), feature by feature - inventories the source, analyses every backend/platform touchpoint and asks the user whether it can be shared or how to handle it, writes a platform-neutral spec, adapts it to the target platform's patterns, generates code on the shared schema/tokens/i18n/analytics, and verifies behaviour and visuals. Creates the target project if it doesn't exist. Use when the user runs /dualcraft:convert, "pasa la web a app", "haz la versión web de la app", "convierte esta funcionalidad a móvil/web", or asks how far a conversion is.
+description: Converts an app between any of the supported stacks - web (Next.js, React + Vite, Astro, Vue/Nuxt) ⇄ mobile (Flutter, React Native, Kotlin Multiplatform, Android, iOS), and also web → web or mobile → mobile migrations - feature by feature - inventories the source, analyses every backend/platform touchpoint and asks the user whether it can be shared or how to handle it, writes a platform-neutral spec, adapts it to the target platform's patterns, generates code on the shared schema/tokens/i18n/analytics, and verifies behaviour and visuals. Creates the target project if it doesn't exist. Use when the user runs /dualcraft:convert, "pasa la web a app", "haz la versión web de la app", "convierte esta funcionalidad a móvil/web", or asks how far a conversion is.
 ---
 
-# DualCraft convert (web ⇄ mobile)
+# DualCraft convert (any stack ⇄ any stack)
 
 `$CONV` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/convert.mjs"`, `$BRAIN` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/brain.mjs"`.
-References: spec format `${CLAUDE_PLUGIN_ROOT}/references/convert-spec.md` · platform mapping `${CLAUDE_PLUGIN_ROOT}/references/platform-mapping.md` · commands `${CLAUDE_PLUGIN_ROOT}/references/stack-commands.md`.
+References: spec format `${CLAUDE_PLUGIN_ROOT}/references/convert-spec.md` · platform mapping (web ⇄ mobile patterns + per-stack building blocks) `${CLAUDE_PLUGIN_ROOT}/references/platform-mapping.md` · source and target stack sheets `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` · commands `${CLAUDE_PLUGIN_ROOT}/references/stack-commands.md`.
+
+Stacks: `nextjs` `react-vite` `astro` `nuxt` · `flutter` `react-native` `kmp` `android` `ios`. `--from`/`--to` take a stack id, or `web`/`mobile` for the project's stack of that kind. Same-kind conversions (e.g. `react-native → flutter`, `nextjs → astro`) keep layout and interaction and change framework idioms; platform capabilities map to the target's native library.
 
 **This is not a line-by-line translation.** Source code tells you *what the product does*; the target is written the way a good native developer of that platform would write it, on the project's shared sources. Behaviour (rules, data, flows) is preserved; layout and interaction are adapted.
 
@@ -22,14 +24,12 @@ The shared sources are what make the conversion cheap and safe. Before convertin
 Do this incrementally: the first feature pulls in what it needs.
 
 ## 1. Inventory & target
-1. `$CONV inventory --from web|mobile` → screens grouped by feature, what each uses (entities, i18n keys, events), and every backend/platform touchpoint.
+1. `$CONV inventory --from <stack|web|mobile> [--to <stack>]` → screens grouped by feature (routes when the stack has them), what each uses (entities, i18n keys, events), and every backend/platform touchpoint — data access found anywhere in the source (Firestore, Supabase, callables, external APIs), server code (route handlers, server actions, Nitro/Astro endpoints) and native capabilities (payments, push, camera, location, biometrics, ads…).
 2. **Target project**:
-   - Exists (`config.stacks.<to>`) → read/create its architecture map and follow it.
-   - Doesn't exist → propose creating it, ask before running (network + new folder):
-     - Flutter: `flutter create --org <reverse.domain> --platforms android,ios <dir>`; feature-first structure; state management and routing: propose Riverpod + go_router (or what the user prefers) and record the decision.
-     - Next.js: `npx create-next-app@latest <dir> --ts --tailwind --app --src-dir --eslint --use-npm` (pinned to the current stable when you run it).
-     Then wire the shared sources (tokens, i18n, analytics, schema generation), set `$BRAIN config set stacks.<to>=<nextjs|flutter> paths.<to>=<dir>`, write its architecture map.
-3. `$CONV init --from <source> --target <dir>` → `.dualcraft/convert/status.json`.
+   - Which stack? If the user didn't say, recommend from the brief and the source (React web → React Native shares the most; content site → Astro; Kotlin team → KMP; best native feel on both → Flutter or native) and ask.
+   - Exists in the project → read/create its architecture map and follow it.
+   - Doesn't exist → create it with `dualcraft:stacks` ("Add a stack": `node "${CLAUDE_PLUGIN_ROOT}/scripts/stacks.mjs" scaffold <id> --dir <dir>`, ask before running), register it, wire the shared sources (tokens, i18n, analytics, schema — the generators produce them for the new stack), write its architecture map following `stacks/<id>.md`.
+3. `$CONV init --from <source> --to <target-stack> [--target <dir>]` → `.dualcraft/convert/status.json`.
 
 ## 2. Backend & platform decisions — analyse, then ASK
 For **every** item in `$CONV status` → "Backend decisions" (route handlers, server actions, Firestore collections, Cloud Functions, native plugins, payments):
@@ -47,9 +47,9 @@ Order by dependency (auth/onboarding → core features → secondary) and value.
 Mode **feature** (`dualcraft:start`), scope = target platform.
 1. **Spec** — read every source file of the feature's screens and write `.dualcraft/convert/spec/screens/<id>.json` (+ update `spec/app.json`) per the spec reference: purpose, route, auth, data (schema entities), states, neutral layout, actions, events, and **business rules in plain language** (they become tests). Missing texts/events/entities → add them to the shared sources first. `$CONV spec-check` must pass. `$CONV set <feature> spec`.
 2. **Adapt** — apply the platform mapping: navigation, layout, inputs, feedback, capabilities; write the choices in `platformNotes`. If the layout changes a lot, design the target screens first (`dualcraft:design-screen`) and get the user's OK. `$CONV set <feature> adapted`.
-3. **Generate** — in the target project, following its architecture map: routes/screens, state, data access through the generated models/types, tokens only (`dualcraft:design-to-code` rules), texts from i18n, events through the generated helpers, backend calls as decided in step 2. Rules test-first with the **same cases** as the source (`dualcraft:tdd`); add the missing tests to the source too if it had none. `$CONV set <feature> generated`.
+3. **Generate** — in the target project, following its architecture map and `stacks/<target>.md` (use the per-stack building blocks table for routing, lists, sheets, forms, state): routes/screens, state, data access through the generated models/types, tokens only (`dualcraft:design-to-code` rules), texts from i18n, events through the generated helpers, backend calls as decided in step 2. Rules test-first with the **same cases** as the source (`dualcraft:tdd`); add the missing tests to the source too if it had none. `$CONV set <feature> generated`.
 4. **Verify** — target analyzer/types/tests/build (`dualcraft:verify`); run both apps and compare screenshots of each screen and state (`dualcraft:web-browser`, `dualcraft:mobile-device`); walk the main flow end to end against the same backend; `analytics.mjs coverage` shows the feature's events on both platforms. `$CONV set <feature> verified`.
-5. **Close** — `dualcraft:review`, functional document updated (the feature's Platforms line now says both — `dualcraft:docs`), commit `feat(<web|mobile>): <feature> converted from <source>` (`dualcraft:commit`), `$CONV set <feature> done`, brain task done.
+5. **Close** — `dualcraft:review`, functional document updated (the feature's Platforms line now says both — `dualcraft:docs`), commit `feat(<web|mobile>): <feature> converted from <source-stack>` (`dualcraft:commit`), `$CONV set <feature> done`, brain task done.
 
 ## 5. Progress & finish
 - `$CONV status` anytime — show it to the user as a short table; the brain map shows the conversion tasks and their dependencies.

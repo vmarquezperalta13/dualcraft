@@ -66,3 +66,22 @@ Used by `dualcraft:convert` in the **adapt** step. Same content and behaviour; n
 - Long-form text (articles, legal): mobile renders it in a scrollable screen or opens the web page.
 - Images: web `next/image` with `sizes`; mobile `Image.network` + cache (`cached_network_image` if the project uses it), same aspect ratios.
 - Video/embeds: platform players; YouTube embeds → `youtube_player_flutter` or open externally.
+
+## Per-stack building blocks
+Use the target stack's own primitives (details in `stacks/<id>.md`).
+
+| Concept | Next.js | React + Vite | Astro | Nuxt | Flutter | React Native (Expo) | KMP / Android (Compose) | iOS (SwiftUI) |
+|---|---|---|---|---|---|---|---|---|
+| Routing | `app/` folders, `[id]` | react-router `path`/`element` | `src/pages/` files | `pages/` files, `[id].vue` | go_router `GoRoute` / Navigator | Expo Router `app/` files | Navigation Compose `composable(…)` | `NavigationStack` + `navigationDestination` |
+| Tabs / primary nav | layout nav | layout nav | layout nav | layout nav | `NavigationBar` + shell route | `(tabs)/_layout.tsx` | `NavigationBar` + `Scaffold` | `TabView` |
+| List | `<ul>` / grid | `<ul>` / grid | `<ul>` (static) | `v-for` | `ListView.builder` | `FlatList` | `LazyColumn` | `List` / `LazyVStack` |
+| Modal / sheet | dialog component | dialog component | island dialog | `<Teleport>` dialog | `showModalBottomSheet` | `Modal` / expo-router modal | `ModalBottomSheet` | `.sheet` |
+| Toast | toast lib | toast lib | — | toast lib | `SnackBar` | toast lib | `Snackbar` | overlay / banner |
+| Form state | react-hook-form + zod | react-hook-form + zod | island + zod | VeeValidate / zod | `Form` + validators | react-hook-form + zod | ViewModel state | `@Observable` model |
+| Server state | server components / fetch | React Query | build-time / endpoints | `useFetch` | Riverpod/Bloc + repository | React Query | ViewModel + repository (Flow) | view model + async/await |
+| Images | `next/image` | `<img>` | `astro:assets` | `<NuxtImg>` | `Image.network` | `expo-image` | Coil (`AsyncImage`) | `AsyncImage` |
+| Secure storage | httpOnly cookies | (server session) | (server) | httpOnly cookies | flutter_secure_storage | expo-secure-store | EncryptedSharedPreferences / Keychain actual | Keychain |
+| Tokens / texts / models / events | DualCraft generators — same names on every stack (see `dualcraft:tokens`) | | | | | | | |
+
+## Same-kind conversions (web → web, mobile → mobile)
+Layout and interaction stay; the work is mostly framework idioms: routing files, state management, data fetching, styling system and native libraries. Business rules, texts, tokens, models and events are already shared — reuse them as they are. Platform capabilities are mapped to the target's native library, not to an "alternative".

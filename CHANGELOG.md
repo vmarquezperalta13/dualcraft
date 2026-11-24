@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0] - 2026-11-24
+### Added
+- Converter for any stack (stage D): `--from`/`--to` take any of the nine stacks (or web/mobile); inventory for Next.js, React + Vite (react-router), Astro (pages + endpoints), Nuxt (pages + Nitro handlers), Flutter, React Native (Expo Router), Kotlin Multiplatform / Android (Compose screens + Navigation routes), iOS (SwiftUI screens)
+- Data access detected across the whole source tree (Firestore, Supabase, callables, external APIs); native capabilities mapped to web alternatives (payments, push, camera/scanner, image picker, location, biometrics, ads, store review, secure storage, sensors, crash reporting) and web-only ones to mobile (Stripe, web push, geolocation, camera, cookies)
+- Same-kind migrations (web → web, mobile → mobile): capabilities map to the target's native library
+- Platform mapping: per-stack building blocks table (routing, tabs, lists, sheets, toasts, forms, server state, images, secure storage)
+
 ## [0.12.0] - 2026-11-24
 ### Added
 - Multi-stack generators (stage B) — one output per stack of the project:

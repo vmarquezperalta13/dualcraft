@@ -6,7 +6,7 @@ Web + mobile development workflow for Claude Code built around a **project brain
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.12)
+## What it does (v0.13)
 
 - **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
 - **New projects**: a full intake form (idea, type, platforms, stacks, backend, design, MVP features) creates the brief, decisions, MVP tasks and functional document, and scaffolds each stack with its CLI.
@@ -22,7 +22,7 @@ You talk to it in your language (Spanish by default); commands are in English.
 - **Shared texts and analytics**: one i18n source → Flutter ARB + next-intl; one tracking plan → typed event helpers for Dart and TypeScript.
 - **Security**: global, web and mobile audits with a static scanner (secrets, Firebase rules, Cloud Functions, Next.js endpoints and headers, Android/iOS config, payments) and a dated report; findings become brain bugs.
 - **Release & marketing**: a readiness checklist across brain, security, texts, analytics and docs; one command bumps every version and closes the CHANGELOG; store notes validated against Play/App Store limits; launch copy, campaign plan and growth ideas for each update.
-- **Web ⇄ mobile converter**: feature-by-feature conversion through a platform-neutral spec; every backend or native dependency is analysed and decided with you (share, expose as API, move to Cloud Functions, alternative, or skip); the target is native, built on the shared sources, and verified against the source.
+- **Converter between any stacks** (web ⇄ mobile, or web → web / mobile → mobile migrations): feature-by-feature conversion through a platform-neutral spec; every backend or native dependency is analysed and decided with you (share, expose as API, move to Cloud Functions, alternative, or skip); the target is native, built on the shared sources, and verified against the source.
 - **Databases**: Firebase, Supabase or PostgreSQL + Prisma with local + dev + prod environments set up through each CLI; the schema becomes SQL migrations (incremental, with RLS), a Prisma schema or Firestore rules — applied per environment and promoted to prod safely.
 - **Database schema as source of truth**: `.dualcraft/db/schema.dbml` ([DBML](https://dbml.dbdiagram.io/docs)) → ER diagram with crow's-foot notation (PNG/SVG export) and generated Dart models, TypeScript types and a Firestore rules skeleton.
 

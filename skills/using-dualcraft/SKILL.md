@@ -66,7 +66,7 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 | Security audit of everything / web / app | `dualcraft:security-global` / `security-web` / `security-mobile` |
 | Close/ship a version, store release notes | `dualcraft:release` |
 | Communicate an update, ASO, social, campaigns, growth ideas | `dualcraft:marketing` |
-| Turn the web into an app or the app into a web, conversion progress | `dualcraft:convert` |
+| Turn the web into an app or the app into a web, migrate to another stack, conversion progress | `dualcraft:convert` |
 | "¿qué comandos hay?", help | `dualcraft:help` |
 
 **Data rule:** in a project with `.dualcraft/db/schema.dbml`, any change to stored data starts in the schema (`dualcraft:schema`) and models/types are regenerated — never hand-edit generated files.
