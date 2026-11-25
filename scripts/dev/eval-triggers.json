@@ -1,5 +1,6 @@
 {
   "help": "¿Qué comandos tiene dualcraft?",
+  "agents": "¿Qué agentes especialistas tengo instalados en dualcraft?",
   "new-project": "Quiero empezar un proyecto nuevo desde cero: una app de reservas de pistas de pádel con web y app móvil.",
   "stacks": "¿Qué tecnologías soporta este flujo de trabajo? Quiero añadir una app de iOS nativa al proyecto.",
   "start": "Empezamos. Quiero arreglar que el login se queda colgado en Android.",

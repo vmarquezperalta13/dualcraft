@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.31.0] - 2026-11-25
+### Added
+- `/dualcraft:agents`: lists the specialist agents (installed or not, what each does, how to add the missing ones) — `scripts/agents.mjs` (`--json`); `/dualcraft:agents <agent> <task>` writes the agent a self-contained brief, launches it and relays its report (Spanish agent names accepted)
+- eval trigger case for the agents command
+
 ## [0.30.0] - 2026-11-25
 ### Added
 - Specialist agents in `agents/` (Claude Code `dualcraft:<agent>`), each built on the DualCraft skills of its area and with its own context: `security`, `reviewer`, `qa`, `architect`, `debugger`, `designer`, `marketing`, `release`

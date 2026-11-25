@@ -80,6 +80,14 @@ test('agents: valid frontmatter, generated from their source, skills they name e
   for (const id of ['security', 'reviewer']) assert.match(read(path.join(ROOT, 'agents', id + '.md')), /^disallowedTools: Edit, Write, NotebookEdit$/m, `${id} only reports`)
 })
 
+test('agents command: lists every specialist, installed from the plugin agents/ folder', () => {
+  const r = run('agents.mjs')
+  assert.equal(r.code, 0, r.err)
+  for (const id of ['security', 'reviewer', 'qa', 'architect', 'debugger', 'designer', 'marketing', 'release']) assert.match(r.out, new RegExp('✓ ' + id + ' '))
+  assert.match(r.out, /✓ instalados: 8 de 8/); assert.ok(r.out.includes('/dualcraft:agents <agente> <tarea>'))
+  assert.equal(JSON.parse(run('agents.mjs', ['--json']).out).agents.length, 8)
+})
+
 test('help: lists installed commands and how to add missing ones', () => {
   assert.match(run('help.mjs').out, /✓ instalados: \d+/)
 })

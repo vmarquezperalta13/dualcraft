@@ -36,7 +36,7 @@ let specialists = {}
 try { specialists = JSON.parse(fs.readFileSync(path.join(root, 'packs.json'), 'utf8')).specialists || {} } catch { /* full plugin without packs.json */ }
 const agentIds = Object.keys(specialists).filter((id) => !filter || id.includes(filter) || 'agentes'.includes(filter))
 if (agentIds.length) {
-  out.push('## Agentes especialistas [agents] — pídeselo a Claude ("usa el agente de seguridad") o @dualcraft:<agente>')
+  out.push('## Agentes especialistas [agents] — /dualcraft:agents <agente> <tarea>, pídeselo a Claude ("usa el agente de seguridad") o @dualcraft:<agente>')
   for (const id of agentIds) { const ok = fs.existsSync(path.join(root, 'agents', id + '.md')); out.push(`  ${ok ? '✓' : '·'} dualcraft:${id.padEnd(19)} ${specialists[id].es}${ok ? '' : `  (se instala con la skill ${specialists[id].requires})`}`) }
   out.push('')
 }

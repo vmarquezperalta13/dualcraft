@@ -73,6 +73,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | Command | |
 |---|---|
 | `/dualcraft:help` | List all commands |
+| `/dualcraft:agents` | List the specialist agents and hand a task to one: `/dualcraft:agents security audita la app` |
 | `/dualcraft:new-project` | Intake form + setup for a brand-new project |
 | `/dualcraft:stacks` | Supported stacks; add one to the project |
 | `/dualcraft:start` | Set up the project, load context, choose the work mode |
@@ -120,7 +121,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:port` | Deep language port (Flutter → Kotlin/KMP/SwiftUI and back, TS ⇄ Dart/Kotlin): idioms, deps, file plan, parity |
 
 ## Specialist agents
-Specialists with their own context, for jobs that would flood the conversation. Claude Code: `dualcraft:<agent>` (ask "usa el agente de seguridad" or @-mention it); Gemini CLI: `~/.gemini/agents/dualcraft-<agent>.md`; Codex CLI: `~/.codex/agents/dualcraft-<agent>.toml`. Each one is installed with the skill it relies on. None of them commits, pushes, publishes or deploys.
+Specialists with their own context, for jobs that would flood the conversation. Claude Code: `/dualcraft:agents` lists them and `/dualcraft:agents <agent> <task>` hands one a task (or ask "usa el agente de seguridad", or @-mention `dualcraft:<agent>`); Gemini CLI: `~/.gemini/agents/dualcraft-<agent>.md`; Codex CLI: `~/.codex/agents/dualcraft-<agent>.toml`. Each one is installed with the skill it relies on. None of them commits, pushes, publishes or deploys.
 
 | Agent | Does | Changes code |
 |---|---|---|
