@@ -31,5 +31,14 @@ for (const [pack, label] of Object.entries(catalog.packs)) {
   }
   out.push('')
 }
+// specialist agents (agents/<id>.md), installed with the skill they rely on
+let specialists = {}
+try { specialists = JSON.parse(fs.readFileSync(path.join(root, 'packs.json'), 'utf8')).specialists || {} } catch { /* full plugin without packs.json */ }
+const agentIds = Object.keys(specialists).filter((id) => !filter || id.includes(filter) || 'agentes'.includes(filter))
+if (agentIds.length) {
+  out.push('## Agentes especialistas [agents] — pídeselo a Claude ("usa el agente de seguridad") o @dualcraft:<agente>')
+  for (const id of agentIds) { const ok = fs.existsSync(path.join(root, 'agents', id + '.md')); out.push(`  ${ok ? '✓' : '·'} dualcraft:${id.padEnd(19)} ${specialists[id].es}${ok ? '' : `  (se instala con la skill ${specialists[id].requires})`}`) }
+  out.push('')
+}
 out.push(`✓ instalados: ${nAvail}${nSoon ? `   · no instalados: ${nSoon} (gestiona packs con: npx github:vmarquezperalta13/dualcraft list)` : ''}`)
 console.log(out.join('\n'))

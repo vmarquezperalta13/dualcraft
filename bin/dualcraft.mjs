@@ -160,6 +160,25 @@ function writeBlock(file, block) {
   fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, next)
 }
 
+// ---------- specialists (agents/<id>.md) ----------
+/** Specialist agents whose required skill is installed. */
+const resolveSpecialists = (skills) => Object.entries(PACKS.specialists || {}).filter(([id, a]) => skills.includes(a.requires) && fs.existsSync(path.join(SRC, 'agents', id + '.md'))).map(([id]) => id)
+const specialistFile = (agent, id) => path.join(HOME, agent === 'gemini' ? '.gemini' : '.codex', 'agents', 'dualcraft-' + id + (agent === 'gemini' ? '.md' : '.toml'))
+/** Gemini: markdown with name + description (tool names differ, so the Claude tool lists are dropped). Codex: TOML. */
+function specialistFor(agent, id, allSkills) {
+  const src = fs.readFileSync(path.join(SRC, 'agents', id + '.md'), 'utf8').replace(/\r\n/g, '\n')
+  const m = src.match(/^---\n([\s\S]*?)\n---\n+([\s\S]*)$/)
+  const desc = JSON.parse(m[1].match(/^description: (.*)$/m)[1])
+  const body = transformSkill(m[2], allSkills).replace(/with the Skill tool/g, 'as skills')
+  if (agent === 'gemini') return '---\nname: dualcraft-' + id + '\ndescription: ' + JSON.stringify(desc) + '\n---\n\n' + body
+  return 'name = ' + JSON.stringify('dualcraft-' + id) + '\ndescription = ' + JSON.stringify(desc) + "\ndeveloper_instructions = '''\n" + body.split("'''").join("''") + "'''\n"
+}
+function installSpecialists(agent, specialists, prev = []) {
+  const all = fs.readdirSync(path.join(SRC, 'skills'))
+  for (const id of prev) if (!specialists.includes(id)) fs.rmSync(specialistFile(agent, id), { force: true })
+  for (const id of specialists) { const f = specialistFile(agent, id); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, specialistFor(agent, id, all)) }
+}
+
 // ---------- per agent ----------
 function claudeRun(claude, args) {
   const needsShell = claude === 'claude' || claude.endsWith('.cmd')
@@ -167,12 +186,13 @@ function claudeRun(claude, args) {
   const r = needsShell ? spawnSync([q(claude), ...args.map(q)].join(' '), { encoding: 'utf8', shell: true }) : spawnSync(claude, args, { encoding: 'utf8' })
   return { ok: r.status === 0, out: ((r.stdout || '') + (r.stderr || '')).trim() }
 }
-async function installClaude(skills, sel) {
+async function installClaude(skills, sel, specialists = []) {
   const market = path.join(DC, 'claude-marketplace'); const plugin = path.join(market, 'dualcraft')
   fs.rmSync(market, { recursive: true, force: true })
   copyShared(plugin)
   fs.cpSync(path.join(SRC, 'hooks'), path.join(plugin, 'hooks'), { recursive: true })
   for (const s of skills) fs.cpSync(path.join(SRC, 'skills', s), path.join(plugin, 'skills', s), { recursive: true })
+  for (const id of specialists) { fs.mkdirSync(path.join(plugin, 'agents'), { recursive: true }); fs.copyFileSync(path.join(SRC, 'agents', id + '.md'), path.join(plugin, 'agents', id + '.md')) }
   const pj = JSON.parse(fs.readFileSync(path.join(SRC, '.claude-plugin', 'plugin.json'), 'utf8'))
   pj.description = `${pj.description} Installed packs: core${sel.stacks.length ? ', ' + sel.stacks.join(', ') : ''}${sel.packs.length ? ', ' + sel.packs.join(', ') : ''}.`
   fs.mkdirSync(path.join(plugin, '.claude-plugin'), { recursive: true })
@@ -190,9 +210,9 @@ async function installClaude(skills, sel) {
   const add = claudeRun(claude, cmds[0]); if (!add.ok && !/already/i.test(add.out)) claudeRun(claude, ['plugin', 'marketplace', 'update', 'dualcraft-local'])
   claudeRun(claude, cmds[1])
   const inst = claudeRun(claude, cmds[2])
-  say(inst.ok ? '  Claude Code: plugin "dualcraft@dualcraft-local" instalado (comandos /dualcraft:*, hooks activos). Abre un chat nuevo para usarlo.' : `  Claude Code: no se pudo instalar automáticamente:\n${inst.out}\n  Prueba: claude plugin install dualcraft@dualcraft-local --scope user`)
+  say(inst.ok ? `  Claude Code: plugin "dualcraft@dualcraft-local" instalado (comandos /dualcraft:*, ${specialists.length} agentes dualcraft:*, hooks activos). Abre un chat nuevo para usarlo.` : `  Claude Code: no se pudo instalar automáticamente:\n${inst.out}\n  Prueba: claude plugin install dualcraft@dualcraft-local --scope user`)
 }
-function installSkillsAgent(agent, skills, prevSkills = []) {
+function installSkillsAgent(agent, skills, prevSkills = [], specialists = [], prevSpecialists = []) {
   const base = path.join(HOME, agent === 'gemini' ? '.gemini' : '.codex')
   const dir = path.join(base, 'skills')
   fs.mkdirSync(dir, { recursive: true })
@@ -202,10 +222,11 @@ function installSkillsAgent(agent, skills, prevSkills = []) {
     const target = path.join(dir, agentName(s)); fs.rmSync(target, { recursive: true, force: true }); fs.mkdirSync(target, { recursive: true })
     fs.writeFileSync(path.join(target, 'SKILL.md'), transformSkill(fs.readFileSync(path.join(SRC, 'skills', s, 'SKILL.md'), 'utf8'), all))
   }
+  installSpecialists(agent, specialists, prevSpecialists)
   writeBlock(path.join(base, agent === 'gemini' ? 'GEMINI.md' : 'AGENTS.md'), contextBlock(agent))
-  say(`  ${PACKS.agents[agent].name}: ${skills.length} skills en ${posix(dir)} + instrucciones en ${agent === 'gemini' ? 'GEMINI.md' : 'AGENTS.md'}`)
+  say(`  ${PACKS.agents[agent].name}: ${skills.length} skills en ${posix(dir)}, ${specialists.length} agentes en ${posix(path.join(base, 'agents'))} + instrucciones en ${agent === 'gemini' ? 'GEMINI.md' : 'AGENTS.md'}`)
 }
-function removeAgent(agent, skills) {
+function removeAgent(agent, skills, specialists = []) {
   if (agent === 'claude') {
     const claude = findClaude()
     if (claude && !opt['no-claude-cli']) { claudeRun(claude, ['plugin', 'uninstall', 'dualcraft@dualcraft-local']); claudeRun(claude, ['plugin', 'marketplace', 'remove', 'dualcraft-local']) }
@@ -215,21 +236,22 @@ function removeAgent(agent, skills) {
   }
   const base = path.join(HOME, agent === 'gemini' ? '.gemini' : '.codex')
   for (const s of skills) fs.rmSync(path.join(base, 'skills', agentName(s)), { recursive: true, force: true })
+  for (const id of specialists) fs.rmSync(specialistFile(agent, id), { force: true })
   writeBlock(path.join(base, agent === 'gemini' ? 'GEMINI.md' : 'AGENTS.md'), null)
-  say(`  ${PACKS.agents[agent].name}: skills e instrucciones eliminadas.`)
+  say(`  ${PACKS.agents[agent].name}: skills, agentes e instrucciones eliminados.`)
 }
 
 async function apply(sel, prev) {
   validate(sel)
-  const skills = resolveSkills(sel)
-  say(`\nInstalando DualCraft ${VERSION} (${skills.length} skills)…`)
+  const skills = resolveSkills(sel); const specialists = resolveSpecialists(skills)
+  say(`\nInstalando DualCraft ${VERSION} (${skills.length} skills, ${specialists.length} agentes)…`)
   copyShared(CURRENT)
-  for (const a of prev?.agents || []) if (!sel.agents.includes(a)) removeAgent(a, prev.skills || [])
+  for (const a of prev?.agents || []) if (!sel.agents.includes(a)) removeAgent(a, prev.skills || [], prev.specialists || [])
   for (const a of sel.agents) {
-    if (a === 'claude') await installClaude(skills, sel)
-    else installSkillsAgent(a, skills, prev?.agents?.includes(a) ? prev.skills : [])
+    if (a === 'claude') await installClaude(skills, sel, specialists)
+    else installSkillsAgent(a, skills, prev?.agents?.includes(a) ? prev.skills : [], specialists, prev?.agents?.includes(a) ? prev.specialists || [] : [])
   }
-  writeState({ version: VERSION, installedAt: prev?.installedAt || new Date().toISOString(), updatedAt: new Date().toISOString(), home: posix(CURRENT), ...sel, skills })
+  writeState({ version: VERSION, installedAt: prev?.installedAt || new Date().toISOString(), updatedAt: new Date().toISOString(), home: posix(CURRENT), ...sel, skills, specialists })
   const desc = skills.reduce((n, s) => n + ((fs.readFileSync(path.join(SRC, 'skills', s, 'SKILL.md'), 'utf8').match(/^description:\s*(?:>-?\s*\n\s+)?(.*)$/m) || [])[1] || '').length, 0)
   say(`\nListo. Coste fijo aproximado por sesión: ~${Math.round(desc / 4.2).toLocaleString('es-ES')} tokens de descripciones de skills (con todo instalado: ~2.600).`)
   say('Siguiente paso: en un proyecto, /dualcraft:start (Claude) o pide "empezar con DualCraft" (Gemini/Codex).')
@@ -267,11 +289,12 @@ if (cmd === 'install') {
   say(`  ✓ core — ${PACKS.core.description}`)
   say('\nStacks:'); for (const id of STACK_IDS) say(`  ${has('stacks', id) ? '✓' : '·'} ${id.padEnd(13)} ${PACKS.stacks[id].name}`)
   say('\nPacks opcionales:'); for (const id of OPT_IDS) say(`  ${has('packs', id) ? '✓' : '·'} ${id.padEnd(9)} ${PACKS.optional[id].name} — ${PACKS.optional[id].description}`)
+  say('\nAgentes especialistas (se instalan con la skill que usan):'); for (const [id, a] of Object.entries(PACKS.specialists || {})) say(`  ${prev?.specialists?.includes(id) ? '✓' : '·'} ${id.padEnd(10)} ${a.es}`)
   say('\nAñadir: npx github:vmarquezperalta13/dualcraft add <id…>   ·   quitar: … remove <id…>')
 } else if (cmd === 'uninstall') {
   if (!prev) fail('DualCraft no está instalado')
   if (!(await confirm('¿Quitar DualCraft de todos los agentes? (los proyectos y su carpeta .dualcraft no se tocan)'))) { say('Cancelado.'); process.exit(0) }
-  for (const a of prev.agents) removeAgent(a, prev.skills || [])
+  for (const a of prev.agents) removeAgent(a, prev.skills || [], prev.specialists || [])
   fs.rmSync(DC, { recursive: true, force: true })
   say('DualCraft desinstalado.')
 } else if (cmd === 'doctor') {
@@ -279,7 +302,7 @@ if (cmd === 'install') {
   say(`DualCraft ${VERSION} · Node ${process.version}${Number(process.versions.node.split('.')[0]) < 18 ? '  ✗ necesita Node 18+' : ''}`)
   say(`Agentes detectados: ${Object.entries(det).map(([k, v]) => `${k} ${v ? '✓' : '·'}`).join(' · ')}`)
   if (!prev) { say('No instalado.'); process.exit(0) }
-  say(`Instalado: ${prev.version} · ${prev.skills.length} skills · stacks: ${prev.stacks.join(', ') || '—'} · packs: ${prev.packs.join(', ') || '—'}`)
+  say(`Instalado: ${prev.version} · ${prev.skills.length} skills · ${(prev.specialists || []).length} agentes · stacks: ${prev.stacks.join(', ') || '—'} · packs: ${prev.packs.join(', ') || '—'}`)
   say(`${fs.existsSync(path.join(CURRENT, 'scripts', 'brain.mjs')) ? '✓' : '✗'} scripts en ${posix(CURRENT)}`)
   for (const a of prev.agents) {
     if (a === 'claude') { const c = findClaude(); const l = c ? claudeRun(c, ['plugin', 'list']).out : ''; say(`${/dualcraft@dualcraft-local/.test(l) ? '✓' : '✗'} Claude Code plugin dualcraft@dualcraft-local${c ? '' : ' (CLI de Claude no encontrado)'}`) }

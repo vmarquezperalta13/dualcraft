@@ -10,9 +10,8 @@ description: Product photos from your real photos, free and local (.dualcraft/ma
 ## The rule
 **Edit real photos, don't invent them.** The user's own product photos (`marketing/photos/input/`) are cut out and composed — the product in every image is the real one, so it never misleads. Everything runs on the user's machine: **free, no API, no account, offline** after the model download. Generated: `marketing/photos/studio.mjs` (never edit). Yours: the spec, `input/`, and `cutouts/` (fix a cutout by hand if needed).
 
-## Two options — say which one is in use
-1. **Edit (this skill, available now)** — background removal (BiRefNet, MIT, ~220 MB, CPU only, ~10–20 s per photo) + composition with sharp. Packshots, cutouts, brand backgrounds, ads. Cannot create new scenes (a product on a beach table).
-2. **Generate (planned)** — scenes, lifestyle shots and short clips with open models in **ComfyUI on the user's own GPU** (free, slower, big downloads; only models whose license allows commercial use), or optionally a paid provider with a quote before every call and spending caps. `generate` in the spec stays `null` until then — never call a paid API, never use the GPU without asking.
+## What it does not do
+It never generates or invents images (no AI image or video generation, no paid provider, no GPU): it cannot create new scenes such as a product on a beach table. For those, the user shoots the photo or provides the background (`background: {"image": "path"}`).
 
 ## Presets (defaults, editable in the spec)
 `store-white` 2000×2000 jpg, pure white, contact shadow, product fills 85 % (Amazon main image) · `cutout` transparent png · `brand-square` 1080×1080 brand spotlight · `ad-feed` 1080×1350 · `ad-story` 1080×1920 (text kept out of the top 14 % and bottom 20 %) · `ad-square` 1080×1080. A preset: `kind` packshot|ad, `width`, `height`, `format` jpg|png|webp, `background` white|transparent|brand|surface|`#rrggbb`|`{"image": "path"}`, `shadow` contact|drop|none, `fill` 0.2–1. A product may list its own `presets`.

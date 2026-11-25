@@ -91,6 +91,8 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 
 **Stack rule:** the project's stacks are in `config.stacks`. For any stack other than Next.js/Flutter, read `${CLAUDE_PLUGIN_ROOT}/stacks/<id>.md` before working in it — it replaces the Next.js/Flutter examples of the general skills.
 
+**Specialist agents** (`dualcraft:<agent>`, when installed): hand a self-contained job to one when it is big, needs a fresh look, or would flood this conversation — a security audit (`security`), a branch review (`reviewer`), test coverage and "is it really done" (`qa`), options and a plan for a new feature (`architect`), a hard bug (`debugger`), screens and the design system (`designer`), launch copy and material (`marketing`), closing a version (`release`). Also when the user asks for one ("usa el agente de seguridad"). Give the agent the goal, scope and what the user already decided; relay its report to the user. `security` and `reviewer` only report: apply their fixes here, after the user agrees. Small tasks stay here.
+
 **Process rules:** no code before an agreed design for new features; no fix before a root cause; no "done" without fresh verification evidence.
 
 All commands: `dualcraft:help` (it also shows skills not installed and how to add them: `npx github:vmarquezperalta13/dualcraft add <stack|pack>`).

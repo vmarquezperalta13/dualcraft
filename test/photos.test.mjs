@@ -86,8 +86,8 @@ test('check: renders missing or stale, store rule (≥ 85 % fill), headline over
   c = run('photos.mjs', ['check'], p)
   assert.equal(c.code, 1); assert.match(c.out, /headline longer than 3 lines/); assert.match(c.out, /botella: photo not found/)
   // validation
-  write(file, JSON.stringify({ locales: ['es'], presets: [{ id: 'Bad', kind: 'poster', width: 50, height: 99999, format: 'gif', background: 'transparent', shadow: 'neon', fill: 2 }, { id: 'clear', kind: 'packshot', width: 500, height: 500, format: 'jpg', background: 'transparent', fill: 0.9 }], products: [{ id: 'x', source: 'a.pdf', presets: ['nope'] }], generate: { provider: 'fal' } }))
+  write(file, JSON.stringify({ locales: ['es'], presets: [{ id: 'Bad', kind: 'poster', width: 50, height: 99999, format: 'gif', background: 'transparent', shadow: 'neon', fill: 2 }, { id: 'clear', kind: 'packshot', width: 500, height: 500, format: 'jpg', background: 'transparent', fill: 0.9 }], products: [{ id: 'x', source: 'a.pdf', presets: ['nope'] }] }))
   const v = run('photos.mjs', ['gen'], p)
   assert.equal(v.code, 1)
-  for (const re of [/id must be kebab-case/, /kind must be packshot or ad/, /whole pixels, 200–6000/, /format must be jpg, png, webp/, /shadow must be contact, drop, none/, /fill must be 0\.2–1/, /clear: a transparent background needs png or webp/, /source must be a jpg/, /unknown preset "nope"/, /image generation .* not available yet/]) assert.match(v.out, re)
+  for (const re of [/id must be kebab-case/, /kind must be packshot or ad/, /whole pixels, 200–6000/, /format must be jpg, png, webp/, /shadow must be contact, drop, none/, /fill must be 0\.2–1/, /clear: a transparent background needs png or webp/, /source must be a jpg/, /unknown preset "nope"/]) assert.match(v.out, re)
 })

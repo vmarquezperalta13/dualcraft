@@ -1,5 +1,5 @@
 {
-  "$comment": "DualCraft packs for the installer (bin/dualcraft.mjs). 'core' is always installed. A stack pack adds its reference sheet and pulls in its platform pack (web-platform or mobile-platform). Optional packs add their skills; 'when' limits a skill to projects with that kind of stack.",
+  "$comment": "DualCraft packs for the installer (bin/dualcraft.mjs). 'core' is always installed. A stack pack adds its reference sheet and pulls in its platform pack (web-platform or mobile-platform). Optional packs add their skills; 'when' limits a skill to projects with that kind of stack. 'specialists' are the agents (agents/<id>.md), installed when their 'requires' skill is.",
   "core": {
     "name": "Núcleo",
     "description": "Brain, decisiones, modos de trabajo, proceso (brainstorm, plan, TDD, debug, verify, review), documento funcional, commits",
@@ -209,6 +209,40 @@
         "convert",
         "port"
       ]
+    }
+  },
+  "specialists": {
+    "security": {
+      "requires": "security-global",
+      "es": "Seguridad: modelo de amenazas, auditoría web, móvil y backend con el escáner; solo informa y apunta bugs en el brain"
+    },
+    "reviewer": {
+      "requires": "review",
+      "es": "Revisor de código: corrección, ciclo de vida, coherencia web ⇄ móvil, decisiones, tokens, accesibilidad; solo informa"
+    },
+    "qa": {
+      "requires": "verify",
+      "es": "QA y tests: encuentra lo no probado, escribe tests unitarios, de widget, integración y e2e, ejecuta las suites y el rendimiento"
+    },
+    "architect": {
+      "requires": "plan",
+      "es": "Arquitecto: explora ideas, opciones con pros y contras, dónde va cada cambio, plan de implementación y decisiones"
+    },
+    "debugger": {
+      "requires": "debug",
+      "es": "Depurador: reproduce, encuentra la causa raíz con evidencias y aplica el arreglo mínimo con test de regresión"
+    },
+    "designer": {
+      "requires": "design-system",
+      "es": "Diseño: Design System, tokens y contraste, pantallas móvil y web con sus estados, y diseño a código"
+    },
+    "marketing": {
+      "requires": "marketing",
+      "es": "Marketing: qué comunicar en cada versión, ASO, textos por canal e idioma, campaña y métricas, capturas, vídeos y fotos"
+    },
+    "release": {
+      "requires": "release",
+      "es": "Release: checklist, versión, CHANGELOG, notas de tienda, CI/CD y requisitos legales; deja el tag, la publicación y el deploy para ti"
     }
   },
   "agents": {

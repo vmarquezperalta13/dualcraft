@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.30.0] - 2026-11-25
+### Added
+- Specialist agents in `agents/` (Claude Code `dualcraft:<agent>`), each built on the DualCraft skills of its area and with its own context: `security`, `reviewer`, `qa`, `architect`, `debugger`, `designer`, `marketing`, `release`
+  - `security` and `reviewer` only report (no Edit/Write); `architect` writes plans, not code; `qa` writes tests, not production code
+  - shared rules: read the brain and the decisions in force first, report in the project's language, return the user's choices as questions, never commit, push, tag, publish or deploy
+  - generated from `scripts/dev/agents-src.mjs` (`--check` in the tests)
+- Installer: each agent is installed with the skill it relies on (`packs.json` → `specialists`) — into the Claude plugin, `~/.gemini/agents/dualcraft-<agent>.md` and `~/.codex/agents/dualcraft-<agent>.toml`; `list`, `doctor` and `uninstall` include them
+- `/dualcraft:help` lists the agents; `using-dualcraft` says when to hand work to one
+### Changed
+- `photos`: image generation dropped from the plans — the skill edits real photos only (`generate` removed from the spec)
+
 ## [0.29.0] - 2026-11-25
 ### Added
 - Product photos, free and local: `/dualcraft:photos` and `scripts/photos.mjs` (init, gen, check, render) — `.dualcraft/marketing/photos.json` + a studio in `marketing/photos/` (sharp 0.35.5, transformers.js 4.3.2) that edits the user's real product photos; no paid API, CPU only, offline after the first model download

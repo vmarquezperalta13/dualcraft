@@ -61,7 +61,7 @@ const PRESETS = [
 ]
 const kebab = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'product'
 function defaults() {
-  return { dir: opt.dir ? String(opt.dir) : 'marketing/photos', locales: i18nLocales.length ? i18nLocales : [config.lang || 'es'], model: MODEL, presets: PRESETS, products: [], generate: null }
+  return { dir: opt.dir ? String(opt.dir) : 'marketing/photos', locales: i18nLocales.length ? i18nLocales : [config.lang || 'es'], model: MODEL, presets: PRESETS, products: [] }
 }
 const inputDir = (spec) => path.join(root, spec.dir || 'marketing/photos', 'input')
 /** One product per photo in input/ (origin "input"); products you add by hand, or with "locked", are kept as they are. */
@@ -99,7 +99,6 @@ function validate(spec) {
     if (!p.source || !IMAGE.test(p.source)) errors.push(`product ${p.id}: source must be a jpg, png, webp, avif or tiff photo`)
     for (const id of p.presets || []) if (!pseen.has(id)) errors.push(`product ${p.id}: unknown preset "${id}"`)
   }
-  if (spec.generate != null) errors.push('generate: image generation (ComfyUI in local, or a paid provider) is not available yet — leave it null')
   return errors
 }
 

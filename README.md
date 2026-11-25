@@ -119,6 +119,20 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:convert` | Convert web ⇄ mobile, feature by feature |
 | `/dualcraft:port` | Deep language port (Flutter → Kotlin/KMP/SwiftUI and back, TS ⇄ Dart/Kotlin): idioms, deps, file plan, parity |
 
+## Specialist agents
+Specialists with their own context, for jobs that would flood the conversation. Claude Code: `dualcraft:<agent>` (ask "usa el agente de seguridad" or @-mention it); Gemini CLI: `~/.gemini/agents/dualcraft-<agent>.md`; Codex CLI: `~/.codex/agents/dualcraft-<agent>.toml`. Each one is installed with the skill it relies on. None of them commits, pushes, publishes or deploys.
+
+| Agent | Does | Changes code |
+|---|---|---|
+| `security` | Threat model and full audit (web, mobile, backend, payments, privacy) with the scanner; findings as brain bugs | No — reports only |
+| `reviewer` | Code review of a branch, diff or PR: correctness, lifecycle, web ⇄ mobile, decisions, tokens, accessibility | No — reports only |
+| `qa` | Finds untested behaviour, writes unit to e2e tests, runs suites and performance budgets | Tests only |
+| `architect` | Options with trade-offs, where each change goes, implementation plan, decisions | Plans only |
+| `debugger` | Root cause with evidence, minimal fix and regression test, other platform checked | Yes |
+| `designer` | Design system, tokens and contrast, screens with their states, design to code | Yes |
+| `marketing` | What to say per version, ASO, copy per channel and language, campaign, screenshots, videos, photos | Drafts and material |
+| `release` | Readiness checklist, versions, CHANGELOG, store notes, CI/CD, legal; leaves tag, publish and deploy to you | Release files |
+
 ## Development
 
 ```
