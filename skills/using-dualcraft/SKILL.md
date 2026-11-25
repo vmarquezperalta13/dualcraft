@@ -47,6 +47,7 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 | End-to-end tests, Playwright, Maestro, smoke tests of every screen | `dualcraft:e2e` |
 | Performance budgets, Lighthouse, bundle size, app size, startup time | `dualcraft:perf` |
 | Marketing video, Remotion, App Store preview, reel or TikTok of a release | `dualcraft:video` |
+| Product photos, remove background, white background packshot, ad with the product photo | `dualcraft:photos` |
 | Privacy policy, GDPR, cookies, terms, App Privacy / Data safety, account deletion | `dualcraft:legal` |
 | New idea, "quiero añadir…", design before code | `dualcraft:brainstorm` |
 | Work with several steps / both platforms | `dualcraft:plan` |

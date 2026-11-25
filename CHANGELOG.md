@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.29.0] - 2026-11-25
+### Added
+- Product photos, free and local: `/dualcraft:photos` and `scripts/photos.mjs` (init, gen, check, render) — `.dualcraft/marketing/photos.json` + a studio in `marketing/photos/` (sharp 0.35.5, transformers.js 4.3.2) that edits the user's real product photos; no paid API, CPU only, offline after the first model download
+  - background removal with BiRefNet lite (MIT, ONNX); cutouts cached in `cutouts/` and editable by hand; photos already transparent are used as they are
+  - presets: `store-white` (2000×2000, pure white, contact shadow, product fills 85 %), `cutout` (transparent), `brand-square` (brand spotlight), `ad-feed` 4:5, `ad-story` 9:16 (text outside the top and bottom safe zones), `ad-square`; editable sizes, formats, backgrounds (white, transparent, brand, surface, colour, image), shadows (contact, drop) and fill
+  - ads with headline and call-to-action button per language (literal, per locale, `t:` i18n keys, `listing:`), wrapped to 3 lines, colours from the Design System tokens (oklch converted) and its .ttf/.otf fonts
+  - one product per photo in `input/`, kept in sync; each image carries a `.json` recipe (source hash, settings, coverage)
+  - `check`: new or missing photos, stale renders, marketplace fill rule, headline overflow; reminder to use only photos of your own products
+  - `render --dry-run` plans the images without processing them
+  - image generation (local ComfyUI on your GPU, or a paid provider with caps) is planned as option 2; `generate` stays `null` until then
+- eval trigger case for the photos skill
+
 ## [0.28.0] - 2026-11-25
 ### Added
 - Marketing videos with Remotion: `/dualcraft:video` and `scripts/video.mjs` (init, gen, check, studio, render) — `.dualcraft/marketing/videos.json` → a Remotion project (`marketing/video/`, Remotion 4.0.547) with one composition per video × format × language

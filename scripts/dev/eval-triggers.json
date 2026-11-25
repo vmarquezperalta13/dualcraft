@@ -55,6 +55,7 @@
   "screenshots": "Necesito las capturas para la ficha de Google Play y App Store en español e inglés.",
   "release": "Cerramos la versión 1.3, vamos a publicar.",
   "video": "Hazme un vídeo vertical para Instagram y TikTok con las novedades de la versión.",
+  "photos": "Tengo fotos de mi producto hechas con el móvil: quítales el fondo y hazme la foto en fondo blanco para Amazon y un anuncio para Instagram.",
   "convert": "Pasa la web a app móvil.",
   "port": "Convierte este código de Flutter a Kotlin con Jetpack Compose."
 }

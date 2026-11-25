@@ -93,6 +93,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:e2e` | End-to-end flows → Playwright specs and Maestro flows; run locally and in CI |
 | `/dualcraft:perf` | Performance budgets: Lighthouse, bundle, app size, cold start; CI jobs and a local runner |
 | `/dualcraft:video` | Marketing videos with Remotion: App Store previews, Play promo, Reels/TikTok, per language |
+| `/dualcraft:photos` | Product photos from your real photos, free and local: background removal, white packshots, ads per language |
 | `/dualcraft:legal` | Data map, draft privacy policy / terms / cookies, store privacy forms, privacy manifest |
 | `/dualcraft:backend` | Server functions from a contract: callables, webhooks, triggers, cron; validators + typed clients |
 | `/dualcraft:schema` | Edit the schema; generate Dart / TS / Firestore rules |
@@ -160,6 +161,7 @@ claude plugin eval . --ablation none --runs 1 --tag behavior --scaffold
   e2e/flows.json  end-to-end flows in neutral steps (source of the Playwright specs and Maestro flows)
   perf/budgets.json  performance budgets (web vitals, bundle, app size, startup) + perf-check.mjs runner and history
   marketing/videos.json  marketing videos in neutral scenes (source of the Remotion project in marketing/video/)
+  marketing/photos.json  product photo presets and texts (studio in marketing/photos/, photos in input/)
   legal/data-map.json  personal data processed: purposes, legal basis, retention, providers (source of the legal drafts)
   payments/products.json  products, entitlements and currencies sold in the apps (source)
   design/tokens.json  copy of the Design System tokens (pulled, never edited here)

@@ -193,12 +193,13 @@
     },
     "release": {
       "name": "Release y marketing",
-      "description": "Cerrar versiones, notas de tienda, capturas y vídeos para tiendas y redes, campañas e ideas de crecimiento",
+      "description": "Cerrar versiones, notas de tienda, capturas, vídeos y fotos de producto para tiendas y redes, campañas e ideas de crecimiento",
       "skills": [
         "release",
         "marketing",
         "screenshots",
-        "video"
+        "video",
+        "photos"
       ]
     },
     "convert": {
