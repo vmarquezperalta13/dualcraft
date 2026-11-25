@@ -36,6 +36,11 @@ jobs:
           node-version: 22
       - run: node test/compile/generate.mjs out
       - run: npx -y -p typescript@5.6.3 tsc --noEmit --strict --target es2020 --lib es2020 --moduleResolution node out/ts/*.ts out/ts/port/*.ts
+      - name: AuthService implementations (firebase web SDK, supabase-js, React Native sign-in libraries)
+        working-directory: out/auth-ts
+        run: |
+          npm install --no-audit --no-fund --ignore-scripts
+          npx tsc -p .
       - name: React Native port idioms (real react-native, React Navigation, zustand and TanStack Query types)
         working-directory: out/ui-rn
         run: |
@@ -117,6 +122,12 @@ jobs:
       - run: node test/compile/generate.mjs out
       - working-directory: out/kotlin
         run: gradle --no-daemon -q run
+      - name: AuthService with supabase-kt (JVM)
+        working-directory: out/auth-kotlin
+        run: gradle --no-daemon -q compileKotlin
+      - name: AuthService with Firebase on Android (AGP + Android SDK)
+        working-directory: out/auth-android
+        run: gradle --no-daemon -q compileDebugKotlin
 
   swift:
     name: Type-check Swift output (macOS + iOS SDK)
@@ -133,6 +144,9 @@ jobs:
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios17.0-simulator ./*.swift
           python3 -c "import json; json.load(open('DualCraft.xcstrings'))"
           plutil -lint ./PrivacyInfo-*.xcprivacy
+      - name: AuthService on iOS (FirebaseAuth, GoogleSignIn, supabase-swift through SwiftPM)
+        working-directory: out/auth-swift
+        run: xcodebuild -scheme AuthSwift -destination 'generic/platform=iOS Simulator' -skipPackagePluginValidation -skipMacroValidation -quiet build
       - name: Port idioms (Swift language + SwiftUI)
         working-directory: out/swift
         run: |

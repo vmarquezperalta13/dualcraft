@@ -59,10 +59,10 @@ const kt = (dir, config, id, sub, file) => {
 }
 const exists = (...p) => fs.existsSync(path.join(...p))
 
-/** Default output path for a generator ('tokens' | 'models' | 'analytics' | 'api' | 'payments' | 'push') on a stack. Returns { file, pkg? }. */
+/** Default output path for a generator ('tokens' | 'models' | 'analytics' | 'api' | 'payments' | 'push' | 'auth') on a stack. Returns { file, pkg? }. */
 export function outputFor(gen, stack, root, config) {
   const { id, dir } = stack
-  const override = config[{ tokens: 'design', models: 'db', analytics: 'analytics', api: 'backend', payments: 'payments', push: 'push' }[gen]]?.out?.[id]
+  const override = config[{ tokens: 'design', models: 'db', analytics: 'analytics', api: 'backend', payments: 'payments', push: 'push', auth: 'auth' }[gen]]?.out?.[id]
   if (override) return { file: path.join(root, override), pkg: config.design?.kotlinPackage }
   const src = exists(dir, 'src') ? 'src' : ''
   const T = {
@@ -131,6 +131,17 @@ export function outputFor(gen, stack, root, config) {
       kmp: () => kt(dir, config, id, 'push', 'PushMessages.kt'),
       android: () => kt(dir, config, id, 'push', 'PushMessages.kt'),
       ios: () => ({ file: path.join(iosAppDir(dir, config), 'Core', 'Push', 'PushMessages.swift') }),
+    },
+    auth: {
+      nextjs: () => ({ file: path.join(dir, src, 'lib', 'auth-catalog.ts') }),
+      'react-vite': () => ({ file: path.join(dir, 'src', 'lib', 'auth-catalog.ts') }),
+      astro: () => ({ file: path.join(dir, 'src', 'lib', 'auth-catalog.ts') }),
+      nuxt: () => ({ file: path.join(dir, exists(dir, 'app') ? 'app' : '', 'utils', 'auth-catalog.ts') }),
+      'react-native': () => ({ file: path.join(dir, 'src', 'lib', 'auth-catalog.ts') }),
+      flutter: () => ({ file: path.join(dir, 'lib', 'generated', 'auth_catalog.dart') }),
+      kmp: () => kt(dir, config, id, 'auth', 'AuthCatalog.kt'),
+      android: () => kt(dir, config, id, 'data/auth', 'AuthCatalog.kt'),
+      ios: () => ({ file: path.join(iosAppDir(dir, config), 'Core', 'Auth', 'AuthCatalog.swift') }),
     },
   }
   return T[gen][id]()

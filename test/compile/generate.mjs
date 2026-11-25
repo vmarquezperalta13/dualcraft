@@ -9,11 +9,16 @@
 //   <out>/functions-rc → same, RevenueCat mode
 //   <out>/web-server  → tsc (Next.js route handlers + Nuxt server routes with a small h3 shim)
 //   <out>/deno        → deno check (Supabase Edge Functions)
+//   <out>/auth-ts     → npm install && tsc (AuthService: web with Firebase, supabase-js for the web and React Native)
 //   <out>/ui-rn       → npm install && tsc (React Native idioms of references/port against the real library types)
 //   references/port idioms are also copied into dart/lib/port, kotlin/idioms, swift/port-{lang,ui} and ts/port
 import fs from 'node:fs'
 import path from 'node:path'
 import { run, makeMultiProject, makeProject, write, read, ROOT } from '../helpers.mjs'
+import { flutterSupabase } from '../../scripts/lib/auth-clients.mjs'
+import { tsFirebase, tsSupabase } from '../../scripts/lib/auth-clients-ts.mjs'
+import { kotlinSupabase } from '../../scripts/lib/auth-clients-kt.mjs'
+import { swiftSupabase } from '../../scripts/lib/auth-clients-swift.mjs'
 
 const OUT = path.resolve(process.argv[2] || 'compile-out')
 fs.rmSync(OUT, { recursive: true, force: true })
@@ -52,6 +57,13 @@ function payments(p, mode) {
   must(run('backend.mjs', ['check'], p), 'backend check after payments ' + mode)
 }
 
+// auth (every method, roles, guest, linking, MFA) → catalogs per stack + deleteAccount/setUserRole on the server
+function authSetup(p) {
+  must(run('auth.mjs', ['init', '--methods', 'email,google,apple,passkey,phone', '--mfa', 'totp,sms', '--rp-id', 'acme.app', '--roles', 'admin,editor,user'], p), 'auth init')
+  must(run('auth.mjs', ['check'], p), 'auth check')
+  must(run('backend.mjs', ['check'], p), 'backend check after auth')
+}
+
 // ---------- multi-stack project (Firestore schema: enums, maps, reserved names) ----------
 const multi = makeMultiProject('firestore')
 for (const s of ['tokens.mjs', 'gen.mjs', 'analytics.mjs', 'i18n.mjs']) must(run(s, s === 'tokens.mjs' || s === 'gen.mjs' ? ['all'] : ['gen'], multi), s)
@@ -59,6 +71,7 @@ const M = (...p) => path.join(multi, ...p)
 backend(multi, 'firebase', FB)
 payments(multi, 'native')
 pushSetup(multi)
+authSetup(multi)
 write(M('functions', 'src', 'notify.ts'), `import { onDocumentCreated } from 'firebase-functions/v2/firestore'
 import { REGION } from './generated/api'
 import { push, render, format } from './generated/push'
@@ -78,7 +91,7 @@ payments(rc, 'revenuecat')
 fs.cpSync(path.join(rc, 'functions'), path.join(OUT, 'functions-rc'), { recursive: true })
 
 // TypeScript
-for (const [f, name] of [['rn/src/theme/ds-tokens.ts', 'rn-tokens.ts'], ['rn/src/types/db.ts', 'rn-db.ts'], ['rn/src/lib/analytics-events.ts', 'rn-analytics.ts'], ['web/src/types/db.ts', 'web-db.ts'], ['web/src/lib/analytics-events.ts', 'web-analytics.ts'], ['rn/src/lib/api-client.ts', 'rn-api.ts'], ['web/src/lib/api-client.ts', 'web-api.ts'], ['functions/src/generated/api.ts', 'server-api.ts'], ['rn/src/lib/payments-catalog.ts', 'rn-payments.ts'], ['rn/src/lib/push-messages.ts', 'rn-push.ts']]) copy(M(f), path.join(OUT, 'ts', name))
+for (const [f, name] of [['rn/src/theme/ds-tokens.ts', 'rn-tokens.ts'], ['rn/src/types/db.ts', 'rn-db.ts'], ['rn/src/lib/analytics-events.ts', 'rn-analytics.ts'], ['web/src/types/db.ts', 'web-db.ts'], ['web/src/lib/analytics-events.ts', 'web-analytics.ts'], ['rn/src/lib/api-client.ts', 'rn-api.ts'], ['web/src/lib/api-client.ts', 'web-api.ts'], ['functions/src/generated/api.ts', 'server-api.ts'], ['rn/src/lib/payments-catalog.ts', 'rn-payments.ts'], ['rn/src/lib/push-messages.ts', 'rn-push.ts'], ['rn/src/lib/auth-catalog.ts', 'rn-auth.ts'], ['web/src/lib/auth-catalog.ts', 'web-auth.ts']]) copy(M(f), path.join(OUT, 'ts', name))
 write(path.join(OUT, 'ts', 'rn.d.ts'), "declare module 'react-native' { export function useColorScheme(): 'light' | 'dark' | null | undefined }\n")
 write(path.join(OUT, 'ts', 'use.ts'), "import { dsTheme, dsText } from './rn-tokens'\nimport { analyticsEvents } from './rn-analytics'\nimport type { Users } from './rn-db'\nconst t = dsTheme('dark'); const c: string = t.colors.onSurface; const w: '600' = dsText.titleLarge.fontWeight\nconst e = analyticsEvents.signUp({ method: 'google' }); const u: Pick<Users, 'id'> = { id: 'x' }\nvoid c; void w; void e; void u\n")
 write(path.join(OUT, 'ts', 'use-api.ts'), `import { createApi, ApiError, type ApiTransport } from './rn-api'
@@ -122,7 +135,7 @@ export const check = async () => [e, coins, ids, found, entitlements.premium, (a
 
 // Kotlin (KMP outputs: theme, models, analytics)
 const K = (...p) => M('kmp', 'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'test', 'app', ...p)
-for (const [f, to] of [[K('theme', 'DsTokens.kt'), 'theme/DsTokens.kt'], [K('model', 'DbModels.kt'), 'model/DbModels.kt'], [K('analytics', 'AnalyticsEvents.kt'), 'analytics/AnalyticsEvents.kt'], [K('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [K('payments', 'PaymentsCatalog.kt'), 'payments/PaymentsCatalog.kt'], [K('push', 'PushMessages.kt'), 'push/PushMessages.kt']]) copy(f, path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', to))
+for (const [f, to] of [[K('theme', 'DsTokens.kt'), 'theme/DsTokens.kt'], [K('model', 'DbModels.kt'), 'model/DbModels.kt'], [K('analytics', 'AnalyticsEvents.kt'), 'analytics/AnalyticsEvents.kt'], [K('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [K('payments', 'PaymentsCatalog.kt'), 'payments/PaymentsCatalog.kt'], [K('push', 'PushMessages.kt'), 'push/PushMessages.kt'], [K('auth', 'AuthCatalog.kt'), 'auth/AuthCatalog.kt']]) copy(f, path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', to))
 write(path.join(OUT, 'kotlin', 'settings.gradle.kts'), 'pluginManagement { repositories { gradlePluginPortal(); mavenCentral(); google() } }\ndependencyResolutionManagement { repositories { mavenCentral(); google() } }\nrootProject.name = "dualcraft-kotlin-check"\n')
 write(path.join(OUT, 'kotlin', 'build.gradle.kts'), 'plugins {\n    kotlin("jvm") version "2.0.21"\n    kotlin("plugin.serialization") version "2.0.21"\n    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"\n    id("org.jetbrains.compose") version "1.7.0"\n    application\n}\ndependencies {\n    implementation(compose.desktop.currentOs)\n    implementation(compose.material3)\n    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")\n    implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")\n    implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.8.3")\n    implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")\n    implementation("io.coil-kt.coil3:coil-compose:3.0.4")\n}\napplication { mainClass.set("check.MainKt") }\n')
 write(path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'check', 'Main.kt'), `package check
@@ -132,6 +145,7 @@ import com.test.app.theme.*
 import com.test.app.api.*
 import com.test.app.payments.*
 import com.test.app.push.*
+import com.test.app.auth.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 class FakeTransport : ApiTransport {
@@ -160,12 +174,21 @@ fun main() {
     val e = AnalyticsEvents.matchViewed("m1", fromPush = true, position = 3)
     check(e.params["from_push"] == 1L) { "bool sent as 1" }
     check(DsSpacing.s4.value == 16f) { "spacing" }
+    val guest = AuthUser(uid = "g", isAnonymous = true)
+    val editor = AuthUser(uid = "e", email = "e@x.y", role = roleFrom("editor"))
+    check(decideAccess("/login?next=/x", null) == AccessDecision.ALLOW && decideAccess("/admin/users", null) == AccessDecision.SIGN_IN) { "access anonymous" }
+    check(decideAccess("/feed", guest) == AccessDecision.ALLOW && decideAccess("/account/profile", guest) == AccessDecision.SIGN_IN) { "access guest" }
+    check(decideAccess("/admin", editor) == AccessDecision.FORBIDDEN && decideAccess("/admin/a/b", AuthUser(uid = "a", role = roleFrom("admin"))) == AccessDecision.ALLOW && decideAccess("/account", editor) == AccessDecision.ALLOW) { "access roles" }
+    check(roleFrom(null) == AuthRole.USER && roleFrom("nope") == AuthRole.USER && ADMIN_ROLE == AuthRole.ADMIN) { "roles" }
+    check(authErrorFrom("auth/email-already-in-use") == AuthErrorCode.EMAIL_IN_USE && authErrorFrom("ERROR_WRONG_PASSWORD") == AuthErrorCode.INVALID_CREDENTIALS && authErrorFrom("invalid_credentials") == AuthErrorCode.INVALID_CREDENTIALS && authErrorFrom("weird") == AuthErrorCode.UNKNOWN) { "auth errors" }
+    check(AuthErrorCode.ACCOUNT_EXISTS_WITH_DIFFERENT_METHOD.key == "auth.errors.account_exists_with_different_method") { "error key" }
+    check(passwordProblems("abc") == listOf(PasswordProblem.TOO_SHORT, PasswordProblem.NO_DIGIT) && passwordProblems("abcdefg1").isEmpty()) { "password policy" }
     println("kotlin OK: \${e.name} \${DsColorsLight.primary}")
 }
 `)
 
 // Swift (iOS outputs)
-for (const [f, to] of [['iosapp/Demo/DesignSystem/DsTokens.swift', 'DsTokens.swift'], ['iosapp/Demo/Core/Models/DbModels.swift', 'DbModels.swift'], ['iosapp/Demo/Core/Analytics/AnalyticsEvents.swift', 'AnalyticsEvents.swift'], ['iosapp/Demo/Resources/DualCraft.xcstrings', 'DualCraft.xcstrings'], ['iosapp/Demo/Core/Api/ApiClient.swift', 'ApiClient.swift'], ['iosapp/Demo/Core/Payments/PaymentsCatalog.swift', 'PaymentsCatalog.swift'], ['iosapp/Demo/Core/Push/PushMessages.swift', 'PushMessages.swift']]) copy(M(f), path.join(OUT, 'swift', to))
+for (const [f, to] of [['iosapp/Demo/DesignSystem/DsTokens.swift', 'DsTokens.swift'], ['iosapp/Demo/Core/Models/DbModels.swift', 'DbModels.swift'], ['iosapp/Demo/Core/Analytics/AnalyticsEvents.swift', 'AnalyticsEvents.swift'], ['iosapp/Demo/Resources/DualCraft.xcstrings', 'DualCraft.xcstrings'], ['iosapp/Demo/Core/Api/ApiClient.swift', 'ApiClient.swift'], ['iosapp/Demo/Core/Payments/PaymentsCatalog.swift', 'PaymentsCatalog.swift'], ['iosapp/Demo/Core/Push/PushMessages.swift', 'PushMessages.swift'], ['iosapp/Demo/Core/Auth/AuthCatalog.swift', 'AuthCatalog.swift']]) copy(M(f), path.join(OUT, 'swift', to))
 write(path.join(OUT, 'swift', 'Use.swift'), 'import SwiftUI\nfunc dualcraftCheck() -> [Any] {\n    let u = Users(id: "1", displayName: "a", email: "e", role: .inProgress, tags: nil, createdAt: Date(), lastSeen: nil, settings: ["k": .string("v")], classValue: "vip")\n    return [DsColor.primary, DsSpacing.s4, DsText.titleLarge.font, AnalyticsEvents.signUp(method: .google).name, u.classValue as Any]\n}\n' +
   'struct FakeTransport: ApiTransport {\n    func call(_ endpoint: String, _ data: [String: Any]) async throws -> Any? {\n        if endpoint == "ping" { return nil }\n        return ["coins": 5, "ratio": 1, "level": "silver-plus", "items": ["a"], "levels": ["gold"], "default": true] as [String: Any]\n    }\n}\n' +
   'func apiCheck() async throws -> Int {\n    let api = Api(transport: FakeTransport())\n    try await api.ping()\n    let r = try await api.redeemCode(RedeemCodeInput(code: "ABC", platform: .ios, class: 3))\n    return r.coins + (r.levels?.count ?? 0) + (r.level == .silverPlus ? 1 : 0)\n}\n' +
@@ -174,10 +197,11 @@ write(path.join(OUT, 'swift', 'Use.swift'), 'import SwiftUI\nfunc dualcraftCheck
 
 // ---------- Flutter project (hockey schema) ----------
 const fl = makeProject({ mobile: 'flutter', paths: { mobile: 'app' }, schema: 'hockey' })
-write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\n  in_app_purchase: any\n  firebase_messaging: ">=17.0.0"\n  flutter_local_notifications: any\n  flutter_riverpod: any\n  flutter_bloc: any\n  go_router: any\nflutter:\n  generate: true\n')
+write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\n  in_app_purchase: any\n  firebase_messaging: ">=17.0.0"\n  flutter_local_notifications: any\n  flutter_riverpod: any\n  flutter_bloc: any\n  go_router: any\n  firebase_auth: any\n  google_sign_in: ^7.0.0\n  sign_in_with_apple: any\n  crypto: any\n  supabase_flutter: any\nflutter:\n  generate: true\n')
 write(path.join(fl, 'app', 'l10n.yaml'), 'arb-dir: lib/l10n\ntemplate-arb-file: app_es.arb\noutput-localization-file: app_localizations.dart\n')
 for (const s of ['tokens.mjs', 'gen.mjs', 'analytics.mjs', 'i18n.mjs']) must(run(s, s === 'tokens.mjs' || s === 'gen.mjs' ? ['all'] : ['gen'], fl), `flutter ${s}`)
 backend(fl, 'firebase', COMMON)
+authSetup(fl)
 payments(fl, 'native')
 pushSetup(fl)
 write(path.join(fl, 'app', 'lib', 'main.dart'), "import 'package:flutter/material.dart';\nimport 'generated/design_tokens.dart';\nimport 'generated/db_models.dart';\nimport 'generated/analytics_events.dart';\nimport 'generated/api_client.dart';\nimport 'generated/payments_catalog.dart';\nimport 'services/purchase_service.dart';\nimport 'generated/push_catalog.dart';\nimport 'services/push_service.dart';\nvoid main() => runApp(MaterialApp(theme: DsTheme.light(), darkTheme: DsTheme.dark(), home: Builder(builder: (c) => Container(color: c.ds.surface, padding: const EdgeInsets.all(DsSpacing.s4)))));\nfinal t = HockeyTeam(id: 1, name: 'x');\nfinal e = AnalyticsEvents.signUp(method: SignUpMethod.google);\n" +
@@ -214,6 +238,7 @@ console.log('postgres OK: ' + t.rows[0].n + ' tables, ' + p.rows[0].n + ' polici
 // ---------- Supabase Edge Functions (Deno) ----------
 const sb = makeProject({ extra: { backend: { provider: 'supabase' } } })
 backend(sb, 'supabase', [...COMMON, ['trigger0', '--kind', 'trigger', '--on', 'db:orders.insert']])
+authSetup(sb)
 payments(sb, 'revenuecat')
 fs.cpSync(path.join(sb, 'supabase', 'functions'), path.join(OUT, 'deno'), { recursive: true })
 write(path.join(OUT, 'deno', 'deno.json'), '{ "nodeModulesDir": "auto" }\n') // the repo's package.json would otherwise switch Deno to manual node_modules
@@ -260,6 +285,52 @@ fs.mkdirSync(path.join(fl, 'app', 'ios', 'Runner.xcworkspace'), { recursive: tru
 write(path.join(fl, 'app', 'android', 'app', 'build.gradle.kts'), 'android { defaultConfig { applicationId = "com.acme.hockey" } }\n')
 must(run('deploy.mjs', ['init'], fl), 'deploy init flutter')
 fs.cpSync(path.join(fl, '.github', 'workflows'), path.join(OUT, 'workflows', 'flutter'), { recursive: true })
+
+// ---------- auth implementations (AuthService) against the real SDKs ----------
+const AC = JSON.parse(read(path.join(fl, '.dualcraft', 'auth', 'auth.json'))) // every method, MFA, guest, linking
+write(path.join(OUT, 'dart', 'lib', 'services', 'auth_service_supabase.dart'), flutterSupabase(AC)) // the Firebase one comes from the Flutter project
+copy(M('web', 'src', 'lib', 'api-client.ts'), path.join(OUT, 'auth-ts', 'src', 'api-client.ts'))
+copy(M('web', 'src', 'lib', 'auth-catalog.ts'), path.join(OUT, 'auth-ts', 'src', 'auth-catalog.ts'))
+copy(M('web', 'src', 'lib', 'auth-service.ts'), path.join(OUT, 'auth-ts', 'src', 'auth-firebase.ts'))
+copy(M('rn', 'src', 'lib', 'auth-service.ts'), path.join(OUT, 'auth-ts', 'src', 'auth-rn-firebase.ts'))
+write(path.join(OUT, 'auth-ts', 'src', 'auth-firebase-full.ts'), tsFirebase(AC).replace('class FirebaseAuthService implements AuthService', 'class FullFirebase'))
+write(path.join(OUT, 'auth-ts', 'src', 'auth-supabase.ts'), tsSupabase(AC).replace('class SupabaseAuthService implements AuthService', 'class WebSupabase'))
+write(path.join(OUT, 'auth-ts', 'src', 'auth-supabase-native.ts'), tsSupabase(AC, { native: true }).replace('class SupabaseAuthService implements AuthService', 'class NativeSupabase'))
+write(path.join(OUT, 'auth-ts', 'package.json'), JSON.stringify({ name: 'auth-ts-check', private: true, dependencies: { typescript: '5.6.3', firebase: '11.10.0', '@supabase/supabase-js': '2.49.4', '@react-native-google-signin/google-signin': '13.2.0', 'expo-apple-authentication': '7.1.3', 'expo-crypto': '14.0.2', 'react-native': '0.76.5', '@types/react': '18.3.12', '@react-native-firebase/app': '22.4.0', '@react-native-firebase/auth': '22.4.0' } }, null, 2))
+// Kotlin: supabase-kt on the JVM (Android/KMP code), Firebase on an Android library module (AGP + Android SDK)
+const KS = (...p) => path.join(OUT, 'auth-kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', ...p)
+copy(K('api', 'ApiClient.kt'), KS('api', 'ApiClient.kt'))
+copy(K('auth', 'AuthCatalog.kt'), KS('auth', 'AuthCatalog.kt'))
+write(KS('auth', 'SupabaseAuthService.kt'), kotlinSupabase(AC, { pkg: 'com.test.app.auth', apiPkg: 'com.test.app.api' }))
+write(path.join(OUT, 'auth-kotlin', 'settings.gradle.kts'), 'pluginManagement { repositories { gradlePluginPortal(); mavenCentral(); google() } }\ndependencyResolutionManagement { repositories { mavenCentral(); google() } }\nrootProject.name = "auth-kotlin"\n')
+write(path.join(OUT, 'auth-kotlin', 'build.gradle.kts'), 'plugins {\n    kotlin("jvm") version "2.1.21"\n    kotlin("plugin.serialization") version "2.1.21"\n}\ndependencies {\n    implementation(platform("io.github.jan-tennert.supabase:bom:3.2.6"))\n    implementation("io.github.jan-tennert.supabase:auth-kt")\n    implementation("io.ktor:ktor-client-cio:3.2.3")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")\n}\n')
+const DR = (...p) => M('droid', 'app', 'src', 'main', 'java', 'com', 'test', 'droid', 'data', ...p)
+for (const [from, to] of [[DR('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [DR('auth', 'AuthCatalog.kt'), 'auth/AuthCatalog.kt'], [DR('auth', 'FirebaseAuthService.kt'), 'auth/FirebaseAuthService.kt']]) copy(from, path.join(OUT, 'auth-android', 'src', 'main', 'java', 'com', 'test', 'droid', 'data', to))
+write(path.join(OUT, 'auth-android', 'settings.gradle.kts'), 'pluginManagement { repositories { gradlePluginPortal(); mavenCentral(); google() } }\ndependencyResolutionManagement { repositories { mavenCentral(); google() } }\nrootProject.name = "auth-android"\n')
+write(path.join(OUT, 'auth-android', 'gradle.properties'), 'android.useAndroidX=true\norg.gradle.jvmargs=-Xmx2g\n')
+write(path.join(OUT, 'auth-android', 'build.gradle.kts'), 'plugins {\n    id("com.android.library") version "8.7.3"\n    id("org.jetbrains.kotlin.android") version "2.1.21"\n    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.21"\n}\nandroid {\n    namespace = "com.test.droid"\n    compileSdk = 35\n    defaultConfig { minSdk = 24 }\n    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }\n}\nkotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }\ndependencies {\n    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))\n    implementation("com.google.firebase:firebase-auth")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")\n    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")\n    implementation("androidx.credentials:credentials:1.5.0")\n    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")\n    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")\n}\n')
+// Swift: a SwiftPM package (two targets: Firebase and Supabase) built for the iOS simulator in CI
+for (const t of ['AuthFirebase', 'AuthSupabase']) for (const f of ['Core/Api/ApiClient.swift', 'Core/Auth/AuthCatalog.swift']) copy(M('iosapp', 'Demo', ...f.split('/')), path.join(OUT, 'auth-swift', 'Sources', t, path.basename(f)))
+copy(M('iosapp', 'Demo', 'Core', 'Auth', 'FirebaseAuthService.swift'), path.join(OUT, 'auth-swift', 'Sources', 'AuthFirebase', 'FirebaseAuthService.swift'))
+write(path.join(OUT, 'auth-swift', 'Sources', 'AuthSupabase', 'SupabaseAuthService.swift'), swiftSupabase(AC))
+write(path.join(OUT, 'auth-swift', 'Package.swift'), `// swift-tools-version:5.9
+import PackageDescription
+let package = Package(
+    name: "AuthSwift",
+    platforms: [.iOS(.v17)],
+    products: [.library(name: "AuthSwift", targets: ["AuthFirebase", "AuthSupabase"])],
+    dependencies: [
+        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "11.0.0"),
+        .package(url: "https://github.com/google/GoogleSignIn-iOS", from: "8.0.0"),
+        .package(url: "https://github.com/supabase/supabase-swift", from: "2.20.0"),
+    ],
+    targets: [
+        .target(name: "AuthFirebase", dependencies: [.product(name: "FirebaseAuth", package: "firebase-ios-sdk"), .product(name: "FirebaseCore", package: "firebase-ios-sdk"), .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS")]),
+        .target(name: "AuthSupabase", dependencies: [.product(name: "Supabase", package: "supabase-swift"), .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS")]),
+    ]
+)
+`)
+write(path.join(OUT, 'auth-ts', 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true, noEmit: true, target: 'es2022', lib: ['es2022', 'dom'], module: 'esnext', moduleResolution: 'bundler', skipLibCheck: true }, include: ['src/*.ts'] }, null, 2))
 
 // ---------- port idioms (references/port): every language and UI framework compiles ----------
 const PR = path.join(ROOT, 'references', 'port')
