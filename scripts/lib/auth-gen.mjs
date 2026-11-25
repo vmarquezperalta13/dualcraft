@@ -545,5 +545,12 @@ export const RECENT_LOGIN_SECONDS = ${c.deletion?.recentLoginSeconds ?? 300}
 export const CLEANUP: readonly { collection: string; field: string | null }[] = ${JSON.stringify(cleanup)}
 /** Storage prefixes removed on deletion ({uid} is replaced${prov === 'supabase' ? '; first segment = bucket' : ''}). */
 export const STORAGE_PREFIXES: readonly string[] = ${JSON.stringify(c.deletion?.storage || [])}
-`
+${c.methods.includes('passkey') && prov === 'firebase' ? `/** Passkeys (WebAuthn): relying party = your domain; origins = the web origin(s) + android:apk-key-hash:<base64url SHA-256 of the signing cert>. */
+export const PASSKEY_RP_ID = ${q(c.passkey?.rpId || '')}
+export const PASSKEY_RP_NAME = ${q(c.passkey?.rpName || 'App')}
+export const PASSKEY_ORIGINS: readonly string[] = ${JSON.stringify(passkeyOrigins(c))}
+` : ''}`
 }
+
+/** Allowed WebAuthn origins: passkey.origins, else https://<rpId>. */
+export const passkeyOrigins = (c) => (c.passkey?.origins?.length ? c.passkey.origins : c.passkey?.rpId ? [`https://${c.passkey.rpId}`] : [])

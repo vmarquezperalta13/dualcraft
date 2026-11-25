@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.24.0] - 2026-11-25
+### Added
+- Auth pack: `/dualcraft:auth` and `scripts/auth.mjs` (init, gen, check) on Firebase Auth or Supabase Auth, from one `.dualcraft/auth/auth.json`
+  - methods: email + password, Google, Apple, phone, passkeys; guest sessions and account linking; email verification; password policy; two-step verification (TOTP, SMS)
+  - roles with a default and an admin role, route access rules (`public`, `guest`, `signedIn`, `verified`, `roles`) and `decideAccess()`; Firebase custom claims / Supabase `app_metadata`
+  - generated catalog per stack (TypeScript, Dart, Kotlin, Swift): roles, methods, route rules, password policy, 18 normalized error codes from Firebase and Supabase, the `AuthService` interface
+  - server: `deleteAccount` (recent sign-in, data and storage cleanup, deletion) and `setUserRole` (admins only) in the backend contract with typed clients; first-admin script / SQL; Firestore rules and RLS helpers
+  - `AuthService` implementations (written once): Flutter, web (Next.js, Vite, Astro, Nuxt), React Native, Android, KMP (Supabase) and iOS, for Firebase and Supabase
+  - screens (written once): `AuthFlow` (sign in, sign up, forgot password, phone, second factor, verify email), `AccountScreen` (linking, second factor, passkey, sign out, delete account with re-authentication) and `authRedirect()` for Flutter, React (next-intl / react-i18next), React Native, Nuxt (Vue), Compose (Android / KMP) and SwiftUI; texts `auth.ui.*`, `auth.errors.*`, `auth.password.*` in the shared i18n
+  - passkeys: on Firebase, WebAuthn in your own Cloud Functions (SimpleWebAuthn, single-use challenges, custom token) with clients for the web (@simplewebauthn/browser), React Native (react-native-passkey), Flutter (package:passkeys), Android (Credential Manager) and iOS (AuthenticationServices); on Supabase, the native beta API (supabase-js, supabase_flutter, supabase-swift); `assetlinks.json` and `apple-app-site-association`
+  - `check`: catalogs and contract in sync, implementations complete, texts, App Store 4.8 (Apple with Google on iOS), account-deletion URL, Identity Platform for Firebase MFA, provider limits (RN Firebase TOTP, Supabase SMS and passkeys), SMS cost, guest cleanup, Android passkey origin
+- CI compiles the auth output against the real SDKs: firebase, supabase-js, React Native libraries, next-intl, react-i18next, Vue (vue-tsc), Flutter, supabase-kt, Android (Firebase, Credential Manager, Compose), iOS (FirebaseAuth, GoogleSignIn, supabase-swift, SwiftUI) and the Cloud Functions with SimpleWebAuthn
+### Fixed
+- push test fixture: English text with the same placeholders as Spanish
+
 ## [0.23.0] - 2026-11-24
 ### Added
 - Deep language port: `/dualcraft:port` and `scripts/port.mjs` (idioms, deps, files, parity) — Dart ⇄ Kotlin ⇄ Swift ⇄ TypeScript and Flutter ⇄ Compose (Android/KMP) ⇄ SwiftUI ⇄ React Native, in every direction

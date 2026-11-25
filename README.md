@@ -50,6 +50,7 @@ The installer asks which **agents** (Claude Code, Gemini CLI, Codex CLI), which 
 | payments | in-app purchases on Google Play and the App Store (native server verification or RevenueCat) |
 | push | push notifications with FCM: channels, topics, typed notifications with deep links, texts per language |
 | deploy | CI/CD with GitHub Actions: CI per stack, web deploys with previews, backend per environment, mobile builds to Play internal testing and TestFlight |
+| auth | sign-in on Firebase or Supabase: email, Google, Apple, phone, passkeys, guest + linking, 2FA, roles and route rules, account deletion; typed service and screens per stack |
 | legal | privacy and legal (EU/Spain + stores): data map, draft policies, App Privacy / Data safety answers, iOS privacy manifest, checks |
 | backend | serverless functions from one contract (Cloud Functions, Supabase Edge Functions, API routes), typed clients for every stack |
 | shared | i18n, analytics, cross-platform refactor |
@@ -86,6 +87,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:payments` | In-app purchases: catalog, server verification or RevenueCat, purchase service |
 | `/dualcraft:push` | Push notifications: catalog, typed senders and parsers, device registration |
 | `/dualcraft:deploy` | CI/CD workflows, environments, secrets check, release signing |
+| `/dualcraft:auth` | Auth config, catalogs, AuthService, sign-in/account screens, deletion and roles on the server, passkeys |
 | `/dualcraft:legal` | Data map, draft privacy policy / terms / cookies, store privacy forms, privacy manifest |
 | `/dualcraft:backend` | Server functions from a contract: callables, webhooks, triggers, cron; validators + typed clients |
 | `/dualcraft:schema` | Edit the schema; generate Dart / TS / Firestore rules |
@@ -142,6 +144,7 @@ CI compiles the generated code for real on every push: TypeScript, Flutter, Kotl
   backend/api.json  server functions contract (source)
   push/notifications.json  channels, topics and notifications (texts in i18n under "push")
   deploy/pipeline.json  web host, Android track, branch (workflows are generated from it)
+  auth/auth.json  sign-in methods, roles, route rules, MFA, deletion and passkeys (source of the auth catalogs)
   legal/data-map.json  personal data processed: purposes, legal basis, retention, providers (source of the legal drafts)
   payments/products.json  products, entitlements and currencies sold in the apps (source)
   design/tokens.json  copy of the Design System tokens (pulled, never edited here)

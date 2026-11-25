@@ -201,7 +201,7 @@ write(path.join(OUT, 'swift', 'Use.swift'), 'import SwiftUI\nfunc dualcraftCheck
 
 // ---------- Flutter project (hockey schema) ----------
 const fl = makeProject({ mobile: 'flutter', paths: { mobile: 'app' }, schema: 'hockey' })
-write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\n  in_app_purchase: any\n  firebase_messaging: ">=17.0.0"\n  flutter_local_notifications: any\n  flutter_riverpod: any\n  flutter_bloc: any\n  go_router: any\n  firebase_auth: any\n  google_sign_in: ^7.0.0\n  sign_in_with_apple: any\n  crypto: any\n  supabase_flutter: any\nflutter:\n  generate: true\n')
+write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\n  in_app_purchase: any\n  firebase_messaging: ">=17.0.0"\n  flutter_local_notifications: any\n  flutter_riverpod: any\n  flutter_bloc: any\n  go_router: any\n  firebase_auth: any\n  google_sign_in: ^7.0.0\n  sign_in_with_apple: any\n  crypto: any\n  supabase_flutter: ^2.15.0\n  passkeys: ^2.21.0\nflutter:\n  generate: true\n')
 write(path.join(fl, 'app', 'l10n.yaml'), 'arb-dir: lib/l10n\ntemplate-arb-file: app_es.arb\noutput-localization-file: app_localizations.dart\n')
 for (const s of ['tokens.mjs', 'gen.mjs', 'analytics.mjs', 'i18n.mjs']) must(run(s, s === 'tokens.mjs' || s === 'gen.mjs' ? ['all'] : ['gen'], fl), `flutter ${s}`)
 backend(fl, 'firebase', COMMON)
@@ -303,7 +303,7 @@ write(path.join(OUT, 'auth-ts', 'src', 'auth-supabase-native.ts'), tsSupabase(AC
 write(path.join(OUT, 'auth-ts', 'src', 'screens-next.tsx'), reactWebScreens(AC, { catalog: './auth-catalog', i18n: 'next-intl', next: true }))
 write(path.join(OUT, 'auth-ts', 'src', 'screens-web.tsx'), reactWebScreens(AC, { catalog: './auth-catalog', i18n: 'react-i18next' }))
 write(path.join(OUT, 'auth-ts', 'src', 'screens-rn.tsx'), read(M('rn', 'src', 'screens', 'auth', 'AuthScreens.tsx')).replace("from '../../lib/auth-catalog'", "from './auth-catalog'"))
-write(path.join(OUT, 'auth-ts', 'package.json'), JSON.stringify({ name: 'auth-ts-check', private: true, dependencies: { react: '18.3.1', 'react-dom': '18.3.1', next: '15.1.3', 'next-intl': '3.26.3', i18next: '24.2.0', 'react-i18next': '15.4.0', typescript: '5.6.3', firebase: '11.10.0', '@supabase/supabase-js': '2.49.4', '@react-native-google-signin/google-signin': '13.2.0', 'expo-apple-authentication': '7.1.3', 'expo-crypto': '14.0.2', 'react-native': '0.76.5', '@types/react': '18.3.12', '@react-native-firebase/app': '22.4.0', '@react-native-firebase/auth': '22.4.0' } }, null, 2))
+write(path.join(OUT, 'auth-ts', 'package.json'), JSON.stringify({ name: 'auth-ts-check', private: true, dependencies: { react: '18.3.1', 'react-dom': '18.3.1', next: '15.1.3', 'next-intl': '3.26.3', i18next: '24.2.0', 'react-i18next': '15.4.0', typescript: '5.6.3', firebase: '11.10.0', '@supabase/supabase-js': '2.119.2', '@simplewebauthn/browser': '13.3.0', 'react-native-passkey': '3.6.2', '@react-native-google-signin/google-signin': '13.2.0', 'expo-apple-authentication': '7.1.3', 'expo-crypto': '14.0.2', 'react-native': '0.76.5', '@types/react': '18.3.12', '@react-native-firebase/app': '22.4.0', '@react-native-firebase/auth': '22.4.0' } }, null, 2))
 // Kotlin: supabase-kt on the JVM (Android/KMP code), Firebase on an Android library module (AGP + Android SDK)
 const KS = (...p) => path.join(OUT, 'auth-kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', ...p)
 copy(K('api', 'ApiClient.kt'), KS('api', 'ApiClient.kt'))
@@ -333,7 +333,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "11.0.0"),
         .package(url: "https://github.com/google/GoogleSignIn-iOS", from: "8.0.0"),
-        .package(url: "https://github.com/supabase/supabase-swift", from: "2.20.0"),
+        .package(url: "https://github.com/supabase/supabase-swift", from: "2.48.0"),
     ],
     targets: [
         .target(name: "AuthFirebase", dependencies: [.product(name: "FirebaseAuth", package: "firebase-ios-sdk"), .product(name: "FirebaseCore", package: "firebase-ios-sdk"), .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS")]),

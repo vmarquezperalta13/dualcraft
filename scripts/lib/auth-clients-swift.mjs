@@ -6,6 +6,132 @@ const mfa = (c) => (c.mfa?.factors || []).length > 0
 const mf = (c, f) => (c.mfa?.factors || []).includes(f)
 const issuer = (c) => JSON.stringify(c.passkey?.rpName || 'App')
 
+const firebasePasskeys = `
+    // Passkeys: AuthenticationServices on the device, verification in the passkey* Cloud Functions, then a custom
+    // token. Needs the Associated Domains entitlement "webcredentials:<rpId>" and apple-app-site-association.
+    func signInWithPasskey() async throws -> AuthUser {
+        try await guarded {
+            let o = try await passkeyCall { try await api.passkeySignInOptions() }
+            let response = try await PasskeyFlow().assert(optionsJSON: o.options)
+            let token = try await passkeyCall { try await api.passkeySignInVerify(PasskeySignInVerifyInput(challengeId: o.challengeId, response: response)) }.token
+            return try await signedIn(try await auth.signIn(withCustomToken: token))
+        }
+    }
+
+    func registerPasskey() async throws {
+        try await guarded {
+            let o = try await passkeyCall { try await api.passkeyRegisterOptions() }
+            let response = try await PasskeyFlow().register(optionsJSON: o.options)
+            _ = try await passkeyCall { try await api.passkeyRegisterVerify(PasskeyRegisterVerifyInput(response: response)) }
+            current = try await map(user, refresh: true) // picks up the "passkey" claim
+        }
+    }
+
+    /// Server errors of the passkey functions → AuthError.
+    private func passkeyCall<T>(_ body: () async throws -> T) async throws -> T {
+        do { return try await body() } catch let e as ApiError {
+            switch e.code {
+            case "failed-precondition": throw AuthError(code: .codeExpired, raw: e.code)
+            case "not-found", "permission-denied": throw AuthError(code: .invalidCredentials, raw: e.code)
+            case "already-exists": throw AuthError(code: .alreadyLinked, raw: e.code)
+            default: throw AuthError(code: .unknown, raw: e.code)
+            }
+        }
+    }
+`
+/** WebAuthn JSON (SimpleWebAuthn options/responses) ⇄ AuthenticationServices platform passkeys. */
+const passkeyFlow = `
+/// Runs a platform passkey ceremony from WebAuthn options JSON and returns the response JSON for the server.
+@MainActor
+final class PasskeyFlow: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    private var continuation: CheckedContinuation<ASAuthorization, Error>?
+
+    func register(optionsJSON: String) async throws -> String {
+        let o = try Self.object(optionsJSON)
+        guard let rp = o["rp"] as? [String: Any], let rpId = rp["id"] as? String, let user = o["user"] as? [String: Any],
+              let challenge = Self.data(o["challenge"]), let userId = Self.data(user["id"]), let name = user["name"] as? String
+        else { throw AuthError(code: .unknown, raw: "bad_passkey_options") }
+        let request = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: rpId)
+            .createCredentialRegistrationRequest(challenge: challenge, name: name, userID: userId)
+        guard let c = try await perform(request).credential as? ASAuthorizationPlatformPublicKeyCredentialRegistration, let attestation = c.rawAttestationObject
+        else { throw AuthError(code: .unknown, raw: "not_a_passkey") }
+        let id = Self.b64url(c.credentialID)
+        return try Self.json(["id": id, "rawId": id, "type": "public-key", "authenticatorAttachment": "platform", "clientExtensionResults": [String: Any](),
+                              "response": ["clientDataJSON": Self.b64url(c.rawClientDataJSON), "attestationObject": Self.b64url(attestation), "transports": ["internal", "hybrid"]]])
+    }
+
+    func assert(optionsJSON: String) async throws -> String {
+        let o = try Self.object(optionsJSON)
+        guard let rpId = o["rpId"] as? String, let challenge = Self.data(o["challenge"]) else { throw AuthError(code: .unknown, raw: "bad_passkey_options") }
+        let request = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: rpId).createCredentialAssertionRequest(challenge: challenge)
+        guard let c = try await perform(request).credential as? ASAuthorizationPlatformPublicKeyCredentialAssertion else { throw AuthError(code: .unknown, raw: "not_a_passkey") }
+        let id = Self.b64url(c.credentialID)
+        return try Self.json(["id": id, "rawId": id, "type": "public-key", "authenticatorAttachment": "platform", "clientExtensionResults": [String: Any](),
+                              "response": ["clientDataJSON": Self.b64url(c.rawClientDataJSON), "authenticatorData": Self.b64url(c.rawAuthenticatorData), "signature": Self.b64url(c.signature), "userHandle": Self.b64url(c.userID)]])
+    }
+
+    private func perform(_ request: ASAuthorizationRequest) async throws -> ASAuthorization {
+        try await withCheckedThrowingContinuation { c in
+            continuation = c
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            controller.delegate = self
+            controller.presentationContextProvider = self
+            controller.performRequests()
+        }
+    }
+
+    nonisolated func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        MainActor.assumeIsolated { continuation?.resume(returning: authorization); continuation = nil }
+    }
+
+    nonisolated func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        let code = (error as? ASAuthorizationError)?.code
+        MainActor.assumeIsolated {
+            continuation?.resume(throwing: AuthError(code: code == .canceled ? .cancelled : .unknown, raw: String(describing: error)))
+            continuation = nil
+        }
+    }
+
+    nonisolated func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        MainActor.assumeIsolated { UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first ?? ASPresentationAnchor() }
+    }
+
+    private static func object(_ s: String) throws -> [String: Any] {
+        guard let o = try JSONSerialization.jsonObject(with: Data(s.utf8)) as? [String: Any] else { throw AuthError(code: .unknown, raw: "bad_passkey_options") }
+        return o
+    }
+    private static func json(_ o: [String: Any]) throws -> String { String(decoding: try JSONSerialization.data(withJSONObject: o), as: UTF8.self) }
+    private static func b64url(_ d: Data) -> String {
+        d.base64EncodedString().replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
+    }
+    private static func data(_ v: Any?) -> Data? {
+        guard var s = v as? String else { return nil }
+        s = s.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        while s.count % 4 != 0 { s += "=" }
+        return Data(base64Encoded: s)
+    }
+}
+`
+const supabasePasskeys = `
+    // Passkeys (Supabase beta, supabase-swift ≥ 2.48, iOS 16+): enable them in config.toml / Dashboard → Authentication →
+    // Passkeys, plus the Associated Domains entitlement "webcredentials:<rpId>" and apple-app-site-association.
+    func signInWithPasskey() async throws -> AuthUser {
+        try await guarded {
+            let response = try await client.auth.signInWithPasskey(presentationAnchor: anchor())
+            return try await signedIn(response.user)
+        }
+    }
+
+    func registerPasskey() async throws {
+        try await guarded {
+            _ = try await client.auth.registerPasskey(presentationAnchor: anchor())
+        }
+    }
+
+    private func anchor() -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first ?? ASPresentationAnchor()
+    }
+`
 const passkeyStubs = `
     // Passkeys: implemented by the passkey step of the auth pack (auth.mjs).
     func signInWithPasskey() async throws -> AuthUser { throw AuthError(code: .methodDisabled, raw: "passkeys_not_set_up") }
@@ -69,7 +195,7 @@ export function swiftFirebase(c) {
   const idOf = [email && 'case .email: "password"', google && 'case .google: "google.com"', apple && 'case .apple: "apple.com"', phone && 'case .phone: "phone"'].filter(Boolean)
   return `// Firebase implementation of AuthService for iOS (DualCraft auth). Yours after creation: adapt freely.
 // SPM: firebase-ios-sdk (FirebaseAuth)${on(google, ', GoogleSignIn-iOS (GoogleSignIn)')}. Enable the providers in Firebase Console → Authentication${on(google, '; add the REVERSED_CLIENT_ID URL scheme and call GIDSignIn.sharedInstance.handle(url) in .onOpenURL')}${on(apple, '; "Sign in with Apple" capability')}.
-${on(apple, 'import AuthenticationServices\nimport CryptoKit\n')}import FirebaseAuth
+${on(apple || has(c, 'passkey'), 'import AuthenticationServices\n')}${on(apple, 'import CryptoKit\n')}import FirebaseAuth
 import FirebaseCore
 import Foundation
 ${on(google, 'import GoogleSignIn\n')}import UIKit
@@ -111,7 +237,7 @@ ${on(mfa(c), '    private var pendingMfa: MultiFactorResolver?\n    private var 
         return AuthUser(
             uid: u.uid, email: u.email, phone: u.phoneNumber, displayName: u.displayName, photoUrl: u.photoURL,
             isAnonymous: u.isAnonymous, emailVerified: u.isEmailVerified, role: roleFrom(token.claims["role"]),
-            methods: ${on(c.guest, '(u.isAnonymous ? [.guest] : []) + ')}u.providerData.compactMap { methodOf($0.providerID) },
+            methods: ${on(c.guest, '(u.isAnonymous ? [.guest] : []) + ')}u.providerData.compactMap { methodOf($0.providerID) }${on(has(c, 'passkey'), ' + ((token.claims["passkey"] as? Bool) == true ? [.passkey] : [])')},
             mfaEnrolled: ${mfa(c) ? '!u.multiFactor.enrolledFactors.isEmpty' : 'false'}
         )
     }
@@ -210,7 +336,7 @@ ${on(email, `
     func confirmPhoneCode(_ verificationId: String, code: String) async throws -> AuthUser {
         try await guarded { try await signedIn(try await auth.signIn(with: PhoneAuthProvider.provider().credential(withVerificationID: verificationId, verificationCode: code))) }
     }
-`)}${on(has(c, 'passkey'), passkeyStubs)}${on(c.guest, `
+`)}${on(has(c, 'passkey'), firebasePasskeys)}${on(c.guest, `
     func signInAsGuest() async throws -> AuthUser {
         try await guarded { try await signedIn(try await auth.signInAnonymously()) }
     }
@@ -335,7 +461,7 @@ ${on(google, '        GIDSignIn.sharedInstance.signOut()\n')}        try auth.si
         }
     }
 }
-${on(google, presenter)}${on(apple, appleFlow)}`
+${on(google, presenter)}${on(apple, appleFlow)}${on(has(c, 'passkey'), passkeyFlow)}`
 }
 
 // ---------------------------------------------------------------- supabase-swift
@@ -345,8 +471,8 @@ export function swiftSupabase(c) {
   const nameOf = [email && 'case .email: "email"', google && 'case .google: "google"', apple && 'case .apple: "apple"', phone && 'case .phone: "phone"'].filter(Boolean)
   return `// Supabase implementation of AuthService for iOS (supabase-swift) — DualCraft auth. Yours after creation.
 // SPM: supabase-swift (Supabase)${on(google, ', GoogleSignIn-iOS (set GIDClientID in Info.plist; add the iOS client id to Supabase → Google → Client IDs)')}.
-${on(apple, 'import AuthenticationServices\nimport CryptoKit\n')}import Foundation
-${on(google, 'import GoogleSignIn\n')}import Supabase
+${on(apple || has(c, 'passkey'), 'import AuthenticationServices\n')}${on(apple, 'import CryptoKit\n')}import Foundation
+${on(google, 'import GoogleSignIn\n')}${has(c, 'passkey') ? '@_spi(Experimental) ' : ''}import Supabase
 import UIKit
 
 final class SupabaseAuthService: AuthService {
@@ -472,7 +598,7 @@ ${on(email, `
     func confirmPhoneCode(_ verificationId: String, code: String) async throws -> AuthUser {
         try await guarded { try await signedIn(try await client.auth.verifyOTP(phone: verificationId, token: code, type: .sms).user) }
     }
-`)}${on(has(c, 'passkey'), passkeyStubs)}${on(c.guest, `
+`)}${on(has(c, 'passkey'), supabasePasskeys)}${on(c.guest, `
     func signInAsGuest() async throws -> AuthUser {
         try await guarded { try await signedIn(try await client.auth.signInAnonymously().user) }
     }

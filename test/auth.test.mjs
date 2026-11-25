@@ -79,6 +79,27 @@ test('screens for Next.js (next-intl, client component) and Nuxt (Vue SFCs + red
   }
 })
 
+test('Firebase passkeys: WebAuthn functions in the contract, dependency, well-known files, origins warning', () => {
+  const p = makeMultiProject('firestore')
+  run('backend.mjs', ['init', '--provider', 'firebase', '--region', 'europe-west1'], p)
+  const r = auth(p, 'init', '--methods', 'email,google,apple,passkey', '--rp-id', 'acme.app')
+  assert.equal(r.code, 0, r.err)
+  assert.match(read(path.join(p, 'functions/src/passkeys.ts')), /verifyAuthenticationResponse[\s\S]*createCustomToken/)
+  assert.match(read(path.join(p, 'functions/src/index.ts')), /export \{ passkeyRegisterOptions, passkeyRegisterVerify, passkeySignInOptions, passkeySignInVerify \} from '\.\/passkeys'/)
+  assert.ok(JSON.parse(read(path.join(p, 'functions/package.json'))).dependencies['@simplewebauthn/server'])
+  const api = JSON.parse(read(path.join(p, '.dualcraft/backend/api.json')))
+  assert.equal(api.functions.find((f) => f.name === 'passkeySignInVerify').auth, 'public')
+  assert.match(read(path.join(p, 'functions/src/generated/auth.ts')), /PASSKEY_ORIGINS: readonly string\[\] = \["https:\/\/acme\.app"\]/)
+  assert.match(read(path.join(p, 'web/public/.well-known/assetlinks.json')), /"package_name": "com\.test\.(app|droid)"[\s\S]*get_login_creds|get_login_creds[\s\S]*"package_name": "com\.test\.(app|droid)"/)
+  assert.match(read(path.join(p, 'web/public/.well-known/apple-app-site-association')), /webcredentials/)
+  assert.match(read(path.join(p, 'web/src/lib/auth-service.ts')), /startRegistration[\s\S]*signInWithCustomToken/)
+  assert.match(r.out, /match \/passkeys\/\{id\} \{ allow read, write: if false; \}/)
+  const c = auth(p, 'check')
+  assert.equal(c.code, 0, c.out)
+  assert.match(c.out, /android:apk-key-hash/)
+  assert.equal(run('backend.mjs', ['check'], p).code, 0)
+})
+
 test('Supabase: Edge Functions, app_metadata roles, RLS helpers, passkey limits on native SDKs', () => {
   const p = makeMultiProject('firestore')
   const cf = path.join(p, '.dualcraft', 'config.json'); write(cf, JSON.stringify({ ...JSON.parse(read(cf)), backend: { provider: 'supabase' } }))
@@ -91,5 +112,6 @@ test('Supabase: Edge Functions, app_metadata roles, RLS helpers, passkey limits 
   assert.match(r.out, /public\.has_role/); assert.match(r.out, /raw_app_meta_data/)
   const c = auth(p, 'check')
   assert.equal(c.code, 0, c.out)
-  assert.match(c.out, /Supabase passkeys are beta and only in supabase-js \/ supabase_flutter/)
+  assert.match(c.out, /Supabase passkeys are beta \(supabase-js ≥ 2\.105.*supabase-kt has none yet/)
+  assert.match(r.out, /\[auth\.webauthn\][\s\S]*rp_id = "acme\.app"[\s\S]*rp_origins = \["https:\/\/acme\.app"\]/)
 })

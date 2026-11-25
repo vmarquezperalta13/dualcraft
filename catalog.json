@@ -14,6 +14,7 @@
     "push": "Notificaciones push",
     "deploy": "CI/CD y despliegue",
     "legal": "Legal y privacidad",
+    "auth": "Autenticación",
     "security": "Seguridad",
     "marketing": "Marketing y lanzamiento",
     "convert": "Conversor entre stacks y lenguajes"
@@ -47,6 +48,7 @@
     { "name": "push", "pack": "push", "phase": 10, "es": "Notificaciones push con FCM (Android, iOS, web): catálogo de canales, temas y notificaciones tipadas con deep link, textos del i18n en el idioma de cada dispositivo, registro de dispositivos y PushService de Flutter" },
     { "name": "deploy", "pack": "deploy", "phase": 10, "es": "CI/CD con GitHub Actions: CI por stack, despliegue web (Firebase Hosting, Vercel, Cloudflare, Netlify) con previews, backend por entornos y release móvil a pruebas internas de Play y TestFlight; secrets y firma" },
     { "name": "legal", "pack": "legal", "phase": 10, "es": "Legal y privacidad (RGPD/LSSI y tiendas): mapa de datos deducido del código, borradores de política de privacidad, términos y cookies, respuestas de App Privacy y Data safety, PrivacyInfo.xcprivacy; comprueba borrado de cuenta, ATT, permisos y consentimiento de cookies" },
+    { "name": "auth", "pack": "auth", "phase": 10, "es": "Autenticación con Firebase o Supabase desde un único auth.json: email y contraseña, Google, Apple, teléfono, passkeys, invitado y vincular cuentas, verificación en dos pasos, roles y reglas de acceso por ruta, borrado de cuenta; catálogo tipado y AuthService por stack, pantallas de login y cuenta, funciones de servidor" },
     { "name": "database", "pack": "db", "phase": 2, "es": "Crea la BD: Firebase, Supabase o Postgres+Prisma; entornos local+dev+prod por CLI; migraciones SQL con RLS, Prisma, reglas e índices; dev → prod" },
     { "name": "schema", "pack": "db", "phase": 2, "es": "Crea o edita el esquema (fuente de verdad) y genera modelos Dart, tipos TS y reglas de Firestore" },
 

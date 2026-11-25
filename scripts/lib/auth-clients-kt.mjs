@@ -5,29 +5,80 @@ const has = (c, m) => c.methods.includes(m)
 const mfa = (c) => (c.mfa?.factors || []).length > 0
 const mf = (c, f) => (c.mfa?.factors || []).includes(f)
 const issuer = (c) => JSON.stringify(c.passkey?.rpName || 'App')
+const firebasePasskeys = `
+    // Passkeys: Credential Manager on the device, verification in the passkey* Cloud Functions, then a custom token.
+    // Needs .well-known/assetlinks.json on your domain (get_login_creds) and the app's origin in passkey.origins.
+    override suspend fun signInWithPasskey(): AuthUser = guard {
+        val o = passkeyCall { api.passkeySignInOptions() }
+        val result = try {
+            CredentialManager.create(context).getCredential(activity(), GetCredentialRequest(listOf(GetPublicKeyCredentialOption(o.options))))
+        } catch (e: GetCredentialCancellationException) {
+            throw AuthError(AuthErrorCode.CANCELLED, "passkey_cancelled")
+        } catch (e: NoCredentialException) {
+            throw AuthError(AuthErrorCode.INVALID_CREDENTIALS, "no_passkey")
+        }
+        val credential = result.credential as? PublicKeyCredential ?: throw AuthError(AuthErrorCode.UNKNOWN, "not_a_passkey")
+        val token = passkeyCall { api.passkeySignInVerify(PasskeySignInVerifyInput(challengeId = o.challengeId, response = credential.authenticationResponseJson)) }.token
+        signedIn(auth.signInWithCustomToken(token).await())
+    }
+
+    override suspend fun registerPasskey() = guard {
+        val o = passkeyCall { api.passkeyRegisterOptions() }
+        val created = try {
+            CredentialManager.create(context).createCredential(activity(), CreatePublicKeyCredentialRequest(o.options))
+        } catch (e: CreateCredentialCancellationException) {
+            throw AuthError(AuthErrorCode.CANCELLED, "passkey_cancelled")
+        }
+        val json = (created as? CreatePublicKeyCredentialResponse)?.registrationResponseJson ?: throw AuthError(AuthErrorCode.UNKNOWN, "not_a_passkey")
+        passkeyCall { api.passkeyRegisterVerify(PasskeyRegisterVerifyInput(response = json)) }
+        current = map(user, refresh = true) // picks up the "passkey" claim
+    }
+
+    /** Server errors of the passkey functions → AuthError. */
+    private suspend fun <T> passkeyCall(block: suspend () -> T): T = try {
+        block()
+    } catch (e: ApiError) {
+        throw AuthError(
+            when (e.code) {
+                "failed-precondition" -> AuthErrorCode.CODE_EXPIRED
+                "not-found", "permission-denied" -> AuthErrorCode.INVALID_CREDENTIALS
+                "already-exists" -> AuthErrorCode.ALREADY_LINKED
+                else -> AuthErrorCode.UNKNOWN
+            },
+            e.code,
+        )
+    }
+`
 const passkeyStubs = `
-    // Passkeys: implemented by the passkey step of the auth pack (auth.mjs).
-    override suspend fun signInWithPasskey(): AuthUser = throw AuthError(AuthErrorCode.METHOD_DISABLED, "passkeys_not_set_up")
-    override suspend fun registerPasskey(): Unit = throw AuthError(AuthErrorCode.METHOD_DISABLED, "passkeys_not_set_up")
+    // Passkeys: supabase-kt has no passkey support yet (supabase-js, supabase_flutter and supabase-swift do).
+    override suspend fun signInWithPasskey(): AuthUser = throw AuthError(AuthErrorCode.METHOD_DISABLED, "passkeys_not_supported_in_supabase_kt")
+    override suspend fun registerPasskey(): Unit = throw AuthError(AuthErrorCode.METHOD_DISABLED, "passkeys_not_supported_in_supabase_kt")
 `
 
 // ---------------------------------------------------------------- Android + Firebase
 export function kotlinFirebase(c, { pkg, apiPkg }) {
-  const google = has(c, 'google'), apple = has(c, 'apple'), phone = has(c, 'phone'), email = has(c, 'email'), sms = phone || mf(c, 'sms')
+  const google = has(c, 'google'), apple = has(c, 'apple'), phone = has(c, 'phone'), email = has(c, 'email'), sms = phone || mf(c, 'sms'), passkey = has(c, 'passkey')
   const methodOf = [email && '"password" -> AuthMethod.EMAIL', google && '"google.com" -> AuthMethod.GOOGLE', apple && '"apple.com" -> AuthMethod.APPLE', phone && '"phone" -> AuthMethod.PHONE'].filter(Boolean)
   const idOf = [email && 'AuthMethod.EMAIL -> "password"', google && 'AuthMethod.GOOGLE -> "google.com"', apple && 'AuthMethod.APPLE -> "apple.com"', phone && 'AuthMethod.PHONE -> "phone"'].filter(Boolean)
   return `// Firebase implementation of AuthService for Android (DualCraft auth). Yours after creation: adapt freely.
-// Gradle: firebase-auth (Firebase BoM), kotlinx-coroutines-play-services${on(google, ', androidx.credentials:credentials + credentials-play-services-auth, com.google.android.libraries.identity.googleid:googleid')}.
+// Gradle: firebase-auth (Firebase BoM), kotlinx-coroutines-play-services${on(google || passkey, ', androidx.credentials:credentials + credentials-play-services-auth')}${on(google, ', com.google.android.libraries.identity.googleid:googleid')}.
 // Setup: enable the providers in Firebase Console → Authentication${on(google, '; SHA-1/SHA-256 of your signing keys in the Firebase Android app')}${on(apple, '; Apple: Services ID + key in the Apple provider')}.
 package ${pkg}
 
 import android.app.Activity
 import android.content.Context
-${on(google, `import androidx.credentials.ClearCredentialStateRequest
-import androidx.credentials.CredentialManager
+${on(google, 'import androidx.credentials.ClearCredentialStateRequest\n')}${on(google || passkey, `import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
-import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+`)}${on(passkey, `import androidx.credentials.CreatePublicKeyCredentialRequest
+import androidx.credentials.CreatePublicKeyCredentialResponse
+import androidx.credentials.GetPublicKeyCredentialOption
+import androidx.credentials.PublicKeyCredential
+import androidx.credentials.exceptions.CreateCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
+import ${apiPkg}.PasskeyRegisterVerifyInput
+import ${apiPkg}.PasskeySignInVerifyInput
+`)}${on(google, `import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 `)}import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
@@ -82,7 +133,7 @@ ${on(mfa(c), '    private var pendingMfa: MultiFactorResolver? = null\n    priva
             isAnonymous = u.isAnonymous,
             emailVerified = u.isEmailVerified,
             role = roleFrom(token.claims["role"]),
-            methods = ${on(c.guest, 'listOfNotNull(if (u.isAnonymous) AuthMethod.GUEST else null) + ')}u.providerData.mapNotNull { methodOf(it.providerId) },
+            methods = ${on(c.guest, 'listOfNotNull(if (u.isAnonymous) AuthMethod.GUEST else null) + ')}u.providerData.mapNotNull { methodOf(it.providerId) }${on(passkey, ' + listOfNotNull(if (token.claims["passkey"] == true) AuthMethod.PASSKEY else null)')},
             mfaEnrolled = ${mfa(c) ? 'u.multiFactor.enrolledFactors.isNotEmpty()' : 'false'},
         )
     }
@@ -164,7 +215,7 @@ ${on(email, `
     override suspend fun startPhoneSignIn(phone: String): String = guard { sendSms(phone = phone) }
 
     override suspend fun confirmPhoneCode(verificationId: String, code: String): AuthUser = guard { signedIn(auth.signInWithCredential(PhoneAuthProvider.getCredential(verificationId, code)).await()) }
-`)}${on(has(c, 'passkey'), passkeyStubs)}${on(c.guest, `
+`)}${on(has(c, 'passkey'), firebasePasskeys)}${on(c.guest, `
     override suspend fun signInAsGuest(): AuthUser = guard { signedIn(auth.signInAnonymously().await()) }
 `)}${on(c.linking && email, `
     override suspend fun linkEmail(email: String, password: String): AuthUser = guard { signedIn(user.linkWithCredential(EmailAuthProvider.getCredential(email, password)).await()) }

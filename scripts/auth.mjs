@@ -12,8 +12,9 @@ import { fileURLToPath } from 'node:url'
 import { project, parseArgs, die, posix } from './lib/project.mjs'
 import { stamp, writeGuarded } from './lib/guard.mjs'
 import { projectStacks, outputFor, kotlinPackage, kotlinModule, iosAppDir } from './lib/targets.mjs'
-import { METHODS, ACCESS, MFA_FACTORS, ERROR_CODES, snake, genTs, genDart, genKotlin, genSwift, genServer } from './lib/auth-gen.mjs'
+import { METHODS, ACCESS, MFA_FACTORS, ERROR_CODES, snake, genTs, genDart, genKotlin, genSwift, genServer, passkeyOrigins as PK_ORIGINS } from './lib/auth-gen.mjs'
 import * as T from './lib/auth-templates.mjs'
+import * as PK from './lib/auth-passkeys.mjs'
 import { flutterFirebase, flutterSupabase } from './lib/auth-clients.mjs'
 import { tsFirebase, tsSupabase, rnFirebase } from './lib/auth-clients-ts.mjs'
 import { kotlinFirebase, kotlinSupabase } from './lib/auth-clients-kt.mjs'
@@ -135,10 +136,32 @@ const CONTRACT = (c) => [
   { name: 'deleteAccount', kind: 'callable', auth: 'user', description: 'Borra la cuenta del usuario y sus datos (requiere un inicio de sesión reciente)', platforms: ['web', 'mobile'], input: {}, output: { deleted: { type: 'bool', required: true } }, errors: ['failed-precondition'], origin: 'auth' },
   { name: 'setUserRole', kind: 'callable', auth: 'admin', description: 'Asigna un rol a un usuario (solo administradores)', platforms: ['web', 'mobile'], input: { uid: { type: 'string', required: true, minLength: 1, maxLength: 128 }, role: { type: 'string', required: true, values: c.roles } }, output: {}, errors: ['not-found', 'failed-precondition'], origin: 'auth' },
 ]
+/** Firebase passkeys: four functions in functions/src/passkeys.ts (Supabase has passkeys built in). */
+const firebasePasskeys = (c) => (c.provider || provider()) === 'firebase' && c.methods.includes('passkey')
+const contractAll = (c) => [...CONTRACT(c), ...(firebasePasskeys(c) ? PK.PASSKEY_CONTRACT : [])]
+function scaffoldPasskeys(c) {
+  if (!firebasePasskeys(c)) return []
+  const fd = functionsDir(); const made = [writeNew(path.join(fd, 'src', 'passkeys.ts'), PK.firebasePasskeys)]
+  const idx = path.join(fd, 'src', 'index.ts'); const names = PK.PASSKEY_CONTRACT.map((f) => f.name)
+  if (fs.existsSync(idx) && !names.every((n) => new RegExp(`\\b${n}\\b`).test(read(idx)))) { fs.appendFileSync(idx, (read(idx).endsWith('\n') ? '' : '\n') + `export { ${names.join(', ')} } from './passkeys'\n`); made.push(`${rel(idx)}: export ${names.join(', ')}`) }
+  const pj = path.join(fd, 'package.json'); const pkg = readJson(pj)
+  if (pkg && !pkg.dependencies?.['@simplewebauthn/server']) { pkg.dependencies = { ...pkg.dependencies, '@simplewebauthn/server': '^13.1.1' }; fs.writeFileSync(pj, JSON.stringify(pkg, null, 2) + '\n'); made.push(`${rel(pj)}: @simplewebauthn/server (run npm install)`) }
+  return made.filter(Boolean)
+}
+/** assetlinks.json + apple-app-site-association in the web app's public/.well-known (written once; fill the placeholders). */
+function writeWellKnown(c) {
+  if (!c.methods.includes('passkey')) return []
+  const web = stacks.find((s) => s.kind === 'web'); if (!web) return []
+  const droid = stacks.find((s) => s.id === 'android' || s.id === 'kmp')
+  const fl = stacks.find((s) => s.id === 'flutter')
+  const flId = fl && (read(path.join(fl.dir, 'android', 'app', 'build.gradle.kts')) + read(path.join(fl.dir, 'android', 'app', 'build.gradle'))).match(/applicationId\s*=?\s*["']([\w.]+)["']/)?.[1]
+  const files = PK.wellKnown(c, { androidPackage: c.passkey?.androidPackage || (droid ? kotlinPackage(droid.dir, config, droid.id) : flId), iosAppId: c.passkey?.iosAppId })
+  return Object.entries(files).map(([n, t]) => writeNew(path.join(web.dir, 'public', '.well-known', n), t)).filter(Boolean).map((f) => f + ' (passkeys: fill in the placeholders)')
+}
 function syncContract(c) {
   const api = readJson(apiFile); if (!api) return false
   let changed = false
-  for (const f of CONTRACT(c)) {
+  for (const f of contractAll(c)) {
     const i = (api.functions || []).findIndex((x) => x.name === f.name)
     if (i < 0) { (api.functions ||= []).push(f); changed = true } else if (JSON.stringify(api.functions[i].input) !== JSON.stringify(f.input) || api.functions[i].origin !== 'auth') { api.functions[i] = { ...api.functions[i], ...f }; changed = true }
   }
@@ -241,7 +264,8 @@ function generate(c, force) {
   if (sf) written.push(writeGuarded(sf, stamp(genServer(c, prov)), { root, force }))
   // backend add declares the function, exports it from the entry point and scaffolds what scaffoldServer didn't write
   if (fs.existsSync(apiFile)) for (const f of CONTRACT(c)) if (!(readJson(apiFile).functions || []).some((x) => x.name === f.name)) { const r = backend('add', f.name, '--kind', 'callable', '--auth', f.auth, '--platforms', 'web,mobile'); if (r.status !== 0) die('backend add failed:\n' + r.stdout + r.stderr) }
-  if (syncContract(c)) written.push(rel(apiFile) + ' (deleteAccount, setUserRole)')
+  written.push(...scaffoldPasskeys(c), ...writeWellKnown(c))
+  if (syncContract(c)) written.push(rel(apiFile) + ` (${contractAll(c).map((f) => f.name).join(', ')})`)
   if (fs.existsSync(apiFile)) {
     const r = backend('gen', ...(force ? ['--force'] : [])); if (r.status !== 0) die('backend gen failed:\n' + r.stdout + r.stderr)
     r.stdout.split('\n').filter(Boolean).forEach((l) => written.push(l.replace(/^→ /, '') + ' (backend)'))
@@ -263,6 +287,7 @@ if (cmd === 'init') {
   if (v.errors.length) { v.errors.forEach((e) => console.log('✗ ' + e)); console.log(`Complete ${rel(file)}, then run: auth.mjs gen`); seedTexts().forEach((w) => console.log('→ ' + w)) }
   else generate(c, !!opt.force).forEach((w) => console.log('→ ' + w))
   console.log('\n' + (prov === 'supabase' ? T.supabaseRlsHelpers(c.adminRole) + '\n\nFirst admin:\n' + T.supabaseGrantRoleSql(c.adminRole) : T.firestoreRulesHelpers(c.adminRole) + `\n\nFirst admin: cd ${rel(functionsDir())} && node scripts/grant-role.mjs you@example.com ${c.adminRole}`))
+  if (c.methods.includes('passkey')) console.log('\n' + (prov === 'supabase' ? PK.supabasePasskeyConfig(c, PK_ORIGINS(c)) : 'Firestore rules for passkeys:\n' + PK.firestorePasskeyRules) + `\nServe .well-known/assetlinks.json and .well-known/apple-app-site-association from https://${c.passkey?.rpId} (written to the web app's public/.well-known when there is one).`)
   process.exit(0)
 }
 
@@ -280,7 +305,12 @@ if (!errors.length) {
   if (sf && read(sf) !== stamp(genServer(c, prov))) err(`${rel(sf)} out of date — run: auth.mjs gen`)
 }
 const api = readJson(apiFile)
-for (const f of CONTRACT(c)) if (api && !(api.functions || []).some((x) => x.name === f.name)) err(`backend contract: ${f.name} missing — run: auth.mjs gen`)
+for (const f of contractAll(c)) if (api && !(api.functions || []).some((x) => x.name === f.name)) err(`backend contract: ${f.name} missing — run: auth.mjs gen`)
+if (firebasePasskeys(c)) {
+  if (!fs.existsSync(path.join(functionsDir(), 'src', 'passkeys.ts'))) err(`passkeys: ${rel(path.join(functionsDir(), 'src', 'passkeys.ts'))} missing — run: auth.mjs gen`)
+  if (!readJson(path.join(functionsDir(), 'package.json'))?.dependencies?.['@simplewebauthn/server']) err('passkeys: functions/package.json lacks @simplewebauthn/server — run: auth.mjs gen')
+}
+if (c.methods.includes('passkey') && stacks.some((s) => s.id === 'android' || s.id === 'flutter' || s.id === 'react-native' || s.id === 'kmp') && !PK_ORIGINS(c).some((o) => o.startsWith('android:apk-key-hash:'))) warn('passkey: add your Android app origin to passkey.origins ("android:apk-key-hash:<base64url SHA-256 of the signing cert>") and the cert to passkey.androidSha256 (assetlinks.json)')
 if (prov === 'firebase') for (const f of ['deleteAccount', 'setUserRole']) if (!fs.existsSync(path.join(functionsDir(), 'src', f + '.ts'))) err(`${f}: no implementation in ${rel(path.join(functionsDir(), 'src'))}`)
 if (prov === 'supabase') for (const f of ['delete-account', 'set-user-role']) if (!fs.existsSync(path.join(root, 'supabase', 'functions', f, 'index.ts'))) err(`${f}: no Edge Function`)
 // implementations: every method of the interface (methods enabled later must be added by hand)
@@ -311,7 +341,7 @@ if (c.methods.includes('phone')) warn(`phone: SMS has a cost per message and att
 if (c.guest) warn(`guest: enable ${prov === 'supabase' ? 'anonymous sign-ins (Authentication → Providers) with CAPTCHA, and clean up stale anonymous users' : 'the Anonymous provider and plan a cleanup of stale anonymous accounts'}`)
 if (c.methods.includes('passkey')) {
   if (prov === 'firebase') warn('passkey: Firebase has no native passkeys — DualCraft verifies them in your own Cloud Functions and signs in with a custom token (needs the Service Account Token Creator role)')
-  if (prov === 'supabase' && ids.some((x) => ['android', 'kmp', 'ios'].includes(x))) warn('passkey: Supabase passkeys are beta and only in supabase-js / supabase_flutter — the native Kotlin/Swift SDKs do not have them yet')
+  if (prov === 'supabase') warn(`passkey: Supabase passkeys are beta (supabase-js ≥ 2.105 with auth.experimental.passkey, supabase_flutter ≥ 2.15, supabase-swift ≥ 2.48) — enable them in config.toml / the Dashboard${ids.some((x) => ['android', 'kmp'].includes(x)) ? '; supabase-kt has none yet, so Android/KMP apps get a "not supported" error' : ''}`)
 }
 if (opt.json) { console.log(JSON.stringify({ provider: prov, issues }, null, 2)); process.exit(issues.some((i) => i.level === 'error') ? 1 : 0) }
 console.log(`Auth (${prov || 'no backend'}) — methods: ${c.methods.join(', ')}${c.guest ? ', guest' : ''} · roles: ${c.roles.join(', ')} · MFA: ${(c.mfa?.factors || []).join(', ') || 'off'}`)

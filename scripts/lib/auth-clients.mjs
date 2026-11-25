@@ -17,6 +17,7 @@ export function flutterFirebase(c) {
 import 'dart:async';
 ${on(apple, "import 'dart:convert';\nimport 'dart:math';\n\nimport 'package:crypto/crypto.dart';\n")}import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
+${on(has(c, 'passkey'), "import 'package:passkeys/authenticator.dart';\nimport 'package:passkeys/types.dart';\n")}
 ${on(google, "import 'package:google_sign_in/google_sign_in.dart';\n")}${on(apple, "import 'package:sign_in_with_apple/sign_in_with_apple.dart';\n")}
 import '../generated/api_client.dart';
 import '../generated/auth_catalog.dart';
@@ -46,7 +47,7 @@ ${on(mfa(c), '  fb.MultiFactorResolver? _pendingMfa;\n  String? _pendingSmsId;\n
       isAnonymous: u.isAnonymous,
       emailVerified: u.emailVerified,
       role: roleFrom(token.claims?['role']),
-      methods: [${on(c.guest, "if (u.isAnonymous) AuthMethod.guest, ")}...u.providerData.map((p) => _methodOf(p.providerId)).whereType<AuthMethod>()],
+      methods: [${on(c.guest, "if (u.isAnonymous) AuthMethod.guest, ")}...u.providerData.map((p) => _methodOf(p.providerId)).whereType<AuthMethod>()${on(has(c, 'passkey'), ", if (token.claims?['passkey'] == true) AuthMethod.passkey")}],
       mfaEnrolled: ${mfa(c) ? '(await u.multiFactor.getEnrolledFactors()).isNotEmpty' : 'false'},
     );
   }
@@ -162,13 +163,47 @@ ${on(email, `
         return _signedIn(await _auth.signInWithCredential(fb.PhoneAuthProvider.credential(verificationId: verificationId, smsCode: code)));
       });
 `)}${on(has(c, 'passkey'), `
-  // Passkeys: Firebase has no native support — they are verified by your Cloud Functions (passkeyOptions /
-  // passkeyVerify) and the session comes as a custom token. Implemented by the passkey step of the auth pack.
-  @override
-  Future<AuthUser> signInWithPasskey() => throw const AuthError(AuthErrorCode.methodDisabled, 'passkeys_not_set_up');
+  // Passkeys: Firebase has no native support — the device's authenticator (package:passkeys) answers the WebAuthn
+  // options of your passkey* Cloud Functions, which verify it and return a custom token.
+  final _passkeys = PasskeyAuthenticator();
+
+  /// Device prompt + server errors → AuthError.
+  Future<T> _passkey<T>(Future<T> Function() body) async {
+    try {
+      return await body();
+    } on PasskeyAuthCancelledException {
+      throw const AuthError(AuthErrorCode.cancelled, 'passkey_cancelled');
+    } on NoCredentialsAvailableException {
+      throw const AuthError(AuthErrorCode.invalidCredentials, 'no_passkey');
+    } on ApiError catch (e) {
+      throw AuthError(switch (e.code) {
+        'failed-precondition' => AuthErrorCode.codeExpired,
+        'not-found' || 'permission-denied' => AuthErrorCode.invalidCredentials,
+        'already-exists' => AuthErrorCode.alreadyLinked,
+        _ => AuthErrorCode.unknown,
+      }, e.code);
+    }
+  }
 
   @override
-  Future<void> registerPasskey() => throw const AuthError(AuthErrorCode.methodDisabled, 'passkeys_not_set_up');
+  Future<AuthUser> signInWithPasskey() => _guard(() async {
+        final token = await _passkey(() async {
+          final o = await _api.passkeySignInOptions();
+          final r = await _passkeys.authenticate(AuthenticateRequestType.fromJsonString(o.options));
+          return (await _api.passkeySignInVerify(PasskeySignInVerifyInput(challengeId: o.challengeId, response: r.toJsonString()))).token;
+        });
+        return _signedIn(await _auth.signInWithCustomToken(token));
+      });
+
+  @override
+  Future<void> registerPasskey() => _guard(() async {
+        await _passkey(() async {
+          final o = await _api.passkeyRegisterOptions();
+          final r = await _passkeys.register(RegisterRequestType.fromJsonString(o.options));
+          await _api.passkeyRegisterVerify(PasskeyRegisterVerifyInput(response: r.toJsonString()));
+        });
+        _current = await _map(_user, refresh: true); // picks up the "passkey" claim
+      });
 `)}${on(c.guest, `
   @override
   Future<AuthUser> signInAsGuest() => _guard(() async => _signedIn(await _auth.signInAnonymously()));
@@ -288,7 +323,7 @@ export function flutterSupabase(c) {
 // Setup: enable the providers in Supabase → Authentication → Providers${on(google, '; Google: add your iOS/Android/Web client ids to "Client IDs" (native ID-token sign-in)')}${on(c.guest, '; anonymous sign-ins')}${on(c.linking, '; manual linking (for linkGoogle / linkApple)')}.
 import 'dart:async';
 ${on(apple, "import 'dart:convert';\nimport 'dart:math';\n\nimport 'package:crypto/crypto.dart';\n")}import 'package:flutter/foundation.dart';
-${on(google, "import 'package:google_sign_in/google_sign_in.dart';\n")}${on(apple, "import 'package:sign_in_with_apple/sign_in_with_apple.dart';\n")}import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+${on(google, "import 'package:google_sign_in/google_sign_in.dart';\n")}${on(has(c, 'passkey'), "import 'package:passkeys/authenticator.dart';\nimport 'package:passkeys/types.dart';\n")}${on(apple, "import 'package:sign_in_with_apple/sign_in_with_apple.dart';\n")}import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../generated/api_client.dart';
 import '../generated/auth_catalog.dart';
@@ -413,12 +448,31 @@ ${on(email, `
   @override
   Future<AuthUser> confirmPhoneCode(String verificationId, String code) => _guard(() async => _signedIn((await _auth.verifyOTP(type: sb.OtpType.sms, phone: verificationId, token: code)).user));
 `)}${on(has(c, 'passkey'), `
-  // Passkeys (Supabase beta, experimental in supabase_flutter): implemented by the passkey step of the auth pack.
-  @override
-  Future<AuthUser> signInWithPasskey() => throw const AuthError(AuthErrorCode.methodDisabled, 'passkeys_not_set_up');
+  // Passkeys (Supabase beta, experimental in supabase_flutter ≥ 2.15 + package:passkeys). Enable them in
+  // config.toml / Dashboard → Authentication → Passkeys (RP ID + origins).
+  final _passkeys = PasskeyAuthenticator();
 
   @override
-  Future<void> registerPasskey() => throw const AuthError(AuthErrorCode.methodDisabled, 'passkeys_not_set_up');
+  Future<AuthUser> signInWithPasskey() => _guard(() async {
+        try {
+          // ignore: experimental_member_use
+          return _signedIn((await _auth.signInWithPasskey(_passkeys)).user);
+        } on PasskeyAuthCancelledException {
+          throw const AuthError(AuthErrorCode.cancelled, 'passkey_cancelled');
+        } on NoCredentialsAvailableException {
+          throw const AuthError(AuthErrorCode.invalidCredentials, 'no_passkey');
+        }
+      });
+
+  @override
+  Future<void> registerPasskey() => _guard(() async {
+        try {
+          // ignore: experimental_member_use
+          await _auth.registerPasskey(_passkeys);
+        } on PasskeyAuthCancelledException {
+          throw const AuthError(AuthErrorCode.cancelled, 'passkey_cancelled');
+        }
+      });
 `)}${on(c.guest, `
   @override
   Future<AuthUser> signInAsGuest() => _guard(() async => _signedIn((await _auth.signInAnonymously()).user));

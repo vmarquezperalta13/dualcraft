@@ -139,6 +139,13 @@
         "deploy"
       ]
     },
+    "auth": {
+      "name": "Autenticación",
+      "description": "Login con Firebase o Supabase: email, Google, Apple, teléfono, passkeys, invitado, 2FA, roles y rutas protegidas, borrado de cuenta; servicio tipado y pantallas por stack",
+      "skills": [
+        "auth"
+      ]
+    },
     "legal": {
       "name": "Legal y privacidad",
       "description": "RGPD/LSSI y tiendas: mapa de datos, borradores de políticas, App Privacy, Data safety, manifiesto de privacidad de iOS y comprobaciones",

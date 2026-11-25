@@ -5,14 +5,70 @@ const has = (c, m) => c.methods.includes(m)
 const mfa = (c) => (c.mfa?.factors || []).length > 0
 const mf = (c, f) => (c.mfa?.factors || []).includes(f)
 const issuer = (c) => JSON.stringify(c.passkey?.rpName || 'App')
-const passkeyStubs = `
-  // Passkeys: implemented by the passkey step of the auth pack (auth.mjs).
+// Passkeys on Firebase: WebAuthn ceremony on the device, verification in the passkey* Cloud Functions, then a custom token.
+const firebasePasskeys = (ceremony) => `
+  /** Runs the device's passkey prompt; a dismissed prompt becomes AuthError cancelled. */
+  private async ceremony<T>(run: () => Promise<T>): Promise<T> {
+    try {
+      return await run()
+    } catch (e) {
+      const name = (e as { name?: string; code?: string } | null)?.name ?? ''
+      const code = String((e as { code?: string } | null)?.code ?? '')
+      if (name === 'NotAllowedError' || name === 'AbortError' || /cancel/i.test(code) || code === 'ERROR_CEREMONY_ABORTED') throw new AuthError('cancelled', name || code)
+      throw new AuthError('unknown', String(e))
+    }
+  }
+
+  /** Server errors of the passkey functions → AuthError. */
+  private async passkeyCall<T>(call: () => Promise<T>): Promise<T> {
+    try {
+      return await call()
+    } catch (e) {
+      if (e instanceof ApiError) throw new AuthError(e.code === 'failed-precondition' ? 'codeExpired' : e.code === 'not-found' || e.code === 'permission-denied' ? 'invalidCredentials' : e.code === 'already-exists' ? 'alreadyLinked' : 'unknown', e.code)
+      throw e
+    }
+  }
+
   signInWithPasskey(): Promise<AuthUser> {
-    return Promise.reject(new AuthError('methodDisabled', 'passkeys_not_set_up'))
+    return this.guard(async () => {
+      const { challengeId, options } = await this.passkeyCall(() => this.api.passkeySignInOptions())
+      const response = await this.ceremony(() => ${ceremony.get})
+      const { token } = await this.passkeyCall(() => this.api.passkeySignInVerify({ challengeId, response: JSON.stringify(response) }))
+      return this.signedIn(await signInWithCustomToken(this.auth, token))
+    })
   }
 
   registerPasskey(): Promise<void> {
-    return Promise.reject(new AuthError('methodDisabled', 'passkeys_not_set_up'))
+    return this.guard(async () => {
+      const { options } = await this.passkeyCall(() => this.api.passkeyRegisterOptions())
+      const response = await this.ceremony(() => ${ceremony.create})
+      await this.passkeyCall(() => this.api.passkeyRegisterVerify({ response: JSON.stringify(response) }))
+      this.current = await this.map(this.user, true) // picks up the "passkey" claim
+    })
+  }
+`
+const WEB_CEREMONY = { get: 'startAuthentication({ optionsJSON: JSON.parse(options) })', create: 'startRegistration({ optionsJSON: JSON.parse(options) })' }
+const RN_CEREMONY = { get: 'Passkey.get(JSON.parse(options))', create: 'Passkey.create(JSON.parse(options))' }
+const supabasePasskeys = (native) => native ? `
+  // Passkeys: supabase-js runs the WebAuthn ceremony through the browser API, which React Native lacks.
+  signInWithPasskey(): Promise<AuthUser> {
+    return Promise.reject(new AuthError('methodDisabled', 'passkeys_not_supported_on_react_native'))
+  }
+
+  registerPasskey(): Promise<void> {
+    return Promise.reject(new AuthError('methodDisabled', 'passkeys_not_supported_on_react_native'))
+  }
+` : `
+  // Passkeys (Supabase beta): createClient(url, key, { auth: { experimental: { passkey: true } } }) and
+  // Dashboard → Authentication → Passkeys (RP ID + origins).
+  signInWithPasskey(): Promise<AuthUser> {
+    return this.guard(async () => this.signedIn(must(await this.supabase.auth.signInWithPasskey()).user))
+  }
+
+  registerPasskey(): Promise<void> {
+    return this.guard(async () => {
+      must(await this.supabase.auth.registerPasskey())
+    })
   }
 `
 const deleteAccount = `
@@ -41,10 +97,10 @@ export function tsFirebase(c) {
     ...(sms ? ['RecaptchaVerifier', 'PhoneAuthProvider'] : []), ...(phone ? ['signInWithPhoneNumber', 'type ConfirmationResult'] : []),
     ...(c.guest ? ['signInAnonymously'] : []), ...(c.linking ? ['linkWithCredential', 'unlink'] : []), ...(c.linking && (google || apple) ? ['linkWithPopup'] : []),
     ...(mfa(c) ? ['multiFactor', 'getMultiFactorResolver', 'PhoneMultiFactorGenerator', 'type MultiFactorError', 'type MultiFactorResolver', 'type MultiFactorAssertion'] : []),
-    ...(mf(c, 'totp') ? ['TotpMultiFactorGenerator', 'type TotpSecret'] : [])]
+    ...(mf(c, 'totp') ? ['TotpMultiFactorGenerator', 'type TotpSecret'] : []), ...(has(c, 'passkey') ? ['signInWithCustomToken'] : [])]
   return `// Firebase implementation of AuthService for the web (DualCraft auth). Yours after creation: adapt freely.
 // npm i firebase · enable the providers in Firebase Console → Authentication${on(sms, ' · SMS needs an element with id "recaptcha-container" (invisible reCAPTCHA)')}.
-import { FirebaseError } from 'firebase/app'
+${on(has(c, 'passkey'), "import { startAuthentication, startRegistration } from '@simplewebauthn/browser'\n")}import { FirebaseError } from 'firebase/app'
 import { ${[...new Set(imports)].join(', ')} } from 'firebase/auth'
 import { ApiError, type Api } from './api-client'
 import { AuthError, authErrorFrom, roleFrom, type AuthMethod, type AuthService, type AuthUser${on(mfa(c), ', type MfaFactor')}${on(mf(c, 'totp'), ', type TotpEnrollment')} } from './auth-catalog'
@@ -75,7 +131,7 @@ ${on(mfa(c), '  private pendingMfa: MultiFactorResolver | null = null\n  private
 
   private async map(u: User, refresh = false): Promise<AuthUser> {
     const token = await u.getIdTokenResult(refresh)
-    const methods: AuthMethod[] = [${on(c.guest, "...(u.isAnonymous ? (['guest'] as const) : []), ")}...u.providerData.map((p) => METHOD_OF[p.providerId]).filter((m): m is AuthMethod => !!m)]
+    const methods: AuthMethod[] = [${on(c.guest, "...(u.isAnonymous ? (['guest'] as const) : []), ")}...u.providerData.map((p) => METHOD_OF[p.providerId]).filter((m): m is AuthMethod => !!m), ...(token.claims.passkey ? (['passkey'] as const) : [])]
     return { uid: u.uid, email: u.email, phone: u.phoneNumber, displayName: u.displayName, photoUrl: u.photoURL, isAnonymous: u.isAnonymous, emailVerified: u.emailVerified, role: roleFrom(token.claims.role), methods, mfaEnrolled: ${mfa(c) ? 'multiFactor(u).enrolledFactors.length > 0' : 'false'} }
   }
 
@@ -158,7 +214,7 @@ ${on(email, `
       return this.signedIn(await this.confirmation.confirm(code))
     })
   }
-`)}${on(has(c, 'passkey'), passkeyStubs)}${on(c.guest, `
+`)}${on(has(c, 'passkey'), firebasePasskeys(WEB_CEREMONY))}${on(c.guest, `
   signInAsGuest(): Promise<AuthUser> {
     return this.guard(async () => this.signedIn(await signInAnonymously(this.auth)))
   }
@@ -276,12 +332,12 @@ export function rnFirebase(c) {
     ...(email ? ['createUserWithEmailAndPassword', 'signInWithEmailAndPassword', 'sendPasswordResetEmail', 'sendEmailVerification', 'updateProfile'] : []),
     ...(google ? ['GoogleAuthProvider'] : []), ...(apple ? ['AppleAuthProvider'] : []), ...(phone ? ['signInWithPhoneNumber'] : []),
     ...(c.guest ? ['signInAnonymously'] : []), ...(c.linking ? ['linkWithCredential', 'unlink'] : []),
-    ...(mfa(c) ? ['multiFactor', 'getMultiFactorResolver', 'PhoneAuthProvider', 'PhoneMultiFactorGenerator'] : [])]
+    ...(mfa(c) ? ['multiFactor', 'getMultiFactorResolver', 'PhoneAuthProvider', 'PhoneMultiFactorGenerator'] : []), ...(has(c, 'passkey') ? ['signInWithCustomToken'] : [])]
   return `// Firebase implementation of AuthService for React Native (@react-native-firebase/auth, modular API) — DualCraft auth.
 // Yours after creation. npm i @react-native-firebase/app @react-native-firebase/auth${on(google, ' @react-native-google-signin/google-signin')}${on(apple, ' expo-apple-authentication expo-crypto')}
 // Note: @react-native-firebase has no TOTP second factor yet — SMS is the available factor on React Native.
 import { ${[...new Set(imports)].join(', ')} } from '@react-native-firebase/auth'
-${on(google, "import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin'\n")}${on(apple, "import * as AppleAuthentication from 'expo-apple-authentication'\nimport * as Crypto from 'expo-crypto'\n")}import { ApiError, type Api } from './api-client'
+${on(has(c, 'passkey'), "import { Passkey } from 'react-native-passkey'\n")}${on(google, "import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin'\n")}${on(apple, "import * as AppleAuthentication from 'expo-apple-authentication'\nimport * as Crypto from 'expo-crypto'\n")}import { ApiError, type Api } from './api-client'
 import { AuthError, authErrorFrom, roleFrom, type AuthMethod, type AuthService, type AuthUser${on(mfa(c), ', type MfaFactor')}${on(mf(c, 'totp'), ', type TotpEnrollment')} } from './auth-catalog'
 
 type User = FirebaseAuthTypes.User
@@ -312,7 +368,7 @@ ${on(mfa(c), '  private pendingMfa: FirebaseAuthTypes.MultiFactorResolver | null
 
   private async map(u: User, refresh = false): Promise<AuthUser> {
     const token = await getIdTokenResult(u, refresh)
-    const methods: AuthMethod[] = [${on(c.guest, "...(u.isAnonymous ? (['guest'] as const) : []), ")}...u.providerData.map((p) => METHOD_OF[p.providerId]).filter((m): m is AuthMethod => !!m)]
+    const methods: AuthMethod[] = [${on(c.guest, "...(u.isAnonymous ? (['guest'] as const) : []), ")}...u.providerData.map((p) => METHOD_OF[p.providerId]).filter((m): m is AuthMethod => !!m), ...(token.claims.passkey ? (['passkey'] as const) : [])]
     return { uid: u.uid, email: u.email, phone: u.phoneNumber, displayName: u.displayName, photoUrl: u.photoURL, isAnonymous: u.isAnonymous, emailVerified: u.emailVerified, role: roleFrom(token.claims.role), methods, mfaEnrolled: ${mfa(c) ? 'multiFactor(u).enrolledFactors.length > 0' : 'false'} }
   }
 
@@ -402,7 +458,7 @@ ${on(email, `
       return this.signedIn(result)
     })
   }
-`)}${on(has(c, 'passkey'), passkeyStubs)}${on(c.guest, `
+`)}${on(has(c, 'passkey'), firebasePasskeys(RN_CEREMONY))}${on(c.guest, `
   signInAsGuest(): Promise<AuthUser> {
     return this.guard(async () => this.signedIn(await signInAnonymously(this.auth)))
   }
@@ -647,7 +703,7 @@ ${on(email, `
   confirmPhoneCode(verificationId: string, code: string): Promise<AuthUser> {
     return this.guard(async () => this.signedIn(must(await this.supabase.auth.verifyOtp({ phone: verificationId, token: code, type: 'sms' })).user))
   }
-`)}${on(has(c, 'passkey'), passkeyStubs)}${on(c.guest, `
+`)}${on(has(c, 'passkey'), supabasePasskeys(native))}${on(c.guest, `
   signInAsGuest(): Promise<AuthUser> {
     return this.guard(async () => this.signedIn(must(await this.supabase.auth.signInAnonymously()).user))
   }

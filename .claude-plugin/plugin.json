@@ -1,6 +1,6 @@
 {
   "name": "dualcraft",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "Web + mobile development workflow (Next.js, React + Vite, Astro, Nuxt ⇄ Flutter, React Native, Kotlin Multiplatform, Android, iOS): project brain with tasks, decisions and parked work, work modes that drive commits and versions, ER schema, design system, process, security, release & marketing, and a web ⇄ mobile converter.",
   "author": {
     "name": "vmarquezperalta"
