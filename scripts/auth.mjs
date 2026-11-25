@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { project, parseArgs, die, posix } from './lib/project.mjs'
 import { stamp, writeGuarded } from './lib/guard.mjs'
-import { projectStacks, outputFor } from './lib/targets.mjs'
+import { projectStacks, outputFor, kotlinPackage, kotlinModule, iosAppDir } from './lib/targets.mjs'
 import { METHODS, ACCESS, MFA_FACTORS, ERROR_CODES, snake, genTs, genDart, genKotlin, genSwift, genServer } from './lib/auth-gen.mjs'
 import * as T from './lib/auth-templates.mjs'
 import { flutterFirebase, flutterSupabase } from './lib/auth-clients.mjs'
@@ -19,6 +19,12 @@ import { tsFirebase, tsSupabase, rnFirebase } from './lib/auth-clients-ts.mjs'
 import { kotlinFirebase, kotlinSupabase } from './lib/auth-clients-kt.mjs'
 import { swiftFirebase, swiftSupabase } from './lib/auth-clients-swift.mjs'
 import { serviceMembers } from './lib/auth-gen.mjs'
+import { UI_TEXTS, UI_KEYS } from './lib/auth-ui-texts.mjs'
+import * as S from './lib/auth-screens.mjs'
+import * as TS from './lib/auth-screens-ts.mjs'
+import * as NS from './lib/auth-screens-native.mjs'
+import { swiftScreens } from './lib/auth-screens-swift.mjs'
+import * as VUE from './lib/auth-screens-vue.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const [cmd = 'help', ...rest] = process.argv.slice(2)
@@ -117,7 +123,8 @@ function seedTexts() {
     const src = TEXTS[l.slice(0, 2)] || TEXTS.en
     let n = 0
     j.auth ||= {}
-    for (const grp of ['errors', 'password']) { j.auth[grp] ||= {}; for (const [k, v] of Object.entries(src[grp])) if (j.auth[grp][k] === undefined) { j.auth[grp][k] = v; n++ } }
+    const ui = UI_TEXTS[l.slice(0, 2)] || UI_TEXTS.en
+    for (const [grp, vals] of [['errors', src.errors], ['password', src.password], ['ui', ui]]) { j.auth[grp] ||= {}; for (const [k, v] of Object.entries(vals)) if (j.auth[grp][k] === undefined) { j.auth[grp][k] = v; n++ } }
     if (n) { fs.writeFileSync(f, JSON.stringify(j, null, 2) + '\n'); added.push(`${rel(f)}: +${n} auth texts${TEXTS[l.slice(0, 2)] ? '' : ' (English placeholders: translate them)'}`) }
   }
   return added
@@ -165,6 +172,58 @@ function implFor(c, s, prov) {
   if (s.id === 'ios' && (prov === 'firebase' || prov === 'supabase')) return prov === 'firebase' ? { file: path.join(dirOf, 'FirebaseAuthService.swift'), text: swiftFirebase(c) } : { file: path.join(dirOf, 'SupabaseAuthService.swift'), text: swiftSupabase(c) }
   return null
 }
+// ---------------------------------------------------------------- screens (written once)
+/** Package of Compose Multiplatform's generated Res class: packageOfResClass, else <group>.<module>.generated.resources. */
+function composeResPackage(dir, mod) {
+  const g = read(path.join(dir, mod, 'build.gradle.kts'))
+  const set = (g.match(/packageOfResClass\s*=\s*"([\w.]+)"/) || [])[1]
+  if (set) return set
+  const clean = (x) => x.toLowerCase().replace(/[^a-z0-9.]/g, '')
+  const groupRe = /^\s*group\s*=\s*"([\w.]+)"/m
+  const group = (g.match(groupRe) || read(path.join(dir, 'build.gradle.kts')).match(groupRe) || read(path.join(dir, 'settings.gradle.kts')).match(/rootProject\.name\s*=\s*"([^"]+)"/) || [])[1] || 'app'
+  return `${clean(group)}.${clean(mod)}.generated.resources`
+}
+/** { file, text } of the auth screens for a stack, or null. */
+function screensFor(c, s) {
+  const cat = outputFor('auth', s, root, config).file
+  if (s.id === 'flutter') {
+    const y = read(path.join(s.dir, 'l10n.yaml'))
+    const l10nDir = path.join(s.dir, (y.match(/output-dir:\s*(\S+)/) || y.match(/arb-dir:\s*(\S+)/) || [])[1] || 'lib/l10n')
+    const l10nFile = (y.match(/output-localization-file:\s*(\S+)/) || [])[1] || 'app_localizations.dart'
+    const file = path.join(s.dir, 'lib', 'features', 'auth', 'auth_screens.dart')
+    const imp = (p) => posix(path.relative(path.dirname(file), p))
+    return { file, text: S.flutterScreens(c, { catalog: imp(cat), l10n: imp(path.join(l10nDir, l10nFile)) }) }
+  }
+  const tsImport = (file) => { const r = posix(path.relative(path.dirname(file), cat)).replace(/\.ts$/, ''); return r.startsWith('.') ? r : './' + r }
+  if (['nextjs', 'react-vite', 'astro'].includes(s.id)) {
+    const file = path.join(s.dir, fs.existsSync(path.join(s.dir, 'src')) || s.id !== 'nextjs' ? 'src' : '', 'components', 'auth', 'AuthScreens.tsx')
+    return { file, text: TS.reactWebScreens(c, { catalog: tsImport(file), i18n: s.id === 'nextjs' ? 'next-intl' : 'react-i18next', next: s.id === 'nextjs' }) }
+  }
+  if (s.id === 'react-native') {
+    const file = path.join(s.dir, 'src', 'screens', 'auth', 'AuthScreens.tsx')
+    return { file, text: TS.reactNativeScreens(c, { catalog: tsImport(file) }) }
+  }
+  if (s.id === 'android' || s.id === 'kmp') {
+    const app = kotlinPackage(s.dir, config, s.id); const mod = kotlinModule(s.dir, s.id)
+    const base = s.id === 'kmp' ? path.join(s.dir, mod, 'src', 'commonMain', 'kotlin') : path.join(s.dir, mod, 'src', 'main', 'java')
+    const file = path.join(base, ...app.split('.'), 'ui', 'auth', 'AuthScreens.kt')
+    const catalogPkg = outputFor('auth', s, root, config).pkg
+    return { file, text: NS.composeScreens(c, { pkg: app + '.ui.auth', catalogPkg, kmp: s.id === 'kmp', rPkg: app, resPkg: composeResPackage(s.dir, mod) }) }
+  }
+  if (s.id === 'ios') return { file: path.join(iosAppDir(s.dir, config), 'Features', 'Auth', 'AuthScreens.swift'), text: swiftScreens(c) }
+  if (s.id === 'nuxt') {
+    const app = path.join(s.dir, fs.existsSync(path.join(s.dir, 'app')) ? 'app' : '')
+    const comp = (n) => path.join(app, 'components', 'auth', n)
+    const redirect = path.join(path.dirname(cat), 'auth-redirect.ts')
+    return [
+      { file: comp('AuthFlow.vue'), text: VUE.vueAuthFlow(c, { catalog: tsImport(comp('AuthFlow.vue')) }) },
+      { file: comp('AccountScreen.vue'), text: VUE.vueAccount(c, { catalog: tsImport(comp('AccountScreen.vue')) }) },
+      { file: redirect, text: VUE.vueRedirect(c, { catalog: tsImport(redirect) }) },
+    ]
+  }
+  return null
+}
+const writeScreens = (c) => stacks.flatMap((s) => [].concat(screensFor(c, s) || [])).map((i) => writeNew(i.file, i.text)).filter(Boolean).map((f) => f + ' (auth screens — yours)')
 const writeImpls = (c, prov) => stacks.map((s) => implFor(c, s, prov)).filter(Boolean).map((i) => writeNew(i.file, i.text)).filter(Boolean).map((f) => f + ' (AuthService implementation — yours)')
 
 // ---------------------------------------------------------------- generate
@@ -187,7 +246,7 @@ function generate(c, force) {
     const r = backend('gen', ...(force ? ['--force'] : [])); if (r.status !== 0) die('backend gen failed:\n' + r.stdout + r.stderr)
     r.stdout.split('\n').filter(Boolean).forEach((l) => written.push(l.replace(/^→ /, '') + ' (backend)'))
   }
-  written.push(...seedTexts(), ...writeImpls(c, prov))
+  written.push(...seedTexts(), ...writeImpls(c, prov), ...writeScreens(c))
   return written
 }
 
@@ -236,7 +295,7 @@ if (!errors.length) for (const s of stacks) {
 // texts
 for (const l of locales()) {
   const t = readJson(path.join(dir, 'i18n', l + '.json'))?.auth || {}
-  const miss = [...ERROR_CODES.map((e) => 'errors.' + snake(e)), ...PASSWORD_KEYS.map((k) => 'password.' + k)].filter((k) => { const [g, x] = k.split('.'); return !t[g]?.[x] })
+  const miss = [...ERROR_CODES.map((e) => 'errors.' + snake(e)), ...PASSWORD_KEYS.map((k) => 'password.' + k), ...UI_KEYS.map((k) => 'ui.' + k)].filter((k) => { const [g, x] = k.split('.'); return !t[g]?.[x] })
   if (miss.length) err(`i18n ${l}: missing auth.${miss.slice(0, 4).join(', auth.')}${miss.length > 4 ? ` (+${miss.length - 4})` : ''} — run: auth.mjs gen`)
 }
 // store rules and provider limits

@@ -9,6 +9,7 @@
 //   <out>/functions-rc → same, RevenueCat mode
 //   <out>/web-server  → tsc (Next.js route handlers + Nuxt server routes with a small h3 shim)
 //   <out>/deno        → deno check (Supabase Edge Functions)
+//   <out>/auth-vue    → npm install && vue-tsc (Nuxt auth screens)
 //   <out>/auth-ts     → npm install && tsc (AuthService: web with Firebase, supabase-js for the web and React Native)
 //   <out>/ui-rn       → npm install && tsc (React Native idioms of references/port against the real library types)
 //   references/port idioms are also copied into dart/lib/port, kotlin/idioms, swift/port-{lang,ui} and ts/port
@@ -17,6 +18,8 @@ import path from 'node:path'
 import { run, makeMultiProject, makeProject, write, read, ROOT } from '../helpers.mjs'
 import { flutterSupabase } from '../../scripts/lib/auth-clients.mjs'
 import { tsFirebase, tsSupabase } from '../../scripts/lib/auth-clients-ts.mjs'
+import { reactWebScreens } from '../../scripts/lib/auth-screens-ts.mjs'
+import { vueAuthFlow, vueAccount, vueRedirect } from '../../scripts/lib/auth-screens-vue.mjs'
 import { kotlinSupabase } from '../../scripts/lib/auth-clients-kt.mjs'
 import { swiftSupabase } from '../../scripts/lib/auth-clients-swift.mjs'
 
@@ -62,6 +65,7 @@ function authSetup(p) {
   must(run('auth.mjs', ['init', '--methods', 'email,google,apple,passkey,phone', '--mfa', 'totp,sms', '--rp-id', 'acme.app', '--roles', 'admin,editor,user'], p), 'auth init')
   must(run('auth.mjs', ['check'], p), 'auth check')
   must(run('backend.mjs', ['check'], p), 'backend check after auth')
+  if (fs.existsSync(path.join(p, '.dualcraft', 'i18n'))) { must(run('i18n.mjs', ['gen'], p), 'i18n gen after auth') }
 }
 
 // ---------- multi-stack project (Firestore schema: enums, maps, reserved names) ----------
@@ -296,7 +300,10 @@ copy(M('rn', 'src', 'lib', 'auth-service.ts'), path.join(OUT, 'auth-ts', 'src', 
 write(path.join(OUT, 'auth-ts', 'src', 'auth-firebase-full.ts'), tsFirebase(AC).replace('class FirebaseAuthService implements AuthService', 'class FullFirebase'))
 write(path.join(OUT, 'auth-ts', 'src', 'auth-supabase.ts'), tsSupabase(AC).replace('class SupabaseAuthService implements AuthService', 'class WebSupabase'))
 write(path.join(OUT, 'auth-ts', 'src', 'auth-supabase-native.ts'), tsSupabase(AC, { native: true }).replace('class SupabaseAuthService implements AuthService', 'class NativeSupabase'))
-write(path.join(OUT, 'auth-ts', 'package.json'), JSON.stringify({ name: 'auth-ts-check', private: true, dependencies: { typescript: '5.6.3', firebase: '11.10.0', '@supabase/supabase-js': '2.49.4', '@react-native-google-signin/google-signin': '13.2.0', 'expo-apple-authentication': '7.1.3', 'expo-crypto': '14.0.2', 'react-native': '0.76.5', '@types/react': '18.3.12', '@react-native-firebase/app': '22.4.0', '@react-native-firebase/auth': '22.4.0' } }, null, 2))
+write(path.join(OUT, 'auth-ts', 'src', 'screens-next.tsx'), reactWebScreens(AC, { catalog: './auth-catalog', i18n: 'next-intl', next: true }))
+write(path.join(OUT, 'auth-ts', 'src', 'screens-web.tsx'), reactWebScreens(AC, { catalog: './auth-catalog', i18n: 'react-i18next' }))
+write(path.join(OUT, 'auth-ts', 'src', 'screens-rn.tsx'), read(M('rn', 'src', 'screens', 'auth', 'AuthScreens.tsx')).replace("from '../../lib/auth-catalog'", "from './auth-catalog'"))
+write(path.join(OUT, 'auth-ts', 'package.json'), JSON.stringify({ name: 'auth-ts-check', private: true, dependencies: { react: '18.3.1', 'react-dom': '18.3.1', next: '15.1.3', 'next-intl': '3.26.3', i18next: '24.2.0', 'react-i18next': '15.4.0', typescript: '5.6.3', firebase: '11.10.0', '@supabase/supabase-js': '2.49.4', '@react-native-google-signin/google-signin': '13.2.0', 'expo-apple-authentication': '7.1.3', 'expo-crypto': '14.0.2', 'react-native': '0.76.5', '@types/react': '18.3.12', '@react-native-firebase/app': '22.4.0', '@react-native-firebase/auth': '22.4.0' } }, null, 2))
 // Kotlin: supabase-kt on the JVM (Android/KMP code), Firebase on an Android library module (AGP + Android SDK)
 const KS = (...p) => path.join(OUT, 'auth-kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', ...p)
 copy(K('api', 'ApiClient.kt'), KS('api', 'ApiClient.kt'))
@@ -306,12 +313,16 @@ write(path.join(OUT, 'auth-kotlin', 'settings.gradle.kts'), 'pluginManagement { 
 write(path.join(OUT, 'auth-kotlin', 'build.gradle.kts'), 'plugins {\n    kotlin("jvm") version "2.1.21"\n    kotlin("plugin.serialization") version "2.1.21"\n}\ndependencies {\n    implementation(platform("io.github.jan-tennert.supabase:bom:3.2.6"))\n    implementation("io.github.jan-tennert.supabase:auth-kt")\n    implementation("io.ktor:ktor-client-cio:3.2.3")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")\n}\n')
 const DR = (...p) => M('droid', 'app', 'src', 'main', 'java', 'com', 'test', 'droid', 'data', ...p)
 for (const [from, to] of [[DR('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [DR('auth', 'AuthCatalog.kt'), 'auth/AuthCatalog.kt'], [DR('auth', 'FirebaseAuthService.kt'), 'auth/FirebaseAuthService.kt']]) copy(from, path.join(OUT, 'auth-android', 'src', 'main', 'java', 'com', 'test', 'droid', 'data', to))
+// Compose screens + the generated string resources they use
+copy(M('droid', 'app', 'src', 'main', 'java', 'com', 'test', 'droid', 'ui', 'auth', 'AuthScreens.kt'), path.join(OUT, 'auth-android', 'src', 'main', 'java', 'com', 'test', 'droid', 'ui', 'auth', 'AuthScreens.kt'))
+for (const v of fs.readdirSync(M('droid', 'app', 'src', 'main', 'res'))) copy(M('droid', 'app', 'src', 'main', 'res', v, 'ds_strings.xml'), path.join(OUT, 'auth-android', 'src', 'main', 'res', v, 'ds_strings.xml'))
 write(path.join(OUT, 'auth-android', 'settings.gradle.kts'), 'pluginManagement { repositories { gradlePluginPortal(); mavenCentral(); google() } }\ndependencyResolutionManagement { repositories { mavenCentral(); google() } }\nrootProject.name = "auth-android"\n')
 write(path.join(OUT, 'auth-android', 'gradle.properties'), 'android.useAndroidX=true\norg.gradle.jvmargs=-Xmx2g\n')
-write(path.join(OUT, 'auth-android', 'build.gradle.kts'), 'plugins {\n    id("com.android.library") version "8.7.3"\n    id("org.jetbrains.kotlin.android") version "2.1.21"\n    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.21"\n}\nandroid {\n    namespace = "com.test.droid"\n    compileSdk = 35\n    defaultConfig { minSdk = 24 }\n    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }\n}\nkotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }\ndependencies {\n    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))\n    implementation("com.google.firebase:firebase-auth")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")\n    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")\n    implementation("androidx.credentials:credentials:1.5.0")\n    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")\n    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")\n}\n')
+write(path.join(OUT, 'auth-android', 'build.gradle.kts'), 'plugins {\n    id("com.android.library") version "8.7.3"\n    id("org.jetbrains.kotlin.android") version "2.1.21"\n    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.21"\n    id("org.jetbrains.kotlin.plugin.compose") version "2.1.21"\n}\nandroid {\n    namespace = "com.test.droid"\n    compileSdk = 35\n    defaultConfig { minSdk = 24 }\n    buildFeatures { compose = true }\n    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }\n}\nkotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }\ndependencies {\n    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))\n    implementation("com.google.firebase:firebase-auth")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")\n    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")\n    implementation("androidx.credentials:credentials:1.5.0")\n    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")\n    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")\n    implementation(platform("androidx.compose:compose-bom:2024.12.01"))\n    implementation("androidx.compose.material3:material3")\n    implementation("androidx.compose.ui:ui")\n    implementation("androidx.compose.foundation:foundation")\n}\n')
 // Swift: a SwiftPM package (two targets: Firebase and Supabase) built for the iOS simulator in CI
 for (const t of ['AuthFirebase', 'AuthSupabase']) for (const f of ['Core/Api/ApiClient.swift', 'Core/Auth/AuthCatalog.swift']) copy(M('iosapp', 'Demo', ...f.split('/')), path.join(OUT, 'auth-swift', 'Sources', t, path.basename(f)))
 copy(M('iosapp', 'Demo', 'Core', 'Auth', 'FirebaseAuthService.swift'), path.join(OUT, 'auth-swift', 'Sources', 'AuthFirebase', 'FirebaseAuthService.swift'))
+copy(M('iosapp', 'Demo', 'Features', 'Auth', 'AuthScreens.swift'), path.join(OUT, 'auth-swift', 'Sources', 'AuthFirebase', 'AuthScreens.swift'))
 write(path.join(OUT, 'auth-swift', 'Sources', 'AuthSupabase', 'SupabaseAuthService.swift'), swiftSupabase(AC))
 write(path.join(OUT, 'auth-swift', 'Package.swift'), `// swift-tools-version:5.9
 import PackageDescription
@@ -330,7 +341,13 @@ let package = Package(
     ]
 )
 `)
-write(path.join(OUT, 'auth-ts', 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true, noEmit: true, target: 'es2022', lib: ['es2022', 'dom'], module: 'esnext', moduleResolution: 'bundler', skipLibCheck: true }, include: ['src/*.ts'] }, null, 2))
+write(path.join(OUT, 'auth-ts', 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true, noEmit: true, target: 'es2022', lib: ['es2022', 'dom'], module: 'esnext', moduleResolution: 'bundler', skipLibCheck: true, jsx: 'react-jsx' }, include: ['src/*.ts', 'src/*.tsx'] }, null, 2))
+// Vue (Nuxt) auth screens: vue-tsc with real vue + vue-i18n types
+for (const [n, gen] of [['AuthFlow.vue', vueAuthFlow], ['AccountScreen.vue', vueAccount]]) write(path.join(OUT, 'auth-vue', 'src', n), gen(AC, { catalog: './auth-catalog' }))
+write(path.join(OUT, 'auth-vue', 'src', 'auth-redirect.ts'), vueRedirect(AC, { catalog: './auth-catalog' }))
+copy(M('web', 'src', 'lib', 'auth-catalog.ts'), path.join(OUT, 'auth-vue', 'src', 'auth-catalog.ts'))
+write(path.join(OUT, 'auth-vue', 'package.json'), JSON.stringify({ name: 'auth-vue-check', private: true, dependencies: { typescript: '5.6.3', vue: '3.5.13', 'vue-i18n': '10.0.5', 'vue-tsc': '2.2.0' } }, null, 2))
+write(path.join(OUT, 'auth-vue', 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true, noEmit: true, target: 'es2022', lib: ['es2022', 'dom'], module: 'esnext', moduleResolution: 'bundler', skipLibCheck: true, jsx: 'preserve' }, include: ['src/*.ts', 'src/*.vue'] }, null, 2))
 
 // ---------- port idioms (references/port): every language and UI framework compiles ----------
 const PR = path.join(ROOT, 'references', 'port')

@@ -498,8 +498,7 @@ ${on(email, `
 `)}${on(c.linking, `
     func unlink(_ method: AuthMethod) async throws -> AuthUser {
         try await guarded {
-            let name: String
-            switch method {
+            let name: String = switch method {
             ${[...nameOf, 'default: throw AuthError(code: .methodDisabled, raw: "not_linkable")'].join('\n            ')}
             }
             guard let identity = try await client.auth.userIdentities().first(where: { $0.provider == name }) else { throw AuthError(code: .unknown, raw: "not_linked") }

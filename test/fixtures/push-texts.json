@@ -5,7 +5,7 @@
     "weekly_offer": { "title": "Oferta", "body": "Solo esta semana" }
   },
   "en": {
-    "match_started": { "title": "Kick-off!", "body": "{home} is playing" },
+    "match_started": { "title": "Kick-off!", "body": "{home} is playing (min {minute})" },
     "goals_summary": { "title": "Goals", "body": "{count, plural, one {# goal} other {# goals}}" },
     "weekly_offer": { "title": "Offer", "body": "This week only" }
   }

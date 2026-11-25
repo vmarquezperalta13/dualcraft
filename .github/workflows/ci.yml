@@ -36,11 +36,16 @@ jobs:
           node-version: 22
       - run: node test/compile/generate.mjs out
       - run: npx -y -p typescript@5.6.3 tsc --noEmit --strict --target es2020 --lib es2020 --moduleResolution node out/ts/*.ts out/ts/port/*.ts
-      - name: AuthService implementations (firebase web SDK, supabase-js, React Native sign-in libraries)
+      - name: AuthService implementations and auth screens (firebase web SDK, supabase-js, React Native, next-intl, react-i18next)
         working-directory: out/auth-ts
         run: |
           npm install --no-audit --no-fund --ignore-scripts
           npx tsc -p .
+      - name: Nuxt auth screens (vue-tsc, vue-i18n)
+        working-directory: out/auth-vue
+        run: |
+          npm install --no-audit --no-fund --ignore-scripts
+          npx vue-tsc -p .
       - name: React Native port idioms (real react-native, React Navigation, zustand and TanStack Query types)
         working-directory: out/ui-rn
         run: |

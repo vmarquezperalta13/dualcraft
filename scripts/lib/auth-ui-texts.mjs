@@ -1,0 +1,38 @@
+// UI texts of the generated auth screens (i18n auth.ui.*), seeded into every locale by auth.mjs gen.
+export const UI_TEXTS = {
+  es: {
+    sign_in_title: 'Inicia sesión', sign_up_title: 'Crea tu cuenta', email: 'Email', password: 'Contraseña', display_name: 'Nombre',
+    sign_in: 'Entrar', sign_up: 'Crear cuenta', no_account: '¿No tienes cuenta? Regístrate', have_account: '¿Ya tienes cuenta? Inicia sesión',
+    forgot: '¿Has olvidado la contraseña?', forgot_title: 'Recupera tu contraseña', send_reset: 'Enviar enlace', reset_sent: 'Te hemos enviado un enlace a {email}',
+    back: 'Volver', or: 'o', continue_google: 'Continuar con Google', continue_apple: 'Continuar con Apple', continue_phone: 'Continuar con el teléfono',
+    continue_passkey: 'Entrar con passkey', continue_guest: 'Continuar como invitado', phone: 'Teléfono', send_code: 'Enviar código', code: 'Código', verify: 'Verificar',
+    mfa_title: 'Verificación en dos pasos', mfa_hint: 'Introduce el código de tu app de autenticación o del SMS',
+    verify_email_title: 'Verifica tu email', verify_email_body: 'Te hemos enviado un enlace a {email}. Ábrelo y vuelve aquí.', resend: 'Reenviar email',
+    i_verified: 'Ya lo he verificado', email_sent: 'Email enviado', not_verified_yet: 'Todavía no aparece verificado',
+    account_title: 'Tu cuenta', methods_title: 'Métodos de acceso', link: 'Vincular', unlink: 'Desvincular', linked: 'Vinculado',
+    guest_banner: 'Estás como invitado. Vincula un método para no perder tus datos.', verify_banner: 'Tu email no está verificado.',
+    mfa_section: 'Verificación en dos pasos', mfa_add_totp: 'Añadir app de autenticación', mfa_add_sms: 'Añadir SMS', mfa_secret: 'Escanea el QR o introduce esta clave en tu app: {secret}',
+    mfa_remove: 'Quitar', mfa_none: 'Sin segundo factor', passkey_add: 'Añadir passkey', passkey_added: 'Passkey añadida',
+    sign_out: 'Cerrar sesión', delete_account: 'Eliminar cuenta', delete_title: '¿Eliminar tu cuenta?', delete_body: 'Se borrarán tu cuenta y tus datos. No se puede deshacer.',
+    delete_confirm: 'Eliminar', cancel: 'Cancelar', reauth_title: 'Confirma que eres tú', reauth_body: 'Vuelve a introducir tu contraseña', confirm: 'Confirmar',
+    forbidden: 'No tienes permiso para ver esta página', method_email: 'Email y contraseña', method_google: 'Google', method_apple: 'Apple', method_phone: 'Teléfono', method_passkey: 'Passkey',
+  },
+  en: {
+    sign_in_title: 'Sign in', sign_up_title: 'Create your account', email: 'Email', password: 'Password', display_name: 'Name',
+    sign_in: 'Sign in', sign_up: 'Create account', no_account: 'No account yet? Sign up', have_account: 'Already have an account? Sign in',
+    forgot: 'Forgot your password?', forgot_title: 'Reset your password', send_reset: 'Send link', reset_sent: 'We sent a link to {email}',
+    back: 'Back', or: 'or', continue_google: 'Continue with Google', continue_apple: 'Continue with Apple', continue_phone: 'Continue with phone',
+    continue_passkey: 'Sign in with a passkey', continue_guest: 'Continue as guest', phone: 'Phone', send_code: 'Send code', code: 'Code', verify: 'Verify',
+    mfa_title: 'Two-step verification', mfa_hint: 'Enter the code from your authenticator app or the SMS',
+    verify_email_title: 'Verify your email', verify_email_body: 'We sent a link to {email}. Open it and come back here.', resend: 'Resend email',
+    i_verified: 'I have verified it', email_sent: 'Email sent', not_verified_yet: 'It does not show as verified yet',
+    account_title: 'Your account', methods_title: 'Sign-in methods', link: 'Link', unlink: 'Unlink', linked: 'Linked',
+    guest_banner: 'You are a guest. Link a method so you do not lose your data.', verify_banner: 'Your email is not verified.',
+    mfa_section: 'Two-step verification', mfa_add_totp: 'Add authenticator app', mfa_add_sms: 'Add SMS', mfa_secret: 'Scan the QR or enter this key in your app: {secret}',
+    mfa_remove: 'Remove', mfa_none: 'No second factor', passkey_add: 'Add passkey', passkey_added: 'Passkey added',
+    sign_out: 'Sign out', delete_account: 'Delete account', delete_title: 'Delete your account?', delete_body: 'Your account and your data will be deleted. This cannot be undone.',
+    delete_confirm: 'Delete', cancel: 'Cancel', reauth_title: 'Confirm it is you', reauth_body: 'Enter your password again', confirm: 'Confirm',
+    forbidden: 'You do not have permission to see this page', method_email: 'Email and password', method_google: 'Google', method_apple: 'Apple', method_phone: 'Phone', method_passkey: 'Passkey',
+  },
+}
+export const UI_KEYS = Object.keys(UI_TEXTS.en)
