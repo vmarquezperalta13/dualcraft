@@ -57,6 +57,7 @@ function webOut(s) {
   if (s.id === 'astro') return { out: 'dist', ssr: Object.keys(deps).some((d) => /^@astrojs\/(node|vercel|netlify|cloudflare)$/.test(d)) }
   return { out: 'dist', ssr: false }
 }
+const perfOn = () => fs.existsSync(path.join(dir, 'perf', 'perf-check.mjs')) && !!readJson(path.join(dir, 'perf', 'budgets.json'))
 const gradleApp = (s) => (s.id === 'kmp' ? (['composeApp', 'androidApp', 'app'].find((m) => exists(s.dir, m, 'build.gradle.kts') || exists(s.dir, m, 'build.gradle')) || 'composeApp') : 'app')
 function applicationId(s) {
   const files = s.id === 'flutter' ? [path.join(s.dir, 'android/app/build.gradle.kts'), path.join(s.dir, 'android/app/build.gradle')] : [path.join(s.dir, gradleApp(s), 'build.gradle.kts'), path.join(s.dir, gradleApp(s), 'build.gradle')]
@@ -134,6 +135,22 @@ function ciWorkflow(p) {
       if (s.kind === 'web') L.push(`      - run: ${pm.run} build`)
     }
   }
+  // end-to-end (dualcraft:e2e): Playwright starts the app itself (webServer) unless E2E_BASE_URL points at a preview
+  for (const s of stacks.filter((x) => x.kind === 'web' && ['ts', 'js', 'mjs'].some((e) => exists(x.dir, `playwright.config.${e}`)))) {
+    const pm = nodePm(s.dir)
+    L.push(`  e2e-${jobId(s)}:`, `    name: E2E ${s.id} (Playwright)`, '    runs-on: ubuntu-latest', '    timeout-minutes: 30', '    defaults:', '      run:', `        working-directory: ${wd(s.dir)}`, '    env:', `      E2E_EMAIL: ${E('secrets.E2E_EMAIL')}`, `      E2E_PASSWORD: ${E('secrets.E2E_PASSWORD')}`, '    steps:', ...checkout, ...setupNode(s.dir, pm), `      - run: ${pm.install}`, `      - run: ${pm.x} playwright install --with-deps chromium`, `      - run: ${pm.x} playwright test`, '      - if: failure()', '        uses: actions/upload-artifact@v4', '        with:', `          name: playwright-report-${jobId(s)}`, `          path: ${posix(path.join(wd(s.dir), 'playwright-report'))}`, '          retention-days: 7')
+  }
+  // performance budgets (dualcraft:perf): bundle sizes from the build, then Lighthouse on the running app — warnings by default
+  if (perfOn() && readJson(path.join(dir, 'perf', 'budgets.json'))?.web) for (const s of stacks.filter((x) => x.kind === 'web')) {
+    const pm = nodePm(s.dir); const o = webOut(s)
+    const port = { 'react-vite': 4173, astro: 4321 }[s.id] || 3000
+    const serve = s.id === 'react-vite' ? `${pm.x} vite preview --port ${port}` : s.id === 'astro' ? (o.ssr ? `${pm.run} preview -- --port ${port}` : `${pm.x} astro preview --port ${port}`) : s.id === 'nuxt' ? (o.ssr ? 'node .output/server/index.mjs' : `npx -y serve@14.2.4 ${o.out} -l ${port}`) : o.ssr ? `${pm.run} start` : `npx -y serve@14.2.4 ${o.out} -l ${port}`
+    L.push(`  perf-${jobId(s)}:`, `    name: Performance ${s.id} (bundle + Lighthouse)`, '    runs-on: ubuntu-latest', '    timeout-minutes: 20', '    steps:', ...checkout, ...setupNode(s.dir, pm),
+      `      - working-directory: ${wd(s.dir)}`, `        run: ${pm.install}`, `      - working-directory: ${wd(s.dir)}`, `        run: ${pm.run} build`,
+      `      - run: node .dualcraft/perf/perf-check.mjs bundle ${s.id} ${wd(s.dir)}`,
+      '      - name: Start the app', `        working-directory: ${wd(s.dir)}`, `        run: (${serve} > "$RUNNER_TEMP/app.log" 2>&1 &) && npx -y wait-on@8.0.1 -t 120000 http://localhost:${port}`,
+      `      - run: node .dualcraft/perf/perf-check.mjs lighthouse http://localhost:${port}`)
+  }
   const prov = provider()
   if (prov === 'firebase' && exists(functionsDir(), 'package.json')) {
     const fd = functionsDir(); const pm = nodePm(fd); const sc = scripts(fd)
@@ -198,7 +215,8 @@ function mobileWorkflow(p) {
   const L = [...HEADER('Release mobile (testing)'), 'on:', '  push:', "    tags: ['v*']", '  workflow_dispatch:', '', 'concurrency:', `  group: release-mobile-${E('github.ref')}`, '  cancel-in-progress: false', '', 'permissions:', '  contents: read', '', 'env:',
     `  BUILD_NUMBER: ${E('github.run_number')}`, '', 'jobs:']
   const version = ['      - name: Version from the tag', '        run: |', '          v="${GITHUB_REF_NAME#v}"; case "$v" in [0-9]*) ;; *) v="0.0.0" ;; esac', '          echo "VERSION=$v" >> "$GITHUB_ENV"', `          echo "BUILD=$(( BUILD_NUMBER + ${E('vars.BUILD_NUMBER_OFFSET || 0')} ))" >> "$GITHUB_ENV"`]
-  const playUpload = (s, aab) => ['      - uses: r0adkll/upload-google-play@v1', '        with:', `          serviceAccountJsonPlainText: ${E('secrets.PLAY_SERVICE_ACCOUNT_JSON')}`, `          packageName: ${applicationId(s) || 'com.example.app'}`, `          releaseFiles: ${aab}`, `          track: ${track}`, '          status: completed']
+  const sizeStep = (file) => (perfOn() ? ['      - name: App size budget (dualcraft:perf, warns only by default)', '        working-directory: .', `        run: node .dualcraft/perf/perf-check.mjs app-size ${file}`] : [])
+  const playUpload = (s, aab) => [...sizeStep(aab), '      - uses: r0adkll/upload-google-play@v1', '        with:', `          serviceAccountJsonPlainText: ${E('secrets.PLAY_SERVICE_ACCOUNT_JSON')}`, `          packageName: ${applicationId(s) || 'com.example.app'}`, `          releaseFiles: ${aab}`, `          track: ${track}`, '          status: completed']
   const keystoreEnv = ['        env:', `          KEYSTORE_BASE64: ${E('secrets.ANDROID_KEYSTORE_BASE64')}`, `          KEYSTORE_PASSWORD: ${E('secrets.ANDROID_KEYSTORE_PASSWORD')}`, `          KEY_ALIAS: ${E('secrets.ANDROID_KEY_ALIAS')}`, `          KEY_PASSWORD: ${E('secrets.ANDROID_KEY_PASSWORD')}`]
   const iosSteps = (s) => {
     const x = iosProject(s); const d = wd(x.dir)
@@ -206,7 +224,7 @@ function mobileWorkflow(p) {
       '      - name: Archive and upload to TestFlight (automatic signing with the API key)', `        working-directory: ${d}`, '        env:', `          KEY_ID: ${E('secrets.APPSTORE_KEY_ID')}`, `          ISSUER_ID: ${E('secrets.APPSTORE_ISSUER_ID')}`, `          TEAM_ID: ${E('vars.IOS_TEAM_ID')}`, '        run: |',
       '          set -- -allowProvisioningUpdates -authenticationKeyPath "$HOME/private_keys/AuthKey_$KEY_ID.p8" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID"',
       `          xcodebuild ${x.flag} -scheme ${x.scheme} -configuration Release -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/app.xcarchive" archive DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD" "$@"`,
-      '          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/app.xcarchive" -exportOptionsPlist ExportOptions.plist -exportPath "$RUNNER_TEMP/export" "$@"']
+      '          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/app.xcarchive" -exportOptionsPlist ExportOptions.plist -exportPath "$RUNNER_TEMP/export" "$@"', ...sizeStep('"$RUNNER_TEMP"/export/*.ipa')]
   }
   for (const s of stacks.filter((x) => x.kind === 'mobile')) {
     if (s.id === 'react-native') {

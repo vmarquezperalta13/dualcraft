@@ -16,7 +16,7 @@ Commands: `${CLAUDE_PLUGIN_ROOT}/references/stack-commands.md`. Process: `dualcr
 | State (Riverpod notifier, Bloc, ChangeNotifier) | unit test with fake repositories; Riverpod: `ProviderContainer(overrides: […])`; Bloc: `bloc_test` if present |
 | Widgets / screens | `testWidgets` — `pumpWidget` inside the app's `MaterialApp` with theme (`DsTheme.light()`), localizations and provider overrides; `find.text/byType/bySemanticsLabel`, `tester.tap`, `pumpAndSettle` |
 | Visual regressions | goldens (`matchesGoldenFile`) for key components in light and dark; regenerate deliberately with `--update-goldens` |
-| Real device flows | `integration_test/` (or Patrol) — few, critical paths |
+| Real device flows | `dualcraft:e2e` (Maestro flows generated from the same flows.json as the web's Playwright specs, any stack) or `integration_test/` / Patrol — few, critical paths |
 
 Wrap widgets in a shared test harness (`test/helpers/pump_app.dart`) so every test gets theme, l10n and overrides the same way — create it if missing.
 

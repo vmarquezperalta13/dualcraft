@@ -29,6 +29,7 @@ Project facts: `node "${CLAUDE_PLUGIN_ROOT}/scripts/detect.mjs"` (shows sitemap/
 - CLS: dimensions on images/embeds; no late-injected banners above content.
 - INP: little client JS — keep `'use client'` at leaves, lazy-load heavy widgets (`next/dynamic`), avoid large libraries for small needs.
 - Caching: static where possible, `revalidate` for content pages.
+- Keep it from regressing: `dualcraft:perf` turns these into budgets checked in CI (Lighthouse + bundle per route).
 
 ## Measure
 - Lighthouse: `npx lighthouse <url> --only-categories=performance,seo,accessibility,best-practices --output=json --output-path=<scratchpad>/lh.json --chrome-flags="--headless=new"` against a production build (`build` + `start`), mobile and desktop presets. Ask before installing if it isn't available.

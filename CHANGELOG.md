@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.26.0] - 2026-11-25
+### Added
+- Performance budgets: `/dualcraft:perf` and `scripts/perf.mjs` (init, gen, check, run) — `.dualcraft/perf/budgets.json` plus a self-contained runner copied into the repo (`.dualcraft/perf/perf-check.mjs`, Node 18+, no dependencies) used by CI and locally
+  - web: Lighthouse 12 (mobile, median of runs) on the budget routes — score, LCP, CLS, TBT; bundle JS/CSS gzip totals, largest chunks and JS per Next.js App Router route
+  - mobile: APK / AAB / IPA size; cold start from adb (`am start -W`), Flutter `--trace-startup` or an XCTest value, kept in `history.json` and compared with the previous run
+  - `mode` warn (annotations + job summary table, default) or fail, with a tolerance for noise
+- `deploy`: a `perf-<stack>` job per web stack (build → bundle → start the app → Lighthouse) and an app-size step before each store upload in the mobile release workflow
+- CI runs real Lighthouse with the runner against the fixture site
+
+## [0.25.0] - 2026-11-25
+### Added
+- End-to-end tests: `/dualcraft:e2e` and `scripts/e2e.mjs` (init, gen, check, run) — one neutral spec `.dualcraft/e2e/flows.json` → Playwright specs for the web (`e2e/dualcraft/*.spec.ts`) and Maestro flows for every mobile stack (`.maestro/dualcraft/*.yaml`)
+  - steps: open, tap, fill, see / notSee, url, noErrors, back, screenshot; texts by i18n key (default locale), test ids, secrets from env, unique emails
+  - derived flows refreshed by `gen`: auth (protected page → sign in, wrong password, password policy, sign in with a test account, guest, sign up + delete), smoke for every static web route (console errors, protected → sign in) and app deep link, payments paywall (product testIDs), store screenshots (raw captures for `dualcraft:screenshots`, opt-in web visual regression)
+  - `playwright.config.ts` (desktop + mobile Chromium, webServer or a preview URL) and Maestro workspace config written once; `@playwright/test` added
+  - `check`: spec valid, derived flows in sync, texts exist, generated files current, Playwright installed, CI job present
+- `deploy`: an `e2e-<stack>` Playwright job per web stack in the generated CI (test-account secrets, report uploaded on failure)
+- CI runs the generated Playwright specs against a fixture site (Chromium, desktop + mobile) and validates the generated Maestro flows against the SchemaStore schema (documented commands only)
+### Fixed
+- Flutter Supabase passkey sign-in awaits inside its `try` (Flutter 3.50 lint `unawaited_return_in_try_block`)
+
 ## [0.24.0] - 2026-11-25
 ### Added
 - Auth pack: `/dualcraft:auth` and `scripts/auth.mjs` (init, gen, check) on Firebase Auth or Supabase Auth, from one `.dualcraft/auth/auth.json`

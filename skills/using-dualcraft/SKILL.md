@@ -44,6 +44,8 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 | Push notifications, notify users, FCM | `dualcraft:push` |
 | CI, deploys, pipelines, TestFlight / Play testing uploads, secrets | `dualcraft:deploy` |
 | Login, sign-up, roles, protected routes, delete account, passkeys, 2FA | `dualcraft:auth` |
+| End-to-end tests, Playwright, Maestro, smoke tests of every screen | `dualcraft:e2e` |
+| Performance budgets, Lighthouse, bundle size, app size, startup time | `dualcraft:perf` |
 | Privacy policy, GDPR, cookies, terms, App Privacy / Data safety, account deletion | `dualcraft:legal` |
 | New idea, "quiero añadir…", design before code | `dualcraft:brainstorm` |
 | Work with several steps / both platforms | `dualcraft:plan` |

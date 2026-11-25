@@ -175,3 +175,34 @@ jobs:
           npm i --no-audit --no-fund @electric-sql/pglite@0.2.17 prisma@6.1.0
           node pg.mjs migrations
           DATABASE_URL=postgresql://u:p@localhost:5432/db npx prisma validate --schema prisma/schema.prisma
+
+  e2e:
+    name: Run generated E2E (Playwright), validate Maestro flows, performance runner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node test/compile/generate.mjs out
+      - name: Playwright specs against the fixture site (Chromium, desktop + mobile)
+        working-directory: out/e2e-web
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          npx tsc -p .
+          npx playwright test
+      - name: Maestro flows against the SchemaStore schema (documented commands only)
+        run: |
+          mkdir -p out/maestro-check && cd out/maestro-check
+          npm init -y >/dev/null
+          npm i --no-audit --no-fund yaml@2.6.1 ajv@8.17.1
+          cp ../../test/compile/maestro-validate.mjs .
+          node maestro-validate.mjs ../../test/fixtures/maestro-flow.schema.json ../e2e-maestro/dualcraft/*.yaml
+      - name: Performance runner (real Lighthouse on the fixture site, bundle of a build)
+        working-directory: out/perf
+        run: |
+          node .dualcraft/perf/perf-check.mjs bundle nextjs site
+          (node server.mjs &) && npx -y wait-on@8.0.1 -t 60000 http://localhost:3000/login
+          node .dualcraft/perf/perf-check.mjs lighthouse http://localhost:3000 --runs 1
+          node -e "const r=require('./.dualcraft/perf/results/web-lighthouse.json'); if (r.rows.length !== 4) process.exit(1)"

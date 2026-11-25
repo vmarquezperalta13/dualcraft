@@ -16,7 +16,7 @@ Commands: `${CLAUDE_PLUGIN_ROOT}/references/stack-commands.md`. Process: `dualcr
 | Component behaviour | Testing Library + `user-event` | query by role/label/text (`getByRole('button', { name: /guardar/i })`) — also checks accessibility |
 | Route handlers (`route.ts`) | call the exported `GET/POST` with a `Request` | assert status, body, auth checks |
 | Server actions | call the function directly with mocked data layer | |
-| Full user flows (login, checkout) | Playwright | few, critical paths only; against `next build && next start` or dev |
+| Full user flows (login, checkout) | Playwright via `dualcraft:e2e` (flows.json → specs shared with the apps' Maestro flows) | few, critical paths only; against `next build && next start` or a preview |
 
 Async server components are awkward to unit-test: test their data functions and cover the page with Playwright.
 
@@ -27,7 +27,7 @@ Async server components are awkward to unit-test: test their data functions and 
 - `next/navigation`: mock `useRouter`, `usePathname` where needed.
 
 ## No test setup yet?
-Propose (ask first) Vitest + Testing Library: `pm add -D vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom`, a `vitest.config.ts` with `environment: 'jsdom'` and the React plugin, a setup file importing `@testing-library/jest-dom/vitest`, and a `"test": "vitest run"` script. Playwright: `npm init playwright@latest`. Record the choice as a brain decision.
+Propose (ask first) Vitest + Testing Library: `pm add -D vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom`, a `vitest.config.ts` with `environment: 'jsdom'` and the React plugin, a setup file importing `@testing-library/jest-dom/vitest`, and a `"test": "vitest run"` script. Playwright: `dualcraft:e2e` (`e2e.mjs init` writes the config and the derived flows). Record the choice as a brain decision.
 
 ## Same rule, both platforms
 If the rule also exists in Flutter, use the same test cases (see `dualcraft:tdd`).

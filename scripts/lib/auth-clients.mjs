@@ -456,7 +456,7 @@ ${on(email, `
   Future<AuthUser> signInWithPasskey() => _guard(() async {
         try {
           // ignore: experimental_member_use
-          return _signedIn((await _auth.signInWithPasskey(_passkeys)).user);
+          return await _signedIn((await _auth.signInWithPasskey(_passkeys)).user);
         } on PasskeyAuthCancelledException {
           throw const AuthError(AuthErrorCode.cancelled, 'passkey_cancelled');
         } on NoCredentialsAvailableException {

@@ -146,6 +146,20 @@
         "auth"
       ]
     },
+    "e2e": {
+      "name": "Tests end-to-end",
+      "description": "Playwright (web) y Maestro (apps) desde un único spec: login, rutas, compras y capturas, con job de CI para la web",
+      "skills": [
+        "e2e"
+      ]
+    },
+    "perf": {
+      "name": "Rendimiento",
+      "description": "Presupuestos de rendimiento: Lighthouse y bundle en la web, tamaño y arranque de la app, con avisos en CI",
+      "skills": [
+        "perf"
+      ]
+    },
     "legal": {
       "name": "Legal y privacidad",
       "description": "RGPD/LSSI y tiendas: mapa de datos, borradores de políticas, App Privacy, Data safety, manifiesto de privacidad de iOS y comprobaciones",
