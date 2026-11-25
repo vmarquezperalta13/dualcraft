@@ -186,7 +186,7 @@ function generate(spec, force) {
     written.push(writeNew(path.join(web.dir, 'playwright.config.ts'), G.playwrightConfig({ baseUrl: spec.web.baseUrl, startCommand: spec.web.startCommand })))
     const pj = path.join(web.dir, 'package.json'); const pkg = readJson(pj)
     if (pkg && !pkg.devDependencies?.['@playwright/test'] && !pkg.dependencies?.['@playwright/test']) {
-      pkg.devDependencies = { ...pkg.devDependencies, '@playwright/test': '^1.57.0' }
+      pkg.devDependencies = { ...pkg.devDependencies, '@playwright/test': '^1.65.0' }
       pkg.scripts = { ...pkg.scripts, 'test:e2e': pkg.scripts?.['test:e2e'] || 'playwright test' }
       fs.writeFileSync(pj, JSON.stringify(pkg, null, 2) + '\n'); written.push(`${rel(pj)}: @playwright/test + "test:e2e" (run npm install && npx playwright install)`)
     }

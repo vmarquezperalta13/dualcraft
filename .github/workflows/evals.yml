@@ -1,0 +1,57 @@
+name: Skill evals
+
+# Manual runs only (Actions → Skill evals → Run workflow). No paid API: the runs use your Claude subscription through
+# the CLAUDE_CODE_OAUTH_TOKEN secret (create it with `claude setup-token`), so they count against the plan's usage
+# limits. Deterministic graders, 1 run, no baseline arm, one run at a time, usage ceilings (list-price estimate).
+# The job report lists the cases whose skill did not load. Locally, `claude plugin eval` uses your own Claude login.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Cases to run: trigger, behavior or a pack name (e.g. auth)'
+        default: 'trigger'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skill-evals
+  cancel-in-progress: false
+
+jobs:
+  evals:
+    name: claude plugin eval
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      EVAL_TAG: ${{ github.event.inputs.tag || 'trigger' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Subscription token, never the paid API
+        run: |
+          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then echo "::error::Add the CLAUDE_CODE_OAUTH_TOKEN secret (run claude setup-token on your machine)"; exit 1; fi
+          if [ -n "${ANTHROPIC_API_KEY:-}" ]; then echo "::error::ANTHROPIC_API_KEY is set: these evals must not use the paid API"; exit 1; fi
+      - run: npm install -g @anthropic-ai/claude-code@2.1.332
+      - run: node scripts/dev/gen-evals.mjs --check
+      - name: Trigger cases (every skill loads on a natural request)
+        if: env.EVAL_TAG != 'behavior'
+        run: claude plugin eval . --trust-plugin --tag "$EVAL_TAG" --ablation none --runs 1 --concurrency 1 --model claude-sonnet-5-5 --max-cost-usd 4 --no-publish --json triggers.json
+      - name: Behaviour cases (scaffolded project)
+        if: always() && (env.EVAL_TAG == 'trigger' || env.EVAL_TAG == 'behavior')
+        run: claude plugin eval . --trust-plugin --tag behavior --scaffold --ablation none --runs 1 --model claude-sonnet-5-5 --max-cost-usd 1 --no-publish --json behavior.json
+      - name: Summary
+        if: always()
+        run: node scripts/dev/eval-summary.mjs triggers.json behavior.json >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-evals
+          path: |
+            triggers.json
+            behavior.json
+            evals/results/
+          retention-days: 30

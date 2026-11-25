@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "partial": false,
+  "aggregates": { "overallScore": 0.5, "casesPassed": 1, "casesTotal": 2 },
+  "cases": [
+    { "name": "auth", "aggregates": { "score": 1 }, "arms": { "with": [{ "error": null, "graders": [{ "name": "skill-loaded", "type": "tool_used", "passed": true }] }] } },
+    { "name": "perf", "aggregates": { "score": 0 }, "arms": { "with": [{ "error": null, "graders": [{ "name": "skill-loaded", "type": "tool_used", "passed": false }] }] } }
+  ],
+  "costUsd": 0.42,
+  "durationSeconds": 61,
+  "claudeVersion": "2.1.332"
+}

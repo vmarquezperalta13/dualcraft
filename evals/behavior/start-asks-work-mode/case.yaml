@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: start-asks-work-mode
+description: "Asked to build something, DualCraft asks the work mode (bug / new development / refactor) before any code"
+tags: [behavior]
+runs: 1
+context:
+  scaffold_script: scaffold.sh

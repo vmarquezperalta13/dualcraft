@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: decision-conflict
+description: "A request that contradicts a decision in force is flagged, naming the decision"
+tags: [behavior]
+runs: 1
+context:
+  scaffold_script: scaffold.sh
