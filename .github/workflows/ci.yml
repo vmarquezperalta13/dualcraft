@@ -206,3 +206,20 @@ jobs:
           (node server.mjs &) && npx -y wait-on@8.0.1 -t 60000 http://localhost:3000/login
           node .dualcraft/perf/perf-check.mjs lighthouse http://localhost:3000 --runs 1
           node -e "const r=require('./.dualcraft/perf/results/web-lighthouse.json'); if (r.rows.length !== 4) process.exit(1)"
+
+  video:
+    name: Render a generated Remotion video
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node test/compile/generate.mjs out
+      - working-directory: out/video
+        run: |
+          npm install --no-audit --no-fund
+          npx tsc --noEmit
+          npx remotion render src/index.ts release-1-3-0-square-en out/release.mp4 --codec=h264
+          npx remotion still src/index.ts app-intro-vertical-es out/intro.png --frame=150
+          test -s out/release.mp4 && test -s out/intro.png

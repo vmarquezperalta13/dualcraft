@@ -84,6 +84,7 @@
 
     { "name": "marketing", "pack": "marketing", "phase": 7, "es": "Qué comunicar de cada versión + textos listos: tiendas/ASO, web, redes, in-app, push; campaña, métricas e ideas de crecimiento" },
     { "name": "screenshots", "pack": "marketing", "phase": 9, "es": "Capturas para tiendas: por deep link en emulador/simulador/navegador, enmarcadas a tamaño Play/App Store con textos por idioma" },
+    { "name": "video", "pack": "marketing", "phase": 10, "es": "Vídeos de marketing con Remotion desde un único guion: vista previa de App Store, promo de Google Play, vertical 9:16 y formatos de feed, por idioma, con los tokens, las capturas, la ficha y las notas de versión; render en local" },
     { "name": "release", "pack": "marketing", "phase": 7, "es": "Cierra versión: checklist, versión en config/pubspec/package.json, CHANGELOG, tag, notas de tienda por idioma y lanzamiento" },
 
     { "name": "convert", "pack": "convert", "phase": 8, "es": "Convierte entre cualquier stack (web ⇄ móvil o mismo tipo) por funcionalidades: inventario, decisiones de backend preguntadas, spec neutra, adaptación nativa y verificación" },

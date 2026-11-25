@@ -15,7 +15,7 @@
 //   references/port idioms are also copied into dart/lib/port, kotlin/idioms, swift/port-{lang,ui} and ts/port
 import fs from 'node:fs'
 import path from 'node:path'
-import { run, makeMultiProject, makeProject, write, read, ROOT } from '../helpers.mjs'
+import { run, makeMultiProject, makeProject, write, read, ROOT, png } from '../helpers.mjs'
 import { flutterSupabase } from '../../scripts/lib/auth-clients.mjs'
 import { tsFirebase, tsSupabase } from '../../scripts/lib/auth-clients-ts.mjs'
 import { reactWebScreens } from '../../scripts/lib/auth-screens-ts.mjs'
@@ -390,6 +390,16 @@ must(run('perf.mjs', ['init', '--routes', '/login'], ew), 'perf init')
 fs.cpSync(path.join(ew, '.dualcraft', 'perf'), path.join(OUT, 'perf', '.dualcraft', 'perf'), { recursive: true })
 copy(path.join(ROOT, 'test', 'fixtures', 'e2e-site', 'server.mjs'), path.join(OUT, 'perf', 'server.mjs'))
 write(path.join(OUT, 'perf', 'site', '.next', 'static', 'chunks', 'main.js'), 'console.log(' + JSON.stringify('x'.repeat(4000)) + ')\n')
+// Marketing videos: the generated Remotion project, type-checked and one composition rendered in CI (out/video)
+const vp = makeProject({ web: 'nextjs', mobile: 'flutter', paths: { web: 'site', mobile: 'app' } })
+const VD = (...x) => path.join(vp, '.dualcraft', ...x)
+write(VD('store', 'screenshots.json'), JSON.stringify({ screens: [{ name: 'home', android: 'liga://home', caption: { es: 'Sigue a tu equipo en directo', en: 'Follow your team live' } }, { name: 'stats', web: 'http://localhost:3000/stats', caption: { es: 'Estadísticas de cada partido', en: 'Stats for every match' } }] }))
+for (const l of ['es', 'en']) { write(VD('store', 'screenshots', 'raw', l, 'android', 'home.png'), ''); fs.writeFileSync(VD('store', 'screenshots', 'raw', l, 'android', 'home.png'), png(90, 195, [40, 90, 200])); write(VD('store', 'screenshots', 'raw', l, 'web', 'stats.png'), ''); fs.writeFileSync(VD('store', 'screenshots', 'raw', l, 'web', 'stats.png'), png(240, 150, [200, 80, 60])) }
+write(VD('store', 'listing.json'), JSON.stringify({ es: { appstore: { name: 'Liga', subtitle: 'Tu liga en el bolsillo' } }, en: { appstore: { name: 'Liga', subtitle: 'Your league in your pocket' } } }))
+write(VD('release', '1.3.0.json'), JSON.stringify({ es: { play: '• Favoritos\n• Modo oscuro' }, en: { play: '• Favourites\n• Dark mode' } }))
+must(run('video.mjs', ['init'], vp), 'video init')
+must(run('video.mjs', ['check'], vp), 'video check')
+fs.cpSync(path.join(vp, 'marketing', 'video'), path.join(OUT, 'video'), { recursive: true })
 
 console.log(`compile fixtures → ${OUT}`)
 for (const d of fs.readdirSync(OUT)) console.log(`  ${d}: ${fs.readdirSync(path.join(OUT, d)).length} entries`)
