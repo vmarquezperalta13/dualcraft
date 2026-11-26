@@ -31,8 +31,8 @@ DualCraft is both **automation** (generators that write code from one spec per a
 - **Auth**: email, Google, Apple, phone, passkeys, guest, 2FA, roles and route rules, account deletion — typed AuthService and screens per stack.
 - **Payments**: one product catalog → Google Play and App Store purchases with server verification, or RevenueCat.
 - **Push**: FCM catalog of channels, topics and typed notifications with deep links, in each device's language.
-- **CI/CD**: GitHub Actions per stack, web deploys with PR previews, backend deploys, Play internal and TestFlight on tags.
-- **Tests and performance**: end-to-end flows for Playwright and Maestro from one spec; performance budgets (Lighthouse, bundle, app size, cold start) in CI.
+- **CI/CD**: GitHub Actions per stack, web deploys with PR previews, backend deploys, Play internal and TestFlight on tags, weekly dependency update pull requests (Dependabot).
+- **Tests and performance**: end-to-end flows for Playwright and Maestro from one spec, with axe accessibility checks on the web; performance budgets (Lighthouse, bundle, app size, cold start) in CI.
 - **Legal**: data map from SDKs and schema, privacy/terms/cookies drafts, App Store privacy, Data safety, iOS privacy manifest.
 
 **Quality, release and growth**

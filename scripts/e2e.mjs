@@ -77,6 +77,7 @@ function defaults() {
     mobile: mobiles.length ? { appId: opt['app-id'] ? String(opt['app-id']) : appId() || 'com.example.app', scheme: opt.scheme ? String(opt.scheme) : scheme() } : null,
     routes: { account: '/account', paywall: '/paywall' },
     derive: { auth: true, smoke: true, payments: true, screenshots: true },
+    a11y: { ...G.A11Y_DEFAULTS },
     flows: [],
   }
 }
@@ -118,7 +119,7 @@ function derived(spec) {
     if (auth.guest) out.push({ id: 'auth-guest', title: 'Auth — continue as guest', origin: 'auth', tags: ['auth'], platforms: both, steps: [{ open: R.signIn }, { tap: 't:auth.ui.continue_guest' }, { notSee: 't:auth.ui.sign_in_title' }] })
   }
   if (d.smoke !== false) {
-    if (web) for (const r of routesOf(web)) out.push({ id: 'smoke-web-' + (r.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'home'), title: `Smoke — ${r} opens`, origin: 'smoke', tags: ['smoke'], platforms: ['web'], steps: [{ open: r }, ...(isPublic(auth, r) ? [{ url: r }] : [{ url: auth.routes.signIn }]), { noErrors: true }] })
+    if (web) for (const r of routesOf(web)) out.push({ id: 'smoke-web-' + (r.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'home'), title: `Smoke — ${r} opens`, origin: 'smoke', tags: ['smoke'], platforms: ['web'], steps: [{ open: r }, ...(isPublic(auth, r) ? [{ url: r }] : [{ url: auth.routes.signIn }]), { noErrors: true }, ...(spec.a11y && isPublic(auth, r) ? [{ a11y: true }] : [])] })
     if (spec.mobile) { const routes = [...new Set(mobiles.flatMap(routesOf))]; for (const r of routes) out.push({ id: 'smoke-app-' + (r.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'home'), title: `Smoke — app ${r} opens`, origin: 'smoke', tags: ['smoke'], platforms: ['mobile'], steps: [{ open: r }] }) }
   }
   const products = readJson(path.join(dir, 'payments', 'products.json'))
@@ -153,6 +154,12 @@ function validate(spec) {
       if ('fill' in s && s.with === undefined) errors.push(`${f.id} step ${i + 1}: fill needs "with"`)
     })
   }
+  if (spec.a11y) {
+    const a = spec.a11y
+    if (a.level !== undefined && !G.A11Y_LEVELS.includes(a.level)) errors.push(`a11y.level must be ${G.A11Y_LEVELS.join(', ')}`)
+    for (const k of ['tags', 'disable', 'exclude']) if (a[k] !== undefined && (!Array.isArray(a[k]) || a[k].some((x) => typeof x !== 'string' || !x))) errors.push(`a11y.${k} must be a list of strings`)
+  }
+  for (const fl of spec.flows) if (fl.steps?.some((st) => 'a11y' in st) && !spec.a11y) errors.push(`${fl.id}: an a11y step needs "a11y" settings in flows.json (e2e.mjs init --a11y)`)
   return errors
 }
 const forWeb = (f) => (f.platforms || ['web', 'mobile']).includes('web')
@@ -162,7 +169,7 @@ function outputs(spec) {
   const raw = (platformDir) => posix(path.relative(platformDir, path.join(dir, 'store', 'screenshots', 'raw', spec.locale || defLocale)))
   if (spec.web && web) {
     const e2eDir = path.join(web.dir, 'e2e', 'dualcraft')
-    files.push({ file: path.join(e2eDir, 'support.ts'), text: stamp(G.playwrightSupport) })
+    files.push({ file: path.join(e2eDir, 'support.ts'), text: stamp(G.playwrightSupportFor(spec.a11y)) })
     for (const f of spec.flows.filter(forWeb)) files.push({ file: path.join(e2eDir, f.id + '.spec.ts'), text: stamp(G.playwrightSpec(f, { tr, rawDir: posix(path.relative(web.dir, path.join(dir, 'store', 'screenshots', 'raw', spec.locale || defLocale, 'web'))) })) })
   }
   if (spec.mobile) for (const s of mobiles) {
@@ -190,6 +197,11 @@ function generate(spec, force) {
       pkg.scripts = { ...pkg.scripts, 'test:e2e': pkg.scripts?.['test:e2e'] || 'playwright test' }
       fs.writeFileSync(pj, JSON.stringify(pkg, null, 2) + '\n'); written.push(`${rel(pj)}: @playwright/test + "test:e2e" (run npm install && npx playwright install)`)
     }
+    const pkg2 = readJson(pj)
+    if (spec.a11y && pkg2 && !pkg2.devDependencies?.['@axe-core/playwright'] && !pkg2.dependencies?.['@axe-core/playwright']) {
+      pkg2.devDependencies = { ...pkg2.devDependencies, '@axe-core/playwright': G.AXE_VERSION }
+      fs.writeFileSync(pj, JSON.stringify(pkg2, null, 2) + '\n'); written.push(`${rel(pj)}: @axe-core/playwright (accessibility checks; run npm install)`)
+    }
     const gi = path.join(web.dir, '.gitignore')
     if (fs.existsSync(gi) && !/playwright-report/.test(read(gi))) { fs.appendFileSync(gi, '\n# Playwright\n/test-results/\n/playwright-report/\n/blob-report/\n'); written.push(rel(gi) + ': Playwright outputs') }
   }
@@ -204,6 +216,8 @@ if (cmd === 'init' || cmd === 'gen') {
   if (!stacks.length) die('no stacks in .dualcraft/config.json')
   const exists = fs.existsSync(file)
   let spec = exists ? load() : defaults()
+  if (opt.a11y && !spec.a11y) spec.a11y = { ...G.A11Y_DEFAULTS }
+  if (opt['no-a11y']) delete spec.a11y
   spec = sync(spec); save(spec)
   console.log(`${exists ? 'updated' : 'created'} ${rel(file)} — ${spec.flows.length} flows (${summary(spec)})`)
   for (const w of generate(spec, !!opt.force)) console.log('→ ' + w)
@@ -248,6 +262,7 @@ if (!issues.length) {
 if (spec.web && web) {
   const pkg = readJson(path.join(web.dir, 'package.json'))
   if (pkg && !pkg.devDependencies?.['@playwright/test'] && !pkg.dependencies?.['@playwright/test']) err(`${rel(web.dir)}/package.json lacks @playwright/test — run: e2e.mjs gen`)
+  if (pkg && spec.a11y && !pkg.devDependencies?.['@axe-core/playwright'] && !pkg.dependencies?.['@axe-core/playwright']) err(`${rel(web.dir)}/package.json lacks @axe-core/playwright — run: e2e.mjs gen`)
   const wf = path.join(root, '.github', 'workflows')
   const ci = fs.existsSync(wf) ? fs.readdirSync(wf).filter((f) => /\.ya?ml$/.test(f)).map((f) => read(path.join(wf, f))).join('\n') : ''
   if (!/playwright/.test(ci)) warn('CI: no Playwright job — run /dualcraft:deploy gen (adds an e2e job per web stack) or add one')

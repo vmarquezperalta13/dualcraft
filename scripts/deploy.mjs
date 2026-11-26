@@ -17,7 +17,7 @@ const [cmd = 'help', ...rest] = process.argv.slice(2)
 const { opt } = parseArgs(rest)
 if (cmd === 'help' || !['init', 'gen', 'secrets', 'check'].includes(cmd)) {
   console.log(`node deploy.mjs init [--host firebase|vercel|cloudflare|netlify] | gen [--force] | secrets [--json] | check [--json]
-pipeline.json: {"web":{"host":"vercel","project":"acme-web"},"mobile":{"release":"testing","androidTrack":"internal"},"branch":"main"}`)
+pipeline.json: {"web":{"host":"vercel","project":"acme-web"},"mobile":{"release":"testing","androidTrack":"internal"},"branch":"main","dependencies":"dependabot|none"}`)
   process.exit(cmd === 'help' ? 0 : 1)
 }
 
@@ -291,6 +291,28 @@ const exportOptions = (team) => `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `
 
+/** .github/dependabot.yml: weekly update PRs per ecosystem and folder (minor + patch grouped, majors one by one). */
+function dependabotYaml(p) {
+  const ups = []; const seen = new Set(); const notes = []
+  const add = (eco, d) => { const dirRel = '/' + rel(d).replace(/^\.$/, ''); const k = eco + dirRel; if (seen.has(k)) return; seen.add(k); ups.push([eco, dirRel.replace(/\/$/, '') || '/']) }
+  for (const s of stacks) {
+    if (exists(s.dir, 'package.json')) add('npm', s.dir)
+    if (exists(s.dir, 'pubspec.yaml')) add('pub', s.dir)
+    if (['android', 'kmp'].includes(s.id) && ['settings.gradle.kts', 'settings.gradle', 'build.gradle.kts', 'build.gradle'].some((f) => exists(s.dir, f))) add('gradle', s.dir)
+    if (s.id === 'ios' && exists(s.dir, 'Package.swift')) add('swift', s.dir)
+    if (['ios', 'flutter', 'kmp'].includes(s.id) && [s.dir, path.join(s.dir, 'ios'), path.join(s.dir, 'iosApp')].some((d) => exists(d, 'Podfile'))) notes.push(`# ${s.id}: CocoaPods is not supported by Dependabot — update pods by hand (pod outdated) or move to Swift Package Manager.`)
+  }
+  if (provider() === 'firebase' && exists(functionsDir(), 'package.json')) add('npm', functionsDir())
+  if (provider() === 'supabase' && exists(root, 'supabase', 'functions', 'deno.json')) add('deno', path.join(root, 'supabase', 'functions'))
+  for (const d of ['marketing/video', 'marketing/photos']) if (exists(root, d, 'package.json')) add('npm', path.join(root, d))
+  add('github-actions', root)
+  const L = ['# Dependency updates: Dependabot opens weekly pull requests; CI runs on them and you decide what to merge.', '# Enable "Dependabot security updates" in Settings → Code security for vulnerability fixes as soon as they appear.', ...notes, 'version: 2', 'updates:']
+  for (const [eco, d] of ups) L.push(`  - package-ecosystem: ${eco}`, `    directory: "${d}"`, '    schedule:', '      interval: weekly', '      day: monday', '    open-pull-requests-limit: 5', '    commit-message:', `      prefix: "chore(deps${eco === 'github-actions' ? '-ci' : ''})"`, '    groups:', '      minor-and-patch:', '        update-types: [minor, patch]')
+  return L.join('\n') + '\n'
+}
+/** Generated files outside .github/workflows: [absolute path, yaml]. */
+const extraFiles = (p) => (p.dependencies === 'none' ? [] : [[path.join(root, '.github', 'dependabot.yml'), dependabotYaml(p)]])
+
 function workflows(p) {
   const out = [['dualcraft-ci.yml', ciWorkflow(p)]]
   if (stacks.some((s) => s.kind === 'web') && p.web?.host) out.push(['dualcraft-deploy-web.yml', webWorkflow(p)])
@@ -390,6 +412,7 @@ if (cmd === 'init') {
   warnings.forEach((w) => console.log('⚠ ' + w))
   if (errors.length) { errors.forEach((e) => console.log('✗ ' + e)); die('fix the pipeline first.') }
   for (const [f, y] of workflows(p)) console.log('→ ' + writeGuarded(path.join(WF, f), stamp(y, 'hash'), { root, force: !!opt.force }))
+  for (const [f, y] of extraFiles(p)) console.log('→ ' + writeGuarded(f, stamp(y, 'hash'), { root, force: !!opt.force }))
   for (const s of stacks.filter(canIos)) { const made = writeNew(path.join(iosProject(s).dir, 'ExportOptions.plist'), exportOptions(null)); if (made) console.log('+ ' + made + ' (teamID comes from DEVELOPMENT_TEAM at archive time)') }
   const gi = path.join(root, '.gitignore'); const cur = read(gi); const want = ['*.jks', '*.keystore', 'key.properties', '*.p8', '*.p12', '.env*', '!.env.example'].filter((x) => !cur.split(/\r?\n/).includes(x))
   if (want.length) { fs.writeFileSync(gi, cur.replace(/\s*$/, '\n') + '# signing & secrets (DualCraft deploy)\n' + want.join('\n') + '\n'); console.log('+ .gitignore: ' + want.join(' ')) }
@@ -402,6 +425,7 @@ if (cmd === 'gen') {
   warnings.forEach((w) => console.log('⚠ ' + w))
   if (errors.length) { errors.forEach((e) => console.log('✗ ' + e)); die('fix the pipeline first.') }
   for (const [f, y] of workflows(p)) console.log('→ ' + writeGuarded(path.join(WF, f), stamp(y, 'hash'), { root, force: !!opt.force }))
+  for (const [f, y] of extraFiles(p)) console.log('→ ' + writeGuarded(f, stamp(y, 'hash'), { root, force: !!opt.force }))
   process.exit(0)
 }
 
@@ -432,6 +456,11 @@ for (const [f, y] of workflows(p)) {
   const cur = read(path.join(WF, f)).replace(/\r\n/g, '\n')
   if (!cur) issues.push({ level: 'error', m: `.github/workflows/${f} missing — run gen` })
   else if (cur !== stamp(y, 'hash')) issues.push({ level: 'error', m: `.github/workflows/${f} out of date (stacks or pipeline changed) — run gen` })
+}
+for (const [f, y] of extraFiles(p)) {
+  const cur = read(f).replace(/\r\n/g, '\n')
+  if (!cur) issues.push({ level: 'warn', m: `${rel(f)} missing — run gen (weekly dependency update pull requests)` })
+  else if (cur !== stamp(y, 'hash')) issues.push({ level: 'error', m: `${rel(f)} out of date (stacks changed) — run gen` })
 }
 for (const s of stacks) {
   if (canAndroid(s) && p.mobile?.release !== 'none') {

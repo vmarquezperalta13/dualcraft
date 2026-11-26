@@ -80,6 +80,25 @@ test('multi-stack: one job per stack, native signing checks, EAS for React Nativ
   for (const m of [/react-native: eas.json has no build.production profile/, /android: app\/build.gradle.kts has no release signingConfig from ANDROID_KEYSTORE_PATH/, /kmp: applicationId not found/]) assert.match(c, m)
 })
 
+test('dependabot: weekly updates per ecosystem and folder, CocoaPods noted, drift checked, opt-out', () => {
+  const p = makeMultiProject()
+  write(path.join(p, 'kmp', 'settings.gradle.kts'), 'rootProject.name = "k"\n'); write(path.join(p, 'iosapp', 'Package.swift'), '// swift\n'); write(path.join(p, 'iosapp', 'Podfile'), "pod 'X'\n")
+  assert.equal(run('deploy.mjs', ['init', '--host', 'vercel'], p).code, 0)
+  const y = read(path.join(p, '.github', 'dependabot.yml'))
+  const blocks = [...y.matchAll(/package-ecosystem: (\S+)\n {4}directory: "([^"]+)"/g)].map((m) => m[1] + ' ' + m[2])
+  assert.deepEqual(blocks, ['npm /web', 'npm /rn', 'gradle /kmp', 'gradle /droid', 'swift /iosapp', 'github-actions /'])
+  assert.match(y, /# ios: CocoaPods is not supported by Dependabot/)
+  assert.match(y, /groups:\n {6}minor-and-patch:\n {8}update-types: \[minor, patch\]/); assert.match(y, /prefix: "chore\(deps\)"/); assert.match(y, /prefix: "chore\(deps-ci\)"/)
+  assert.doesNotMatch(run('deploy.mjs', ['check'], p).out, /dependabot/)
+  write(path.join(p, 'site2', 'package.json'), '{}')
+  write(path.join(p, 'droid', 'app', 'x'), ''); write(path.join(p, 'rn', 'package.json'), '{}')
+  const cfg = path.join(p, '.dualcraft', 'config.json'); const c = JSON.parse(read(cfg)); c.stacks.web = 'astro'; c.paths.web = 'site2'; write(cfg, JSON.stringify(c))
+  assert.match(run('deploy.mjs', ['check'], p).out, /\.github\/dependabot\.yml out of date \(stacks changed\)/)
+  // opt-out
+  const pf = path.join(p, '.dualcraft', 'deploy', 'pipeline.json'); write(pf, JSON.stringify({ ...JSON.parse(read(pf)), dependencies: 'none' }))
+  assert.doesNotMatch(run('deploy.mjs', ['check'], p).out, /dependabot/)
+})
+
 test('secrets: per environment, against the GitHub API', async () => {
   const p = flutter()
   run('backend.mjs', ['init', '--provider', 'firebase', '--region', 'europe-west1'], p)

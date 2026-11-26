@@ -39,5 +39,6 @@ Promotion to the stores' production stays manual in the consoles. One version = 
 
 ## 5. Keep it healthy
 - New stack or backend → `$DEPLOY gen` (check flags stale workflows).
+- Dependencies: `gen` also writes `.github/dependabot.yml` — weekly pull requests per ecosystem and folder (npm, pub, Gradle, Swift Package Manager, Deno, GitHub Actions), minor + patch grouped, majors one by one, `chore(deps)` commits. CI runs on them; merge after green, read the changelog of majors. Tell the user to enable "Dependabot security updates" (Settings → Code security). CocoaPods isn't supported: `pod outdated` by hand. Opt out with `"dependencies": "none"` in the pipeline.
 - Mobile build numbers come from the run number (+ `BUILD_NUMBER_OFFSET` variable if you uploaded builds by hand before).
 - Brain: decision (host, environments, approval rule); tasks for each missing secret or console step; `dualcraft:release` links the version tag to the deploy.

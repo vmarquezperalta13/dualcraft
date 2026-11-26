@@ -2,7 +2,8 @@
 // route rules of the default auth.json (/login public, everything else needs a session → /login?next=).
 import http from 'node:http'
 
-const page = (title, body) => `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${title}</title></head><body>${body}</body></html>`
+// touch targets of at least 44 px (WCAG 2.2 target-size; the e2e accessibility checks run on these pages)
+const page = (title, body) => `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><style>button,input{min-height:44px;min-width:44px}label{display:block;margin:8px 0}</style></head><body><main>${body}</main></body></html>`
 const login = page('Inicia sesión', `<main id="app"></main>
 <script>
 const app = document.getElementById('app')

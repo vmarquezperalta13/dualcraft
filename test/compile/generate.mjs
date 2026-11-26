@@ -376,6 +376,12 @@ must(run('store.mjs', ['init', '--support-url', 'https://acme.app/help', '--priv
 must(run('deploy.mjs', ['init'], fl), 'deploy init flutter')
 if (!/fastlane supply/.test(read(path.join(fl, '.github', 'workflows', 'dualcraft-release-mobile.yml')))) { console.error('✗ release workflow without fastlane'); process.exit(1) }
 fs.cpSync(path.join(fl, '.github', 'workflows'), path.join(OUT, 'workflows', 'flutter'), { recursive: true })
+// Dependabot configs (validated against SchemaStore's dependabot-2.0 in CI): npm, gradle, swift, pub, deno, github-actions
+write(M('kmp', 'settings.gradle.kts'), 'rootProject.name = "k"\n'); write(M('iosapp', 'Package.swift'), '// swift-tools-version:5.9\n')
+must(run('deploy.mjs', ['gen'], multi), 'deploy gen multi (dependabot)')
+write(path.join(sb, 'supabase', 'functions', 'deno.json'), '{}'); must(run('deploy.mjs', ['gen'], sb), 'deploy gen supabase (dependabot)')
+for (const [name, p] of [['multi', multi], ['supabase', sb], ['flutter', fl]]) copy(path.join(p, '.github', 'dependabot.yml'), path.join(OUT, 'dependabot', name + '.yml'))
+for (const [name, eco] of [['multi', 'swift'], ['supabase', 'deno'], ['flutter', 'pub']]) if (!read(path.join(OUT, 'dependabot', name + '.yml')).includes('package-ecosystem: ' + eco)) { console.error(`✗ dependabot ${name} without ${eco}`); process.exit(1) }
 
 // ---------- auth implementations (AuthService) against the real SDKs ----------
 const AC = JSON.parse(read(path.join(fl, '.dualcraft', 'auth', 'auth.json'))) // every method, MFA, guest, linking
@@ -467,7 +473,7 @@ must(run('e2e.mjs', ['check'], ew), 'e2e check')
 fs.cpSync(path.join(ew, 'site', 'e2e'), path.join(OUT, 'e2e-web', 'e2e'), { recursive: true })
 copy(path.join(ew, 'site', 'playwright.config.ts'), path.join(OUT, 'e2e-web', 'playwright.config.ts'))
 copy(path.join(ROOT, 'test', 'fixtures', 'e2e-site', 'server.mjs'), path.join(OUT, 'e2e-web', 'server.mjs'))
-write(path.join(OUT, 'e2e-web', 'package.json'), JSON.stringify({ name: 'e2e-web-check', private: true, type: 'module', scripts: { build: 'node -e 0', start: 'node server.mjs' }, devDependencies: { '@playwright/test': '1.65.1', '@types/node': '22.10.2', typescript: '5.6.3' } }, null, 2))
+write(path.join(OUT, 'e2e-web', 'package.json'), JSON.stringify({ name: 'e2e-web-check', private: true, type: 'module', scripts: { build: 'node -e 0', start: 'node server.mjs' }, devDependencies: { '@playwright/test': '1.65.1', '@axe-core/playwright': '4.14.1', '@types/node': '22.10.2', typescript: '5.6.3' } }, null, 2))
 write(path.join(OUT, 'e2e-web', 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true, noEmit: true, target: 'es2022', module: 'esnext', moduleResolution: 'bundler', skipLibCheck: true }, include: ['e2e/**/*.ts', 'playwright.config.ts'] }, null, 2))
 fs.cpSync(path.join(ew, 'app', '.maestro'), path.join(OUT, 'e2e-maestro'), { recursive: true })
 // Performance runner: real Lighthouse on the fixture site + bundle of a fake build (out/perf, CI e2e job)

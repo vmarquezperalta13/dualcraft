@@ -84,3 +84,31 @@ test('payments paywall and store screenshots flows; deploy adds a Playwright job
   assert.match(ci, /e2e-nextjs:[\s\S]*E2E_PASSWORD: \$\{\{ secrets\.E2E_PASSWORD \}\}[\s\S]*playwright install --with-deps chromium[\s\S]*playwright test/)
   assert.doesNotMatch(e2e(p, 'check').out, /no Playwright job/)
 })
+
+test('accessibility: axe on public smoke routes and a11y steps, settings validated, dependency added; opt-in for existing specs', () => {
+  const p = setup()
+  assert.equal(e2e(p, 'init', '--scheme', 'acme').code, 0)
+  const spec = JSON.parse(read(flowsFile(p)))
+  assert.deepEqual(spec.a11y, { level: 'serious', tags: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'], disable: [], exclude: [] })
+  assert.deepEqual(spec.flows.find((f) => f.id === 'smoke-web-login').steps.at(-1), { a11y: true }, 'public route checked')
+  assert.ok(!spec.flows.find((f) => f.id === 'smoke-web-matches-id')?.steps.some((s) => 'a11y' in s), 'protected route (redirects to sign-in) not checked twice')
+  const support = read(path.join(p, 'site/e2e/dualcraft/support.ts'))
+  assert.match(support, /import AxeBuilder from '@axe-core\/playwright'/); assert.match(support, /const A11Y = \{ level: "serious", tags: \["wcag2a"/)
+  assert.match(read(path.join(p, 'site/e2e/dualcraft/smoke-web-login.spec.ts')), /import \{ test, expect, expectAccessible \} from "\.\/support"[\s\S]*await expectAccessible\(page, 'smoke-web-login'\)/)
+  assert.match(read(path.join(p, 'site/package.json')), /"@axe-core\/playwright": "\^4\.14\.1"/)
+  // a custom flow with a named check
+  spec.flows.push({ id: 'profile-a11y', platforms: ['web'], steps: [{ open: '/login' }, { a11y: 'login form' }] }); write(flowsFile(p), JSON.stringify(spec))
+  e2e(p, 'gen'); assert.match(read(path.join(p, 'site/e2e/dualcraft/profile-a11y.spec.ts')), /await expectAccessible\(page, 'login form'\)/)
+  // dependency removed → check fails; bad settings → validation
+  const pj = path.join(p, 'site/package.json'); const pkg = JSON.parse(read(pj)); delete pkg.devDependencies['@axe-core/playwright']; write(pj, JSON.stringify(pkg))
+  assert.match(e2e(p, 'check').out, /lacks @axe-core\/playwright/)
+  write(flowsFile(p), JSON.stringify({ ...spec, a11y: { level: 'blocker', tags: 'wcag2aa' } }))
+  const v = e2e(p, 'gen'); assert.equal(v.code, 1); assert.match(v.out, /a11y\.level must be minor, moderate, serious, critical/); assert.match(v.out, /a11y\.tags must be a list of strings/)
+  // turning it off removes the checks; an a11y step then needs the settings back
+  write(flowsFile(p), JSON.stringify(spec)); assert.equal(e2e(p, 'init', '--no-a11y').code, 1, 'the custom a11y step still needs settings')
+  const off = JSON.parse(read(flowsFile(p))); off.flows = off.flows.filter((f) => f.id !== 'profile-a11y'); write(flowsFile(p), JSON.stringify(off))
+  assert.equal(e2e(p, 'init', '--no-a11y').code, 0)
+  assert.ok(!JSON.parse(read(flowsFile(p))).flows.some((f) => f.steps.some((s) => 'a11y' in s)))
+  assert.doesNotMatch(read(path.join(p, 'site/e2e/dualcraft/support.ts')), /AxeBuilder/)
+  assert.equal(e2e(p, 'init', '--a11y').code, 0); assert.ok(JSON.parse(read(flowsFile(p))).a11y)
+})

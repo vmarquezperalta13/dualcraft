@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.37.0] - 2026-11-26
+### Added
+- Accessibility checks in the web e2e tests with axe-core: new step `a11y` (`expectAccessible(page, name)` in the generated Playwright support, `@axe-core/playwright` ^4.14.1 added to the web's package.json), failing on violations from the spec's `a11y.level` up (default serious) with the rule, the elements and a fix link, and every violation attached to the report
+  - `a11y` settings in flows.json: level, WCAG tags (2.0 / 2.1 / 2.2 A and AA by default), rules to disable, selectors to exclude; on for new specs, `e2e.mjs init --a11y` / `--no-a11y` for existing ones
+  - every public smoke route gets the check; `check` reports the missing dependency; Maestro ignores the step
+  - the e2e skill explains the mobile equivalents (Flutter accessibility guidelines, Espresso AccessibilityChecks, XCUITest performAccessibilityAudit)
+- CI runs the axe checks for real against the fixture site (whose buttons now meet the WCAG 2.2 target size axe flagged)
+
+## [0.36.0] - 2026-11-26
+### Added
+- Dependency updates: `deploy init/gen` writes `.github/dependabot.yml` from the project's stacks — weekly pull requests per ecosystem and folder (npm for web, React Native, Cloud Functions and the marketing video/photo projects; pub; Gradle; Swift Package Manager; Deno for Supabase Edge Functions; GitHub Actions), minor and patch updates grouped, majors one by one, `chore(deps)` commit prefix; CocoaPods (unsupported by Dependabot) is noted in the file
+  - `deploy check` reports it missing or out of date; `"dependencies": "none"` in the pipeline opts out
+  - CI validates the generated configs against SchemaStore's dependabot-2.0 schema (`test/compile/schema-validate.mjs`)
+
 ## [0.35.0] - 2026-11-26
 ### Added
 - Store upload with fastlane: `/dualcraft:store` and `scripts/store.mjs` (init, export, check) — the store listing, the latest release notes and the framed screenshots per language exported to fastlane's layout in `fastlane/` (Google Play `metadata/android/<locale>` with phone screenshots and `changelogs/default.txt`; App Store `metadata/<locale>` with support / privacy / marketing URLs and `screenshots/<locale>`), using each store's locale codes; files removed from the sources leave `fastlane/` too

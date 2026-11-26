@@ -208,6 +208,11 @@ jobs:
           npm i --no-audit --no-fund yaml@2.6.1 ajv@8.17.1
           cp ../../test/compile/maestro-validate.mjs .
           node maestro-validate.mjs ../../test/fixtures/maestro-flow.schema.json ../e2e-maestro/dualcraft/*.yaml
+      - name: Dependabot configs against the SchemaStore schema
+        working-directory: out/maestro-check
+        run: |
+          cp ../../test/compile/schema-validate.mjs .
+          node schema-validate.mjs ../../test/fixtures/dependabot.schema.json ../dependabot/*.yml
       - name: Performance runner (real Lighthouse on the fixture site, bundle of a build)
         working-directory: out/perf
         run: |

@@ -1,6 +1,6 @@
 ---
 name: e2e
-description: End-to-end tests from one spec - Playwright (web) and Maestro (apps), flows derived from auth, routes, payments and screenshots, web in CI. Use for "tests e2e", "end to end", "Playwright", "Maestro", "prueba el login entero".
+description: End-to-end tests from one spec - Playwright (web) with axe accessibility checks and Maestro (apps), flows derived from auth, routes, payments and screenshots, web in CI. Use for "tests e2e", "Playwright", "Maestro", "prueba el login entero", "accesibilidad".
 ---
 
 # DualCraft e2e
@@ -11,7 +11,7 @@ description: End-to-end tests from one spec - Playwright (web) and Maestro (apps
 `.dualcraft/e2e/flows.json` holds every end-to-end flow once, in neutral steps; Playwright specs (`<web>/e2e/dualcraft/*.spec.ts`) and Maestro flows (`<app>/.maestro/dualcraft/*.yaml`) are generated from it, so web and apps test the same journeys with the same texts. Never edit the generated files: change the flow and run `$E2E gen`. Your own Playwright/Maestro tests live outside `dualcraft/` folders.
 
 ## Steps
-`open "/path"` (mobile: `<scheme>://path`, or a full URL) · `tap TEXT|{"id"}` · `fill TEXT|{"id"}` + `"with": VALUE` · `see` / `notSee TEXT|{"id"}` · `url "/path"` (web) · `noErrors: true` (web: no console errors) · `back: true` · `screenshot "name"`.
+`open "/path"` (mobile: `<scheme>://path`, or a full URL) · `tap TEXT|{"id"}` · `fill TEXT|{"id"}` + `"with": VALUE` · `see` / `notSee TEXT|{"id"}` · `url "/path"` (web) · `noErrors: true` (web: no console errors) · `back: true` · `screenshot "name"` · `a11y: true|"name"` (web: axe accessibility check of the current screen).
 TEXT = literal words, `"t:<i18n key>"` (default locale — preferred: a copy change doesn't break tests) or `{"t":"key","param":…}`. `{"id":"x"}` = `data-testid` on the web, testID / resource id / accessibilityIdentifier in the apps. VALUE = literal, `"env:NAME"` (secrets) or `"unique-email"`. A flow: `id` (kebab-case), `title`, `platforms` (`web`, `mobile`), `tags`, `requires` (env vars; skipped when missing), `steps`, `locked` (keep a derived flow as you edited it).
 
 ## 1. Set up (`$E2E init`)
@@ -24,6 +24,10 @@ It also writes `playwright.config.ts` (desktop + mobile Chromium, `webServer` bu
 
 ## 2. Add the user's journeys
 Brainstorm the critical paths with the user (the ones that lose money or users when broken), write them as flows without `origin`, prefer `t:` texts and `{"id"}` for icons, then `$E2E gen`. Add the testIDs the flows need in the app code in the same change.
+
+## Accessibility (web, axe)
+`"a11y"` in flows.json (on for new specs; `$E2E init --a11y` / `--no-a11y`): `level` (fail from minor|moderate|serious|critical, default serious), `tags` (WCAG 2.0 / 2.1 / 2.2 A and AA by default), `disable` (rule ids), `exclude` (selectors, e.g. third-party widgets). Every public smoke route gets an `a11y` step; add one after the steps that open a dialog, a form error or a menu, since axe checks what is on screen. A failure names the rule, the elements and a fix link (`@axe-core/playwright`, added to package.json). Fix the cause in the component with tokens (`dualcraft:design-to-code`) — never disable a rule to get green without the user agreeing. Automatic checks catch part of the problems: also try the flow with the keyboard and a screen reader.
+Apps (Maestro ignores `a11y`): Flutter widget tests `expect(tester, meetsGuideline(textContrastGuideline))` (also `androidTapTargetGuideline`, `iOSTapTargetGuideline`, `labeledTapTargetGuideline`); Android `AccessibilityChecks.enable()` in Espresso tests; iOS `try app.performAccessibilityAudit()` in XCUITest (Xcode 15+) — `dualcraft:mobile-test`.
 
 ## 3. Run
 - Web: `$E2E run --platform web [--tag auth]` (first time: `npm install && npx playwright install`).
