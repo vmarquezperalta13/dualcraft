@@ -1,0 +1,11 @@
+{
+  "provider": "firebase",
+  "flags": [
+    { "key": "new_checkout", "type": "bool", "default": false, "kind": "release", "expires": "9.0.0", "task": "T-001", "description": "New checkout flow" },
+    { "key": "home_layout", "type": "string", "default": "list", "values": ["grid", "list"], "kind": "experiment", "expires": "9.0.0", "description": "Home layout test, it's \"A/B\"" },
+    { "key": "max_upload_mb", "type": "int", "default": 20, "kind": "config", "description": "Upload limit in $MB" },
+    { "key": "price_factor", "type": "double", "default": 1, "kind": "ops", "description": "Kill switch factor" },
+    { "key": "support_email", "type": "string", "default": "help@acme.app", "kind": "config" },
+    { "key": "web_only_banner", "type": "bool", "default": true, "kind": "ops", "platforms": ["web"], "description": "Banner" }
+  ]
+}

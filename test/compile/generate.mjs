@@ -68,6 +68,13 @@ function authSetup(p) {
   if (fs.existsSync(path.join(p, '.dualcraft', 'i18n'))) { must(run('i18n.mjs', ['gen'], p), 'i18n gen after auth') }
 }
 
+// feature flags (every type, an enum, quotes and $ in descriptions, a web-only flag) → typed accessors per stack
+function flagsSetup(p) {
+  write(path.join(p, '.dualcraft', 'flags', 'flags.json'), read(path.join(ROOT, 'test', 'fixtures', 'flags.json')))
+  must(run('flags.mjs', ['gen'], p), 'flags gen')
+  const c = run('flags.mjs', ['check'], p); if (c.code !== 0) { console.error(c.out); process.exit(1) }
+}
+
 // ---------- multi-stack project (Firestore schema: enums, maps, reserved names) ----------
 const multi = makeMultiProject('firestore')
 for (const s of ['tokens.mjs', 'gen.mjs', 'analytics.mjs', 'i18n.mjs']) must(run(s, s === 'tokens.mjs' || s === 'gen.mjs' ? ['all'] : ['gen'], multi), s)
@@ -78,6 +85,7 @@ pushSetup(multi)
 authSetup(multi)
 must(run('e2e.mjs', ['init', '--app-id', 'com.test.app', '--scheme', 'acme'], multi), 'e2e init multi')
 must(run('perf.mjs', ['init'], multi), 'perf init multi')
+flagsSetup(multi)
 write(M('functions', 'src', 'notify.ts'), `import { onDocumentCreated } from 'firebase-functions/v2/firestore'
 import { REGION } from './generated/api'
 import { push, render, format } from './generated/push'
@@ -139,13 +147,24 @@ const api = createApi({ call: async () => ({ entitlements: ['premium'] }) } sati
 export const check = async () => [e, coins, ids, found, entitlements.premium, (await api.verifyPurchase({ platform: 'ios', productId: 'premium_lifetime', token: 'x.y.z' })).entitlements]
 `)
 
+copy(M('rn/src/lib/feature-flags.ts'), path.join(OUT, 'ts', 'rn-flags.ts'))
+write(path.join(OUT, 'ts', 'use-flags.ts'), `import { flags, setFlagSource, setFlagOverrides, flagDefaults, type FlagName } from './rn-flags'
+const remote: Record<string, unknown> = { new_checkout: 'true', home_layout: 'grid', max_upload_mb: '7.5', price_factor: 2 }
+setFlagSource((k) => remote[k])
+const a: boolean = flags.newCheckout; const b: 'grid' | 'list' = flags.homeLayout; const n: number = flags.maxUploadMb + flags.priceFactor; const e: string = flags.supportEmail
+setFlagOverrides({ newCheckout: false, homeLayout: 'list' })
+const name: FlagName = 'maxUploadMb'
+void a; void b; void n; void e; void name; void flagDefaults
+`)
+
 // Kotlin (KMP outputs: theme, models, analytics)
 const K = (...p) => M('kmp', 'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'test', 'app', ...p)
-for (const [f, to] of [[K('theme', 'DsTokens.kt'), 'theme/DsTokens.kt'], [K('model', 'DbModels.kt'), 'model/DbModels.kt'], [K('analytics', 'AnalyticsEvents.kt'), 'analytics/AnalyticsEvents.kt'], [K('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [K('payments', 'PaymentsCatalog.kt'), 'payments/PaymentsCatalog.kt'], [K('push', 'PushMessages.kt'), 'push/PushMessages.kt'], [K('auth', 'AuthCatalog.kt'), 'auth/AuthCatalog.kt']]) copy(f, path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', to))
+for (const [f, to] of [[K('theme', 'DsTokens.kt'), 'theme/DsTokens.kt'], [K('model', 'DbModels.kt'), 'model/DbModels.kt'], [K('analytics', 'AnalyticsEvents.kt'), 'analytics/AnalyticsEvents.kt'], [K('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [K('payments', 'PaymentsCatalog.kt'), 'payments/PaymentsCatalog.kt'], [K('push', 'PushMessages.kt'), 'push/PushMessages.kt'], [K('auth', 'AuthCatalog.kt'), 'auth/AuthCatalog.kt'], [K('flags', 'FeatureFlags.kt'), 'flags/FeatureFlags.kt']]) copy(f, path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', to))
 write(path.join(OUT, 'kotlin', 'settings.gradle.kts'), 'pluginManagement { repositories { gradlePluginPortal(); mavenCentral(); google() } }\ndependencyResolutionManagement { repositories { mavenCentral(); google() } }\nrootProject.name = "dualcraft-kotlin-check"\n')
 write(path.join(OUT, 'kotlin', 'build.gradle.kts'), 'plugins {\n    kotlin("jvm") version "2.0.21"\n    kotlin("plugin.serialization") version "2.0.21"\n    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"\n    id("org.jetbrains.compose") version "1.7.0"\n    application\n}\ndependencies {\n    implementation(compose.desktop.currentOs)\n    implementation(compose.material3)\n    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")\n    implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")\n    implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.8.3")\n    implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")\n    implementation("io.coil-kt.coil3:coil-compose:3.0.4")\n}\napplication { mainClass.set("check.MainKt") }\n')
 write(path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'check', 'Main.kt'), `package check
 import com.test.app.model.*
+import com.test.app.flags.*
 import com.test.app.analytics.*
 import com.test.app.theme.*
 import com.test.app.api.*
@@ -189,18 +208,23 @@ fun main() {
     check(authErrorFrom("auth/email-already-in-use") == AuthErrorCode.EMAIL_IN_USE && authErrorFrom("ERROR_WRONG_PASSWORD") == AuthErrorCode.INVALID_CREDENTIALS && authErrorFrom("invalid_credentials") == AuthErrorCode.INVALID_CREDENTIALS && authErrorFrom("weird") == AuthErrorCode.UNKNOWN) { "auth errors" }
     check(AuthErrorCode.ACCOUNT_EXISTS_WITH_DIFFERENT_METHOD.key == "auth.errors.account_exists_with_different_method") { "error key" }
     check(passwordProblems("abc") == listOf(PasswordProblem.TOO_SHORT, PasswordProblem.NO_DIGIT) && passwordProblems("abcdefg1").isEmpty()) { "password policy" }
+    FeatureFlags.source = { k -> mapOf<String, Any?>("new_checkout" to "true", "home_layout" to "grid", "max_upload_mb" to "7.5", "price_factor" to 2)[k] }
+    check(FeatureFlags.newCheckout && FeatureFlags.homeLayout == "grid" && FeatureFlags.maxUploadMb == 20L && FeatureFlags.priceFactor == 2.0 && FeatureFlags.supportEmail == "help@acme.app") { "flags source and fallback" }
+    FeatureFlags.overrides["home_layout"] = "carousel"
+    check(FeatureFlags.homeLayout == "list") { "flags enum fallback" }
     println("kotlin OK: \${e.name} \${DsColorsLight.primary}")
 }
 `)
 
 // Swift (iOS outputs)
-for (const [f, to] of [['iosapp/Demo/DesignSystem/DsTokens.swift', 'DsTokens.swift'], ['iosapp/Demo/Core/Models/DbModels.swift', 'DbModels.swift'], ['iosapp/Demo/Core/Analytics/AnalyticsEvents.swift', 'AnalyticsEvents.swift'], ['iosapp/Demo/Resources/DualCraft.xcstrings', 'DualCraft.xcstrings'], ['iosapp/Demo/Core/Api/ApiClient.swift', 'ApiClient.swift'], ['iosapp/Demo/Core/Payments/PaymentsCatalog.swift', 'PaymentsCatalog.swift'], ['iosapp/Demo/Core/Push/PushMessages.swift', 'PushMessages.swift'], ['iosapp/Demo/Core/Auth/AuthCatalog.swift', 'AuthCatalog.swift']]) copy(M(f), path.join(OUT, 'swift', to))
+for (const [f, to] of [['iosapp/Demo/DesignSystem/DsTokens.swift', 'DsTokens.swift'], ['iosapp/Demo/Core/Models/DbModels.swift', 'DbModels.swift'], ['iosapp/Demo/Core/Analytics/AnalyticsEvents.swift', 'AnalyticsEvents.swift'], ['iosapp/Demo/Resources/DualCraft.xcstrings', 'DualCraft.xcstrings'], ['iosapp/Demo/Core/Api/ApiClient.swift', 'ApiClient.swift'], ['iosapp/Demo/Core/Payments/PaymentsCatalog.swift', 'PaymentsCatalog.swift'], ['iosapp/Demo/Core/Push/PushMessages.swift', 'PushMessages.swift'], ['iosapp/Demo/Core/Auth/AuthCatalog.swift', 'AuthCatalog.swift'], ['iosapp/Demo/Core/Flags/FeatureFlags.swift', 'FeatureFlags.swift']]) copy(M(f), path.join(OUT, 'swift', to))
 write(path.join(OUT, 'swift', 'Use.swift'), 'import SwiftUI\nfunc dualcraftCheck() -> [Any] {\n    let u = Users(id: "1", displayName: "a", email: "e", role: .inProgress, tags: nil, createdAt: Date(), lastSeen: nil, settings: ["k": .string("v")], classValue: "vip")\n    return [DsColor.primary, DsSpacing.s4, DsText.titleLarge.font, AnalyticsEvents.signUp(method: .google).name, u.classValue as Any]\n}\n' +
   'struct FakeTransport: ApiTransport {\n    func call(_ endpoint: String, _ data: [String: Any]) async throws -> Any? {\n        if endpoint == "ping" { return nil }\n        return ["coins": 5, "ratio": 1, "level": "silver-plus", "items": ["a"], "levels": ["gold"], "default": true] as [String: Any]\n    }\n}\n' +
   'func apiCheck() async throws -> Int {\n    let api = Api(transport: FakeTransport())\n    try await api.ping()\n    let r = try await api.redeemCode(RedeemCodeInput(code: "ABC", platform: .ios, class: 3))\n    return r.coins + (r.levels?.count ?? 0) + (r.level == .silverPlus ? 1 : 0)\n}\n' +
   'func paymentsCheck() -> Bool {\n    PaymentsCatalog.byStoreId("com.test.premium.yearly")?.entitlement == .premium && PaymentsCatalog.storeIds(.android).contains("premium") && PaymentsCatalog.coins100.grants["coins"] == 100\n}\n' +
   'func pushCheck() -> String? {\n    guard let m = PushMessage.parse(["type": "goals_summary", "count": "3"]) else { return nil }\n    if case let .goalsSummary(count, ratio) = m { _ = count + Int(ratio ?? 0) }\n    return (m.route ?? "") + m.type + PushTopic.news.forLocale("es") + PushChannel.all[0].id\n}\n')
 
+write(path.join(OUT, 'swift', 'UseFlags.swift'), 'func flagsCheck() -> Bool {\n    FeatureFlags.source = { k in ["new_checkout": "true", "home_layout": "grid", "max_upload_mb": "7.5", "price_factor": 2][k] }\n    let ok = FeatureFlags.newCheckout && FeatureFlags.homeLayout == "grid" && FeatureFlags.maxUploadMb == 20 && FeatureFlags.priceFactor == 2.0 && !FeatureFlags.supportEmail.isEmpty\n    FeatureFlags.overrides["new_checkout"] = false\n    return ok && !FeatureFlags.newCheckout\n}\n')
 // ---------- Flutter project (hockey schema) ----------
 const fl = makeProject({ mobile: 'flutter', paths: { mobile: 'app' }, schema: 'hockey' })
 write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\n  in_app_purchase: any\n  firebase_messaging: ">=17.0.0"\n  flutter_local_notifications: any\n  flutter_riverpod: any\n  flutter_bloc: any\n  go_router: any\n  firebase_auth: any\n  google_sign_in: ^7.0.0\n  sign_in_with_apple: any\n  crypto: any\n  supabase_flutter: ^2.15.0\n  passkeys: ^2.21.0\nflutter:\n  generate: true\n')
@@ -210,13 +234,15 @@ backend(fl, 'firebase', COMMON)
 authSetup(fl)
 payments(fl, 'native')
 pushSetup(fl)
-write(path.join(fl, 'app', 'lib', 'main.dart'), "import 'package:flutter/material.dart';\nimport 'generated/design_tokens.dart';\nimport 'generated/db_models.dart';\nimport 'generated/analytics_events.dart';\nimport 'generated/api_client.dart';\nimport 'generated/payments_catalog.dart';\nimport 'services/purchase_service.dart';\nimport 'generated/push_catalog.dart';\nimport 'services/push_service.dart';\nvoid main() => runApp(MaterialApp(theme: DsTheme.light(), darkTheme: DsTheme.dark(), home: Builder(builder: (c) => Container(color: c.ds.surface, padding: const EdgeInsets.all(DsSpacing.s4)))));\nfinal t = HockeyTeam(id: 1, name: 'x');\nfinal e = AnalyticsEvents.signUp(method: SignUpMethod.google);\n" +
+flagsSetup(fl)
+write(path.join(fl, 'app', 'lib', 'main.dart'), "import 'package:flutter/material.dart';\nimport 'generated/design_tokens.dart';\nimport 'generated/db_models.dart';\nimport 'generated/analytics_events.dart';\nimport 'generated/api_client.dart';\nimport 'generated/payments_catalog.dart';\nimport 'services/purchase_service.dart';\nimport 'generated/push_catalog.dart';\nimport 'services/push_service.dart';\nimport 'generated/feature_flags.dart';\nvoid main() => runApp(MaterialApp(theme: DsTheme.light(), darkTheme: DsTheme.dark(), home: Builder(builder: (c) => Container(color: c.ds.surface, padding: const EdgeInsets.all(DsSpacing.s4)))));\nfinal t = HockeyTeam(id: 1, name: 'x');\nfinal e = AnalyticsEvents.signUp(method: SignUpMethod.google);\n" +
   "class FakeTransport implements ApiTransport {\n  @override\n  Future<Object?> call(String endpoint, Map<String, Object?> data) async => endpoint == 'ping' ? null : <String, Object?>{'coins': 5, 'level': 'silver-plus', 'levels': ['gold'], 'default': true};\n}\n" +
   "Future<int> apiCheck() async {\n  final api = Api(FakeTransport());\n  await api.ping();\n  final r = await api.redeemCode(RedeemCodeInput(code: 'ABC', platform: RedeemCodePlatform.ios, classValue: 3));\n  return r.coins + (r.levels?.length ?? 0) + (r.level == RedeemCodeLevel.silverPlus ? 1 : 0);\n}\n" +
   "class MemoryCache implements EntitlementCache {\n  Set<String> _s = {};\n  @override\n  Future<Set<String>> load() async => _s;\n  @override\n  Future<void> save(Set<String> e) async => _s = {...e};\n}\n" +
   "bool paymentsCheck(PurchaseService s) => s.has(Entitlement.premium) || PaymentsCatalog.byStoreId('premium')?.type == ProductType.subscription;\nfinal service = PurchaseService(Api(FakeTransport()), MemoryCache());\n" +
   "String? pushCheck() {\n  final m = PushMessage.parse({'type': 'match_started', 'matchId': 'm9', 'minute': '12'});\n  return switch (m) {\n    MatchStartedPush(:final matchId, :final minute) => '$matchId ${minute ?? 0} ${PushTopic.news.forLocale('es')}',\n    GoalsSummaryPush(:final count) => '$count',\n    WeeklyOfferPush() => PushChannel.promos.label,\n    null => null,\n  };\n}\n" +
-  "PushService pushService(Api api) => PushService(api, onOpen: (m) => debugPrint(m.route), onForeground: (m, n) => debugPrint(n?.title));\n")
+  "PushService pushService(Api api) => PushService(api, onOpen: (m) => debugPrint(m.route), onForeground: (m, n) => debugPrint(n?.title));\n" +
+  "bool flagsCheck() {\n  FeatureFlags.source = (k) => <String, Object?>{'new_checkout': 'true', 'home_layout': 'grid', 'max_upload_mb': '7.5', 'price_factor': 2}[k];\n  final ok = FeatureFlags.newCheckout && FeatureFlags.homeLayout == 'grid' && FeatureFlags.maxUploadMb == 20 && FeatureFlags.priceFactor == 2.0 && FeatureFlags.supportEmail.isNotEmpty;\n  FeatureFlags.overrides['new_checkout'] = false;\n  return ok && !FeatureFlags.newCheckout;\n}\n")
 fs.cpSync(path.join(fl, 'app'), path.join(OUT, 'dart'), { recursive: true })
 
 // ---------- SQL / Prisma (hockey schema, Supabase) ----------
@@ -226,6 +252,9 @@ const schema = path.join(db, '.dualcraft', 'db', 'schema.dbml')
 write(schema, read(schema).replace('  logo varchar', '  logo varchar\n  city varchar [default: \'\']') + '\nTable comment {\n  id uuid [pk]\n  user_id uuid [not null]\n  body text [not null]\n  created_at timestamp [not null, default: `now()`]\n}\n')
 must(run('database.mjs', ['migration', 'changes'], db), 'migration diff')
 fs.cpSync(path.join(db, 'supabase', 'migrations'), path.join(OUT, 'sql', 'migrations'), { recursive: true })
+write(path.join(db, '.dualcraft', 'flags', 'flags.json'), JSON.stringify({ ...JSON.parse(read(path.join(ROOT, 'test', 'fixtures', 'flags.json'))), provider: 'supabase' }))
+must(run('flags.mjs', ['gen'], db), 'flags gen supabase')
+copy(path.join(db, '.dualcraft', 'flags', 'supabase-feature-flags.sql'), path.join(OUT, 'sql', 'migrations', '99999999999999_feature_flags.sql'))
 must(run('database.mjs', ['prisma', '--out', path.join(OUT, 'sql', 'prisma', 'schema.prisma')], db), 'prisma')
 write(path.join(OUT, 'sql', 'pg.mjs'), `// Applies the migrations, in order, on an in-memory Postgres (PGlite) with a minimal Supabase auth stub.
 import fs from 'node:fs'
@@ -238,7 +267,9 @@ await db.exec("create role anon; create role authenticated; create schema auth; 
 for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.sql')).sort()) { await db.exec(fs.readFileSync(path.join(dir, f), 'utf8')); console.log('applied ' + f) }
 const t = await db.query("select count(*)::int n from information_schema.tables where table_schema='public'")
 const p = await db.query('select count(*)::int n from pg_policies')
-if (t.rows[0].n !== 11 || p.rows[0].n < 4) { console.error('unexpected result', t.rows[0], p.rows[0]); process.exit(1) }
+// 11 schema tables + feature_flags; the flags table is readable by everyone and seeded with every flag
+const flagRows = await db.query("select key, value from public.feature_flags order by key")
+if (t.rows[0].n !== 12 || p.rows[0].n < 5 || flagRows.rows.length !== 6 || flagRows.rows.find((r) => r.key === 'max_upload_mb')?.value !== 20) { console.error('unexpected result', t.rows[0], p.rows[0], flagRows.rows); process.exit(1) }
 console.log('postgres OK: ' + t.rows[0].n + ' tables, ' + p.rows[0].n + ' policies')
 `)
 // ---------- Supabase Edge Functions (Deno) ----------

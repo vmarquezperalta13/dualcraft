@@ -25,6 +25,7 @@ DualCraft is both **automation** (generators that write code from one spec per a
 - **Data**: `schema.dbml` → ER diagram, models per stack, SQL migrations with RLS, Prisma or Firestore rules; Firebase, Supabase or Postgres with local, dev and prod environments.
 - **Shared texts and analytics**: one i18n source (ICU) and one tracking plan → typed code per stack, with coverage.
 - **Backend**: one contract → Cloud Functions, Supabase Edge Functions or API routes (callables, webhooks, triggers, cron) with server validation and typed clients.
+- **Feature flags**: one catalog → typed accessors per stack with safe defaults and test overrides, the Firebase Remote Config template or a Supabase table; expired flags are reported.
 - **Auth**: email, Google, Apple, phone, passkeys, guest, 2FA, roles and route rules, account deletion — typed AuthService and screens per stack.
 - **Payments**: one product catalog → Google Play and App Store purchases with server verification, or RevenueCat.
 - **Push**: FCM catalog of channels, topics and typed notifications with deep links, in each device's language.
@@ -100,6 +101,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:push` | Push notifications: catalog, typed senders and parsers, device registration |
 | `/dualcraft:deploy` | CI/CD workflows, environments, secrets check, release signing |
 | `/dualcraft:auth` | Auth config, catalogs, AuthService, sign-in/account screens, deletion and roles on the server, passkeys |
+| `/dualcraft:flags` | Feature flags and remote config from one catalog: typed per stack, Firebase Remote Config or Supabase, expired flags |
 | `/dualcraft:e2e` | End-to-end flows → Playwright specs and Maestro flows; run locally and in CI |
 | `/dualcraft:perf` | Performance budgets: Lighthouse, bundle, app size, cold start; CI jobs and a local runner |
 | `/dualcraft:video` | Marketing videos with Remotion: App Store previews, Play promo, Reels/TikTok, per language |
@@ -175,7 +177,8 @@ claude plugin eval . --ablation none --runs 1 --tag behavior --scaffold
 12. ✅ End-to-end tests, performance budgets and skill evals
 13. ✅ Marketing videos (Remotion) and product photos
 14. ✅ Specialist agents
-15. Feature flags and Remote Config, error monitoring (Crashlytics / Sentry), deep links
+15. ✅ Feature flags and Remote Config
+16. Error monitoring (Crashlytics / Sentry), deep links
 
 ## Project files
 
@@ -187,6 +190,7 @@ claude plugin eval . --ablation none --runs 1 --tag behavior --scaffold
   backend/api.json  server functions contract (source)
   push/notifications.json  channels, topics and notifications (texts in i18n under "push")
   deploy/pipeline.json  web host, Android track, branch (workflows are generated from it)
+  flags/flags.json  feature flags (typed accessors per stack, Remote Config template or Supabase table)
   auth/auth.json  sign-in methods, roles, route rules, MFA, deletion and passkeys (source of the auth catalogs)
   e2e/flows.json  end-to-end flows in neutral steps (source of the Playwright specs and Maestro flows)
   perf/budgets.json  performance budgets (web vitals, bundle, app size, startup) + perf-check.mjs runner and history

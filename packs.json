@@ -147,6 +147,13 @@
         "auth"
       ]
     },
+    "flags": {
+      "name": "Feature flags",
+      "description": "Feature flags y Remote Config: catálogo tipado por stack, plantilla de Firebase Remote Config o tabla de Supabase, flags caducados",
+      "skills": [
+        "flags"
+      ]
+    },
     "e2e": {
       "name": "Tests end-to-end",
       "description": "Playwright (web) y Maestro (apps) desde un único spec: login, rutas, compras y capturas, con job de CI para la web",

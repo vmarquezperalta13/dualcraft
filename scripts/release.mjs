@@ -134,6 +134,7 @@ if (cmd === 'check') {
   }
   if (hasSrc('design/tokens.json')) { const r = node('tokens.mjs', 'check'); if (!r.ok) add('warn', 'design', 'tokens have errors'); else if (/✗ contrast/.test(r.out)) add('warn', 'design', 'some text/background pairs fail WCAG contrast') }
   if (hasSrc('db/schema.dbml')) { const r = node('er.mjs', 'check'); if (!r.ok) add('block', 'schema', 'schema has errors') }
+  if (hasSrc('flags/flags.json')) { const r = node('flags.mjs', 'check'); if (!r.ok) add('block', 'flags', 'flags: ' + (r.out.split('\n').filter((l) => /✗/.test(l)).map((l) => l.replace(/^\s*✗\s*/, '')).slice(0, 3).join(' | ') || 'run flags.mjs check')) }
   const docsFile = path.join(root, config.docs?.functional || 'docs/FUNCTIONAL.md')
   if (fs.existsSync(docsFile)) { const doc = fs.readFileSync(docsFile, 'utf8'); forV.filter((n) => ['task', 'bug'].includes(n.type) && n.status === 'done' && !(n.tags || []).includes('internal') && !doc.includes(n.id)).forEach((n) => add('warn', 'docs', `${n.id} ${n.title} not reflected in the functional document`)) }
   else add('info', 'docs', 'no functional document yet')

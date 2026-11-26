@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.32.0] - 2026-11-26
+### Added
+- Feature flags and remote config: `/dualcraft:flags` and `scripts/flags.mjs` (init, add, remove, gen, check) — `.dualcraft/flags/flags.json` → a typed accessor per stack (TypeScript, Dart, Kotlin, Swift): defaults built in, overrides for tests and QA, and any missing or ill-typed remote value falls back to the default
+  - kinds: release and experiment (must expire), ops (kill switches), config (remote values); string enums; flags per platform
+  - Firebase Remote Config template (`firebase deploy --only remoteconfig`) or a Supabase `feature_flags` table (read-only to clients, seeded with the defaults)
+  - `references/feature-flags.md`: the adapter per stack and provider (Firebase web, React Native, Flutter, Android, iOS, KMP; Supabase for TS, Dart, Kotlin, Swift; local)
+  - `check`: generated code current, temporary flags without expiry, expired flags (error), flags no code reads, parked brain notes whose flag is missing
+- `park` parks behind a catalog flag; `flags init` imports the flags of parked notes
+- the release readiness check blocks on flag errors (expired flags); the release and architect agents know the flags skill
+- CI compiles and runs the generated flags in TypeScript, Kotlin, Swift and Dart, and applies the Supabase table on Postgres
+- new installer pack `flags`; eval trigger case
+
 ## [0.31.1] - 2026-11-26
 ### Fixed
 - evals: the behaviour scaffolds embedded the day they were generated, so the drift test failed every new day — the brain CLI now honours `DUALCRAFT_TODAY` and the generator pins it
