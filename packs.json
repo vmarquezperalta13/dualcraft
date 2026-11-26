@@ -161,6 +161,13 @@
         "monitoring"
       ]
     },
+    "links": {
+      "name": "Deep links",
+      "description": "Enlaces que abren la app: rutas tipadas por stack, App Links / Universal Links (.well-known) y comprobaciones con push y capturas",
+      "skills": [
+        "links"
+      ]
+    },
     "e2e": {
       "name": "Tests end-to-end",
       "description": "Playwright (web) y Maestro (apps) desde un único spec: login, rutas, compras y capturas, con job de CI para la web",

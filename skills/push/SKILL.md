@@ -52,3 +52,5 @@ Usually from a trigger or a scheduled function (`dualcraft:backend add … --kin
 - `$PUSH check` → catalog + texts in every locale, server pieces, client: permission request, id changes handled (`onRegistered`), cold-start opening, registration through `registerDevice`, iOS entitlements, Android icon/permission. Plus `$BE check`.
 - Test matrix from the reference (closed/background/foreground × platform, sign-out + other account, two languages).
 - Brain: decision for channels and the permission moment; tasks for the console setup; marketing gets a note for push campaigns (topics) — `dualcraft:marketing`.
+
+Routes: every notification `route` must be an app route of `dualcraft:links` (its check fails otherwise); open them with the generated parser.

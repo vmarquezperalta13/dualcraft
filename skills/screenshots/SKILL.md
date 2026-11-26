@@ -29,3 +29,5 @@ Repeat per locale. Look at every raw image: wrong screen, empty data or a debug 
 `$SHOTS frame --locale all --size all` (or `play-phone`, `ios-6.9`, `ios-6.5`, `ipad-13`) → `.dualcraft/store/screenshots/framed/<locale>/<size>/NN-name.png`. Then `$SHOTS check` (Google Play 2–8 per type, App Store up to 10, exact pixel sizes). Show the user two or three framed images before uploading.
 
 Uploading to the stores is manual (Play Console / App Store Connect) unless the project uses fastlane `supply`/`deliver` — then point them at the framed folders. Commit the plan; framed images only if the team wants them versioned.
+
+Deep links: with `dualcraft:links`, capture by the scheme links it builds; its check flags screens whose link opens no route.

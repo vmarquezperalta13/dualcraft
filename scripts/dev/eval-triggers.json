@@ -25,6 +25,7 @@
   "push": "Quiero avisar a los usuarios con una notificación push cuando empiece el partido de su equipo.",
   "deploy": "Monta el CI/CD: que la web se despliegue en Vercel con previews y la app suba a TestFlight.",
   "legal": "Necesito la política de privacidad y las respuestas de Data safety para Google Play.",
+  "links": "Quiero que el enlace de un partido que comparten por WhatsApp abra directamente la app en ese partido.",
   "monitoring": "Quiero enterarme cuando la app falle a los usuarios: configura Sentry en la web y Crashlytics en la app.",
   "flags": "Quiero poder activar el nuevo checkout desde la consola sin publicar otra versión de la app.",
   "auth": "Añade login con Google y Apple, y que los usuarios puedan borrar su cuenta.",

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.34.0] - 2026-11-26
+### Added
+- Deep links: `/dualcraft:links` and `scripts/links.mjs` (init, add, remove, gen, check, snippets) — `.dualcraft/links/links.json` (domain, scheme, routes with `{params}` and optional query values) → per stack (TypeScript, Dart, Kotlin common code, Swift):
+  - typed builders (path, https link, scheme link) and a parser from any link to the typed route, or null for other hosts, bad parameters or unknown paths; the most specific route wins (`/matches/new` before `/matches/{id}`)
+  - `.well-known/assetlinks.json` and `apple-app-site-association` in the web's `public/`, merged with what auth passkeys need (whichever runs first)
+  - `snippets`: Android intent filters with `autoVerify`, iOS Associated Domains and URL scheme, Flutter and Expo settings, hosting headers
+  - `init` imports the routes of push notifications and store screenshots, the domain and app ids from auth passkeys, the Android application id
+  - `check`: generated code and `.well-known` current, domain / fingerprint / app id set, manifest and entitlements declare the domain, push routes that are not app routes (error), screenshot links that open no route
+- push and screenshots skills point at links; the architect agent knows links; CI compiles and runs the builders and parsers in every language
+- new installer pack `links`; eval trigger case
+
 ## [0.33.0] - 2026-11-26
 ### Added
 - Error monitoring: `/dualcraft:monitoring` and `scripts/monitoring.mjs` (init, gen, check) — `.dualcraft/monitoring/monitoring.json` → the same settings in every app (TypeScript, Dart, Kotlin, Swift): release name `<app>@<version>`, environment, trace sample rate, personal data off, errors to ignore, consent flag, and `scrubReport()` that redacts sensitive keys at any depth
