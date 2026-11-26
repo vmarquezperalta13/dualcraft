@@ -134,6 +134,7 @@ if (cmd === 'check') {
   }
   if (hasSrc('design/tokens.json')) { const r = node('tokens.mjs', 'check'); if (!r.ok) add('warn', 'design', 'tokens have errors'); else if (/✗ contrast/.test(r.out)) add('warn', 'design', 'some text/background pairs fail WCAG contrast') }
   if (hasSrc('db/schema.dbml')) { const r = node('er.mjs', 'check'); if (!r.ok) add('block', 'schema', 'schema has errors') }
+  if (hasSrc('store/store.json')) { const r = node('store.mjs', 'check'); if (!r.ok) add('warn', 'store', 'store upload: ' + (r.out.split('\n').filter((l) => /✗/.test(l)).map((l) => l.replace(/^\s*✗\s*/, '')).slice(0, 2).join(' | ') || 'run store.mjs check')) }
   if (hasSrc('monitoring/monitoring.json')) { const r = node('monitoring.mjs', 'check'); if (!r.ok) add('warn', 'monitoring', 'monitoring: ' + (r.out.split('\n').filter((l) => /✗/.test(l)).map((l) => l.replace(/^\s*✗\s*/, '')).slice(0, 2).join(' | ') || 'run monitoring.mjs check')) }
   if (hasSrc('flags/flags.json')) { const r = node('flags.mjs', 'check'); if (!r.ok) add('block', 'flags', 'flags: ' + (r.out.split('\n').filter((l) => /✗/.test(l)).map((l) => l.replace(/^\s*✗\s*/, '')).slice(0, 3).join(' | ') || 'run flags.mjs check')) }
   const docsFile = path.join(root, config.docs?.functional || 'docs/FUNCTIONAL.md')

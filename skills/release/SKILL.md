@@ -39,3 +39,5 @@ Then run `dualcraft:verify` on both platforms (fresh) — release builds include
 - Brain: tasks of the version stay `done`; create a decision/note with anything learned; parked items now due → surface them for the next version.
 - Watch for 24–72 h: Crashlytics (new issues in v<v>), store reviews, analytics events of the new features (`dualcraft:analytics` coverage + dashboards). Problems → bugs with target `<v+patch>`.
 - Hand over to `dualcraft:marketing` for the launch communication if not done yet.
+
+With `dualcraft:store` set up, export the listing, notes and screenshots to fastlane (`store.mjs export`) before tagging: the tag release uploads them.

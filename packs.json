@@ -215,13 +215,14 @@
     },
     "release": {
       "name": "Release y marketing",
-      "description": "Cerrar versiones, notas de tienda, capturas, vídeos y fotos de producto para tiendas y redes, campañas e ideas de crecimiento",
+      "description": "Cerrar versiones, notas de tienda, capturas, vídeos y fotos de producto para tiendas y redes, subida de fichas a las tiendas con fastlane, campañas e ideas de crecimiento",
       "skills": [
         "release",
         "marketing",
         "screenshots",
         "video",
-        "photos"
+        "photos",
+        "store"
       ]
     },
     "convert": {

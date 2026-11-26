@@ -370,7 +370,11 @@ must(run('deploy.mjs', ['init'], sb), 'deploy init supabase')
 fs.cpSync(path.join(sb, '.github', 'workflows'), path.join(OUT, 'workflows', 'supabase'), { recursive: true })
 fs.mkdirSync(path.join(fl, 'app', 'ios', 'Runner.xcworkspace'), { recursive: true }); fs.mkdirSync(path.join(fl, 'app', 'ios', 'Runner.xcodeproj'), { recursive: true })
 write(path.join(fl, 'app', 'android', 'app', 'build.gradle.kts'), 'android { defaultConfig { applicationId = "com.acme.hockey" } }\n')
+// store upload with fastlane: the release workflow uploads with supply / deliver (actionlint checks those steps)
+write(path.join(fl, '.dualcraft', 'store', 'listing.json'), JSON.stringify({ es: { play: { title: 'Hockey', short: 'Tu liga', full: 'Sigue a tu equipo.' }, appstore: { name: 'Hockey', description: 'Sigue a tu equipo.', keywords: 'hockey,liga' } } }))
+must(run('store.mjs', ['init', '--support-url', 'https://acme.app/help', '--privacy-url', 'https://acme.app/privacy'], fl), 'store init')
 must(run('deploy.mjs', ['init'], fl), 'deploy init flutter')
+if (!/fastlane supply/.test(read(path.join(fl, '.github', 'workflows', 'dualcraft-release-mobile.yml')))) { console.error('✗ release workflow without fastlane'); process.exit(1) }
 fs.cpSync(path.join(fl, '.github', 'workflows'), path.join(OUT, 'workflows', 'flutter'), { recursive: true })
 
 // ---------- auth implementations (AuthService) against the real SDKs ----------

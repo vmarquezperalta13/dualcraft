@@ -60,6 +60,9 @@ function webOut(s) {
 const perfOn = () => fs.existsSync(path.join(dir, 'perf', 'perf-check.mjs')) && !!readJson(path.join(dir, 'perf', 'budgets.json'))
 // error monitoring (dualcraft:monitoring): with Sentry, the builds upload source maps / symbols under the same release name
 const monitoringSpec = () => readJson(path.join(dir, 'monitoring', 'monitoring.json'))
+// store upload (dualcraft:store): the release uploads listing, notes and screenshots from fastlane/ with fastlane
+const storeSpec = () => readJson(path.join(dir, 'store', 'store.json')) || {}
+const storeOn = () => fs.existsSync(path.join(dir, 'store', 'store.json')) && fs.existsSync(path.join(root, 'fastlane', 'metadata'))
 const sentryOn = (kind) => monitoringSpec()?.providers?.[kind] === 'sentry'
 const sentryEnv = (kind) => (sentryOn(kind) ? ['    env:', `      SENTRY_AUTH_TOKEN: ${E('secrets.SENTRY_AUTH_TOKEN')}`, `      SENTRY_ORG: ${E('vars.SENTRY_ORG')}`, `      SENTRY_PROJECT: ${E(`vars.SENTRY_PROJECT_${kind.toUpperCase()}`)}`] : [])
 const sentryRelease = (kind) => (sentryOn(kind) ? ['      - name: Sentry release name (dualcraft:monitoring)', '        working-directory: .', `        run: echo "SENTRY_RELEASE=${monitoringSpec().app}@$(node -p "require('./.dualcraft/config.json').version")" >> "$GITHUB_ENV"`] : [])
@@ -222,7 +225,16 @@ function mobileWorkflow(p) {
     `  BUILD_NUMBER: ${E('github.run_number')}`, '', 'jobs:']
   const version = ['      - name: Version from the tag', '        run: |', '          v="${GITHUB_REF_NAME#v}"; case "$v" in [0-9]*) ;; *) v="0.0.0" ;; esac', '          echo "VERSION=$v" >> "$GITHUB_ENV"', `          echo "BUILD=$(( BUILD_NUMBER + ${E('vars.BUILD_NUMBER_OFFSET || 0')} ))" >> "$GITHUB_ENV"`]
   const sizeStep = (file) => (perfOn() ? ['      - name: App size budget (dualcraft:perf, warns only by default)', '        working-directory: .', `        run: node .dualcraft/perf/perf-check.mjs app-size ${file}`] : [])
-  const playUpload = (s, aab) => [...sizeStep(aab), '      - uses: r0adkll/upload-google-play@v1', '        with:', `          serviceAccountJsonPlainText: ${E('secrets.PLAY_SERVICE_ACCOUNT_JSON')}`, `          packageName: ${applicationId(s) || 'com.example.app'}`, `          releaseFiles: ${aab}`, `          track: ${track}`, '          status: completed']
+  const playUpload = (s, aab) => [...sizeStep(aab), ...(storeOn()
+    // dualcraft:store — fastlane supply uploads the bundle together with the listing, release notes and screenshots
+    ? ['      - name: Upload to Google Play with listing, notes and screenshots (fastlane supply)', '        working-directory: .', '        env:', `          PLAY_JSON: ${E('secrets.PLAY_SERVICE_ACCOUNT_JSON')}`, '        run: |', '          command -v fastlane >/dev/null || sudo gem install fastlane --no-document',
+      `          fastlane supply --aab "${aab}" --package_name ${storeSpec().android?.package || applicationId(s) || 'com.example.app'} --track ${track} --release_status completed --json_key_data "$PLAY_JSON" --metadata_path fastlane/metadata/android`]
+    : ['      - uses: r0adkll/upload-google-play@v1', '        with:', `          serviceAccountJsonPlainText: ${E('secrets.PLAY_SERVICE_ACCOUNT_JSON')}`, `          packageName: ${applicationId(s) || 'com.example.app'}`, `          releaseFiles: ${aab}`, `          track: ${track}`, '          status: completed'])]
+  // dualcraft:store — after TestFlight, fastlane deliver sets the version's listing, notes and screenshots (never submits for review)
+  const appStoreMetadata = () => (storeOn() ? ['      - name: App Store listing, notes and screenshots (fastlane deliver, no review submission)', '        env:', `          KEY_ID: ${E('secrets.APPSTORE_KEY_ID')}`, `          ISSUER_ID: ${E('secrets.APPSTORE_ISSUER_ID')}`, `          PRIVATE_KEY: ${E('secrets.APPSTORE_PRIVATE_KEY')}`, '        run: |',
+    '          command -v fastlane >/dev/null || gem install fastlane --no-document',
+    `          node -e 'process.stdout.write(JSON.stringify({ key_id: process.env.KEY_ID, issuer_id: process.env.ISSUER_ID, key: process.env.PRIVATE_KEY, in_house: false }))' > "$RUNNER_TEMP/asc-key.json"`,
+    `          fastlane deliver --api_key_path "$RUNNER_TEMP/asc-key.json" --app_identifier ${storeSpec().ios?.bundleId || 'com.example.app'} --app_version "$VERSION" --skip_binary_upload true --metadata_path fastlane/metadata --screenshots_path fastlane/screenshots --overwrite_screenshots true --submit_for_review false --run_precheck_before_submit false --force true`] : [])
   const keystoreEnv = ['        env:', `          KEYSTORE_BASE64: ${E('secrets.ANDROID_KEYSTORE_BASE64')}`, `          KEYSTORE_PASSWORD: ${E('secrets.ANDROID_KEYSTORE_PASSWORD')}`, `          KEY_ALIAS: ${E('secrets.ANDROID_KEY_ALIAS')}`, `          KEY_PASSWORD: ${E('secrets.ANDROID_KEY_PASSWORD')}`]
   const iosSteps = (s) => {
     const x = iosProject(s); const d = wd(x.dir)
@@ -253,7 +265,7 @@ function mobileWorkflow(p) {
       L.push(`  ${jobId(s)}-ios:`, `    name: ${s.id} → TestFlight`, '    runs-on: macos-latest', ...sentryEnv('mobile'), '    steps:', ...checkout, ...version, ...sentryRelease('mobile', s, wd(s.dir)))
       if (s.id === 'flutter') L.push(...flutterSetup(s), `      - working-directory: ${wd(s.dir)}`, '        run: |', '          flutter pub get', '          flutter build ios --release --no-codesign --build-name="$VERSION" --build-number="$BUILD"', ...sentryDartSymbols(s, wd(s.dir)))
       if (s.id === 'kmp') L.push(...javaSetup)
-      L.push(...iosSteps(s))
+      L.push(...iosSteps(s), ...appStoreMetadata())
     }
   }
   return L.join('\n') + '\n'

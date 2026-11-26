@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.35.0] - 2026-11-26
+### Added
+- Store upload with fastlane: `/dualcraft:store` and `scripts/store.mjs` (init, export, check) — the store listing, the latest release notes and the framed screenshots per language exported to fastlane's layout in `fastlane/` (Google Play `metadata/android/<locale>` with phone screenshots and `changelogs/default.txt`; App Store `metadata/<locale>` with support / privacy / marketing URLs and `screenshots/<locale>`), using each store's locale codes; files removed from the sources leave `fastlane/` too
+  - `.dualcraft/store/store.json`: app ids (from the Gradle and Xcode projects, skipping test and extension targets), URLs, locale overrides, what to upload
+  - `check`: export current, texts each store requires per language, support and privacy URLs, 2–8 Play phone screenshots, 6.9" iPhone screenshots, notes for the current version, release workflow using fastlane
+- deploy: with the store set up, the tag release uploads the Android bundle with `fastlane supply` (listing, notes and screenshots included) and, after TestFlight, sets the App Store version's listing with `fastlane deliver`; neither submits for review
+- the release readiness check includes the store upload; the release and marketing agents know it; CI lints the workflows with the fastlane steps
+- eval trigger case
+
 ## [0.34.0] - 2026-11-26
 ### Added
 - Deep links: `/dualcraft:links` and `scripts/links.mjs` (init, add, remove, gen, check, snippets) — `.dualcraft/links/links.json` (domain, scheme, routes with `{params}` and optional query values) → per stack (TypeScript, Dart, Kotlin common code, Swift):

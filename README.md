@@ -38,6 +38,7 @@ DualCraft is both **automation** (generators that write code from one spec per a
 **Quality, release and growth**
 - **Security**: global, web and mobile audits with a static scanner and a dated report; findings become brain bugs.
 - **Release**: readiness checklist, one command bumps every version, store notes per language validated against store limits.
+- **Store upload**: the listing, release notes and framed screenshots per language exported to fastlane and uploaded to Google Play and App Store Connect on each version tag; submitting for review stays manual.
 - **Marketing**: what to say in each update, copy per channel and language, campaign plan; store screenshots framed per language; marketing videos with Remotion; product photos from real photos (free, local).
 - **Converters**: between stacks feature by feature (web ⇄ mobile, migrations) and deep code ports between Dart, Kotlin, Swift and TypeScript.
 
@@ -108,6 +109,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:flags` | Feature flags and remote config from one catalog: typed per stack, Firebase Remote Config or Supabase, expired flags |
 | `/dualcraft:e2e` | End-to-end flows → Playwright specs and Maestro flows; run locally and in CI |
 | `/dualcraft:perf` | Performance budgets: Lighthouse, bundle, app size, cold start; CI jobs and a local runner |
+| `/dualcraft:store` | Store upload with fastlane: listing, release notes and screenshots per language from the repo, uploaded by the release workflow (no review submission) |
 | `/dualcraft:video` | Marketing videos with Remotion: App Store previews, Play promo, Reels/TikTok, per language |
 | `/dualcraft:photos` | Product photos from your real photos, free and local: background removal, white packshots, ads per language |
 | `/dualcraft:legal` | Data map, draft privacy policy / terms / cookies, store privacy forms, privacy manifest |
@@ -184,6 +186,7 @@ claude plugin eval . --ablation none --runs 1 --tag behavior --scaffold
 15. ✅ Feature flags and Remote Config
 16. ✅ Error monitoring (Sentry / Crashlytics)
 17. ✅ Deep links
+18. ✅ Store upload with fastlane
 
 ## Project files
 
@@ -195,6 +198,7 @@ claude plugin eval . --ablation none --runs 1 --tag behavior --scaffold
   backend/api.json  server functions contract (source)
   push/notifications.json  channels, topics and notifications (texts in i18n under "push")
   deploy/pipeline.json  web host, Android track, branch (workflows are generated from it)
+  store/store.json  store upload (app ids, URLs; fastlane/ is exported from the listing, notes and screenshots)
   links/links.json  deep links (domain, scheme, routes; builders and parsers per stack, .well-known files)
   monitoring/monitoring.json  error monitoring (providers, release name, sampling, consent, scrubbing)
   flags/flags.json  feature flags (typed accessors per stack, Remote Config template or Supabase table)
