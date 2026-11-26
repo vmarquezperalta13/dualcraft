@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.38.0] - 2026-11-26
+### Added
+- Code graph: `/dualcraft:graph` and `scripts/graph.mjs` (core pack) — a dependency-free index of every stack in `.dualcraft/graph/` (not committed; built in a fraction of a second, refreshed by the queries when files change):
+  - symbols per language (TypeScript, Vue, Astro, Dart, Kotlin, Swift) with kind, line and containing type; DualCraft's generated files marked
+  - file dependencies from imports (relative, tsconfig paths and `@/` / `~/` aliases, Dart `package:`, Kotlin packages) and, for Swift and same-package Kotlin, from the type names used (approximate)
+  - `search`, `callers` (`linked` vs `textual`; `--precise` uses the TypeScript compiler already in the web app's node_modules for exact references per declaration, `Type.member` supported), `impact` (transitive dependents per stack), `contracts` (API functions, analytics events, flags, links, i18n keys on web and mobile, flagging what is only on one platform or unused), `context` (files for a task in the user's words, bridged to code names through DualCraft i18n, the app's .arb / message files and hand-made text maps with an English version; related brain notes)
+- the architect, reviewer, debugger and QA agents use the graph; routing sends "where is / who uses / what does it affect" to it; eval trigger case
+
 ## [0.37.0] - 2026-11-26
 ### Added
 - Accessibility checks in the web e2e tests with axe-core: new step `a11y` (`expectAccessible(page, name)` in the generated Playwright support, `@axe-core/playwright` ^4.14.1 added to the web's package.json), failing on violations from the spec's `a11y.level` up (default serious) with the rule, the elements and a fix link, and every violation attached to the report

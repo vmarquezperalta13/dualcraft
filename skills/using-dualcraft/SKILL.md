@@ -29,6 +29,7 @@ DualCraft is a web + mobile workflow (web: Next.js, React + Vite, Astro, Vue/Nux
 |---|---|
 | Brand-new project, "empezamos de cero" | `dualcraft:new-project` |
 | Starting work / choosing what to do | `dualcraft:start` |
+| Where is X, who uses it, what does a change affect, which files matter for a task | `dualcraft:graph` (before grep or opening files one by one) |
 | Supported stacks, add a stack to the project | `dualcraft:stacks` |
 | "apunta", "déjalo para luego", backlog questions | `dualcraft:brain` |
 | "hemos decidido…", "a partir de ahora…", "¿qué decidimos sobre…?", changing a decision | `dualcraft:decisions` |

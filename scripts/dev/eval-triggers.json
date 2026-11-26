@@ -10,6 +10,7 @@
   "github": "Sube las tareas pendientes a GitHub Issues y asígnale la T-004 a mi compañera.",
   "share": "Publica el roadmap como página para enseñárselo al cliente, sin detalles internos.",
   "park": "Esta funcionalidad ya está hecha pero tiene que esperar a la versión 1.4, apárcala.",
+  "graph": "¿Dónde se usa la clase MatchRepository y qué se rompería si cambio su método load?",
   "map": "Enséñame el mapa del brain con qué tarea depende de cuál.",
   "roadmap": "¿Qué entra en la próxima versión y cuánto falta para la 1.3?",
   "brainstorm": "Tengo una idea: que los usuarios puedan seguir a sus equipos favoritos. ¿Cómo lo planteamos?",

@@ -18,6 +18,7 @@ DualCraft is both **automation** (generators that write code from one spec per a
 - **Work modes** (bug / new development / refactor) drive the flow, the commit type and the version impact; finished work can be **parked** for a later version (branch or feature flag).
 - **Process**: brainstorm, written plans, TDD, root-cause debugging, verification with evidence, code review, functional document (`docs/FUNCTIONAL.md`), Conventional Commits with CHANGELOG.
 - **New projects** from an intake form (idea, platforms, stacks, backend, design, MVP) to brief, decisions, tasks and scaffolding.
+- **Code graph**: an index of every stack (symbols and dependencies) answers where something is, who uses it, what a change affects and which files matter for a task — bridging the user's language to code names through the app's texts — and where the shared contracts are used on web and mobile.
 - **Specialist agents** with their own context: security, reviewer, QA, architect, debugger, designer, marketing, release (`/dualcraft:agents`).
 
 **Generators (one source → every stack)**
@@ -96,6 +97,7 @@ Local development: `claude plugin marketplace add <path-to-this-folder>`.
 | `/dualcraft:github` | Sync the brain with GitHub Issues |
 | `/dualcraft:share` | Publish the roadmap or map as a page |
 | `/dualcraft:commit` | Mode-aware Conventional Commit + CHANGELOG |
+| `/dualcraft:graph` | Code graph of every stack: where a symbol is, who uses it (exact for TypeScript), what a change affects, files for a task, contracts on web and mobile |
 | `/dualcraft:map` | Visual map of the brain (nodes + dependencies) |
 | `/dualcraft:roadmap` | Work grouped by target version |
 | `/dualcraft:er` | ER diagram of the database schema |
@@ -187,6 +189,7 @@ claude plugin eval . --ablation none --runs 1 --tag behavior --scaffold
 16. ✅ Error monitoring (Sentry / Crashlytics)
 17. ✅ Deep links
 18. ✅ Store upload with fastlane
+19. ✅ Dependency updates, accessibility checks and the code graph
 
 ## Project files
 

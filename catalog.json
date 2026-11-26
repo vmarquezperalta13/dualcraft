@@ -27,6 +27,7 @@
   "commands": [
     { "name": "help", "pack": "core", "phase": 1, "es": "Lista todos los comandos de DualCraft (disponibles y próximos)" },
     { "name": "agents", "pack": "core", "phase": 15, "es": "Lista los agentes especialistas (instalados o no y qué hace cada uno) y le pasa una tarea a uno: /dualcraft:agents <agente> <tarea>" },
+    { "name": "graph", "pack": "core", "phase": 19, "es": "Grafo del código de todos los stacks: dónde está un símbolo, quién lo usa, qué afecta un cambio, qué archivos importan para una tarea (aunque la pidas en español) y dónde se usan los contratos en web y móvil" },
     { "name": "new-project", "pack": "core", "phase": 1, "es": "Proyecto nuevo: formulario completo (idea, tipo, plataformas, stacks, backend, diseño, funciones MVP) → brief, decisiones, tareas, documento y scaffold" },
     { "name": "stacks", "pack": "core", "phase": 1, "es": "Stacks soportados (Next.js, React+Vite, Astro, Nuxt, Flutter, React Native, KMP, Android, iOS) y añadir uno al proyecto" },
     { "name": "start", "pack": "core", "phase": 1, "es": "Inicia el trabajo: carga el contexto y pregunta el modo (bug/tarea corta, nuevo desarrollo, refactor)" },
