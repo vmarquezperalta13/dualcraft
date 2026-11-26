@@ -1,6 +1,6 @@
 {
   "name": "dualcraft",
-  "version": "0.38.0",
+  "version": "1.0.0",
   "description": "Web + mobile development workflow for Claude Code, Gemini CLI and Codex CLI: project brain, decisions, process skills and generators for Next.js, React + Vite, Astro, Nuxt, Flutter, React Native, Kotlin Multiplatform, Android and iOS.",
   "type": "module",
   "bin": {

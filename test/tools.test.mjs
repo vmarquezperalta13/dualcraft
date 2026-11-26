@@ -83,7 +83,10 @@ test('security: scanner finds the classic holes and stays quiet on clean code', 
   write(path.join(p2, 'lib', 'main.dart'), "void setup() {\n  FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);\n}\nvoid call() { FirebaseFunctions.instance.httpsCallable('f'); FirebaseFunctions.instanceFor(region: 'us-east1'); }\nvoid iap() { InAppPurchase.instance.purchaseStream.listen((p) {}); }\n")
   write(path.join(p2, 'lib', 'debug.dart'), "void ok() {\n  if (kDebugMode) {\n    FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);\n  }\n}\n")
   write(path.join(p2, 'firestore.rules'), "service cloud.firestore { match /databases/{d}/documents { match /u/{id} { allow read: if request.auth != null; } } }\n")
-  write(path.join(p2, 'lib', 'keys.dart'), "const sg = 'SG.abcdefghijklmnopqrstuv.abcdefghijklmnopqrstuvwxyz0123';\nconst wh = 'whsec_abcdefghijklmnopqrstuvwxyz012345';\n")
+  // fake keys for the scanner, assembled at run time so the source never holds a literal that secret scanners flag
+  const fakeSendGrid = ['SG', 'abcdefghijklmnopqrstuv', 'abcdefghijklmnopqrstuvwxyz0123'].join('.')
+  const fakeStripeWebhook = ['whsec', 'abcdefghijklmnopqrstuvwxyz012345'].join('_')
+  write(path.join(p2, 'lib', 'keys.dart'), `const sg = '${fakeSendGrid}';\nconst wh = '${fakeStripeWebhook}';\n`)
   const f2 = JSON.parse(run('security.mjs', ['--json'], p2).out).findings
   const r2 = f2.map((f) => f.rule)
   for (const r of ['flutter.emulator-in-release', 'flutter.functions-default-region', 'flutter.functions-region-mismatch', 'flutter.iap-no-complete', 'flutter.iap-no-restore', 'rules.no-default-deny', 'secret.sendgrid', 'secret.stripe-webhook']) assert.ok(r2.includes(r), `missing ${r}`)

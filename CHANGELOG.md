@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0] - 2026-11-26
+First stable version: the whole cycle of a web + mobile product, from the idea to the stores, on 9 stacks (Next.js, React + Vite, Astro, Nuxt, Flutter, React Native, Kotlin Multiplatform, Android, iOS) for Claude Code, Gemini CLI and Codex CLI.
+- **Way of working**: project brain (tasks, bugs, decisions, parked work) loaded every session, decisions checked against each request, work modes, process skills (brainstorm, plan, TDD, debug, verify, review), functional document, commits and versions
+- **One source → every stack**: design system and tokens, data schema and databases, texts and analytics, backend functions, auth, payments, push, feature flags, deep links, error monitoring
+- **Quality**: end-to-end tests with accessibility checks, performance budgets, security audits with a scanner, legal and privacy, CI/CD with dependency updates
+- **Release and growth**: versions and store notes, store upload with fastlane, store screenshots, marketing videos and product photos, marketing plans
+- **Help**: 8 specialist agents, a code graph across web and mobile, converters between stacks and languages
+- 66 skills, 100 tests; generated code compiled and run in CI for TypeScript, Dart, Kotlin and Swift
+### Fixed
+- the security scanner test assembles its fake Stripe and SendGrid keys at run time, so secret scanning (GitHub) no longer flags the repository
+
 ## [0.38.0] - 2026-11-26
 ### Added
 - Code graph: `/dualcraft:graph` and `scripts/graph.mjs` (core pack) — a dependency-free index of every stack in `.dualcraft/graph/` (not committed; built in a fraction of a second, refreshed by the queries when files change):
