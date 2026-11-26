@@ -58,6 +58,12 @@ function webOut(s) {
   return { out: 'dist', ssr: false }
 }
 const perfOn = () => fs.existsSync(path.join(dir, 'perf', 'perf-check.mjs')) && !!readJson(path.join(dir, 'perf', 'budgets.json'))
+// error monitoring (dualcraft:monitoring): with Sentry, the builds upload source maps / symbols under the same release name
+const monitoringSpec = () => readJson(path.join(dir, 'monitoring', 'monitoring.json'))
+const sentryOn = (kind) => monitoringSpec()?.providers?.[kind] === 'sentry'
+const sentryEnv = (kind) => (sentryOn(kind) ? ['    env:', `      SENTRY_AUTH_TOKEN: ${E('secrets.SENTRY_AUTH_TOKEN')}`, `      SENTRY_ORG: ${E('vars.SENTRY_ORG')}`, `      SENTRY_PROJECT: ${E(`vars.SENTRY_PROJECT_${kind.toUpperCase()}`)}`] : [])
+const sentryRelease = (kind) => (sentryOn(kind) ? ['      - name: Sentry release name (dualcraft:monitoring)', '        working-directory: .', `        run: echo "SENTRY_RELEASE=${monitoringSpec().app}@$(node -p "require('./.dualcraft/config.json').version")" >> "$GITHUB_ENV"`] : [])
+const sentryDartSymbols = (s, workDir) => (sentryOn('mobile') && /sentry_dart_plugin:/.test(read(path.join(s.dir, 'pubspec.yaml'))) ? ['      - name: Upload debug symbols to Sentry', ...(workDir ? [`        working-directory: ${workDir}`] : []), '        run: dart run sentry_dart_plugin'] : [])
 const gradleApp = (s) => (s.id === 'kmp' ? (['composeApp', 'androidApp', 'app'].find((m) => exists(s.dir, m, 'build.gradle.kts') || exists(s.dir, m, 'build.gradle')) || 'composeApp') : 'app')
 function applicationId(s) {
   const files = s.id === 'flutter' ? [path.join(s.dir, 'android/app/build.gradle.kts'), path.join(s.dir, 'android/app/build.gradle')] : [path.join(s.dir, gradleApp(s), 'build.gradle.kts'), path.join(s.dir, gradleApp(s), 'build.gradle')]
@@ -170,7 +176,7 @@ function webWorkflow(p) {
     const pm = nodePm(s.dir); const o = webOut(s); const out = posix(path.join(wd(s.dir), o.out || 'dist'))
     L.push(`  ${jobId(s)}:`, `    name: ${s.id} → ${host}`, `    if: ${forkGuard}`, '    runs-on: ubuntu-latest',
       `    environment: ${E(`github.event_name == 'pull_request' && 'preview' || (${TAG} && 'production' || 'dev')`)}`,
-      '    defaults:', '      run:', `        working-directory: ${wd(s.dir)}`, '    steps:', ...checkout, ...setupNode(s.dir, pm), `      - run: ${pm.install}`)
+      '    defaults:', '      run:', `        working-directory: ${wd(s.dir)}`, ...sentryEnv('web'), '    steps:', ...checkout, ...setupNode(s.dir, pm), `      - run: ${pm.install}`, ...sentryRelease('web', s))
     if (host === 'vercel') {
       const prod = `${E(TAG + " && '--prod' || ''")}`
       L.push('      - run: npm i -g vercel@latest', '      - name: Build and deploy', '        env:', `          VERCEL_TOKEN: ${E('secrets.VERCEL_TOKEN')}`, `          VERCEL_ORG_ID: ${E('vars.VERCEL_ORG_ID')}`, `          VERCEL_PROJECT_ID: ${E('vars.VERCEL_PROJECT_ID')}`, '        run: |',
@@ -233,10 +239,10 @@ function mobileWorkflow(p) {
       continue
     }
     if (canAndroid(s)) {
-      L.push(`  ${jobId(s)}-android:`, `    name: ${s.id} → Google Play (${track})`, '    runs-on: ubuntu-latest', '    defaults:', '      run:', `        working-directory: ${wd(s.dir)}`, '    steps:', ...checkout, ...javaSetup, ...version)
+      L.push(`  ${jobId(s)}-android:`, `    name: ${s.id} → Google Play (${track})`, '    runs-on: ubuntu-latest', '    defaults:', '      run:', `        working-directory: ${wd(s.dir)}`, ...sentryEnv('mobile'), '    steps:', ...checkout, ...javaSetup, ...version, ...sentryRelease('mobile', s))
       if (s.id === 'flutter') {
         L.push(...flutterSetup(s), '      - name: Upload keystore', ...keystoreEnv, '        run: |', '          printf "%s" "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks', '          {', '            echo "storeFile=upload-keystore.jks"', '            echo "storePassword=$KEYSTORE_PASSWORD"', '            echo "keyAlias=$KEY_ALIAS"', '            echo "keyPassword=$KEY_PASSWORD"', '          } > android/key.properties',
-          '      - run: flutter pub get', '      - run: flutter build appbundle --release --build-name="$VERSION" --build-number="$BUILD"', ...playUpload(s, posix(path.join(wd(s.dir), 'build/app/outputs/bundle/release/app-release.aab'))))
+          '      - run: flutter pub get', '      - run: flutter build appbundle --release --build-name="$VERSION" --build-number="$BUILD"', ...sentryDartSymbols(s), ...playUpload(s, posix(path.join(wd(s.dir), 'build/app/outputs/bundle/release/app-release.aab'))))
       } else {
         const m = gradleApp(s)
         L.push('      - uses: gradle/actions/setup-gradle@v4', '      - name: Build signed bundle', ...keystoreEnv, '        run: |', '          printf "%s" "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"', '          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/upload-keystore.jks"', '          chmod +x gradlew',
@@ -244,8 +250,8 @@ function mobileWorkflow(p) {
       }
     }
     if (canIos(s)) {
-      L.push(`  ${jobId(s)}-ios:`, `    name: ${s.id} → TestFlight`, '    runs-on: macos-latest', '    steps:', ...checkout, ...version)
-      if (s.id === 'flutter') L.push(...flutterSetup(s), `      - working-directory: ${wd(s.dir)}`, '        run: |', '          flutter pub get', '          flutter build ios --release --no-codesign --build-name="$VERSION" --build-number="$BUILD"')
+      L.push(`  ${jobId(s)}-ios:`, `    name: ${s.id} → TestFlight`, '    runs-on: macos-latest', ...sentryEnv('mobile'), '    steps:', ...checkout, ...version, ...sentryRelease('mobile', s, wd(s.dir)))
+      if (s.id === 'flutter') L.push(...flutterSetup(s), `      - working-directory: ${wd(s.dir)}`, '        run: |', '          flutter pub get', '          flutter build ios --release --no-codesign --build-name="$VERSION" --build-number="$BUILD"', ...sentryDartSymbols(s, wd(s.dir)))
       if (s.id === 'kmp') L.push(...javaSetup)
       L.push(...iosSteps(s))
     }
@@ -298,6 +304,13 @@ function needed(p) {
   }
   if (prov === 'supabase') { add('SUPABASE_ACCESS_TOKEN', 'secret', ['dev', 'production'], 'supabase.com → Account → Access tokens'); add('SUPABASE_DB_PASSWORD', 'secret', ['dev', 'production'], 'database password of that project'); add('SUPABASE_PROJECT_REF', 'variable', ['dev', 'production'], 'project ref of that environment') }
   const mob = stacks.filter((s) => s.kind === 'mobile')
+  const sentryWeb = hasWeb && sentryOn('web'); const sentryMobile = mob.length > 0 && p.mobile?.release !== 'none' && sentryOn('mobile')
+  if (sentryWeb || sentryMobile) {
+    add('SENTRY_AUTH_TOKEN', 'secret', ['repo'], 'sentry.io → Settings → Auth Tokens (organization token: uploads source maps and debug symbols)')
+    add('SENTRY_ORG', 'variable', ['repo'], 'organization slug in sentry.io URLs')
+    if (sentryWeb) add('SENTRY_PROJECT_WEB', 'variable', ['repo'], 'Sentry project slug of the web app')
+    if (sentryMobile) add('SENTRY_PROJECT_MOBILE', 'variable', ['repo'], 'Sentry project slug of the mobile app')
+  }
   if (p.mobile?.release !== 'none') {
     if (mob.some((s) => s.id === 'react-native')) add('EXPO_TOKEN', 'secret', ['repo'], 'expo.dev → Access tokens; submit credentials live in EAS')
     if (mob.some(canAndroid)) {

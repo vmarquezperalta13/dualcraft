@@ -75,6 +75,15 @@ function flagsSetup(p) {
   const c = run('flags.mjs', ['check'], p); if (c.code !== 0) { console.error(c.out); process.exit(1) }
 }
 
+// error monitoring (Sentry everywhere in the multi project, Crashlytics in Flutter) → settings per stack + Sentry in the deploy workflows
+function monitoringSetup(p, args) {
+  must(run('monitoring.mjs', ['init', ...args], p), 'monitoring init')
+  const spec = path.join(p, '.dualcraft', 'monitoring', 'monitoring.json'); const m = JSON.parse(read(spec))
+  m.scrub = [...m.scrub, 'user.name', 'x$y']; m.ignore = [...m.ignore, "it's \"quoted\" $x"]
+  write(spec, JSON.stringify(m, null, 2)); must(run('monitoring.mjs', ['gen'], p), 'monitoring gen')
+  must(run('monitoring.mjs', ['check'], p), 'monitoring check')
+}
+
 // ---------- multi-stack project (Firestore schema: enums, maps, reserved names) ----------
 const multi = makeMultiProject('firestore')
 for (const s of ['tokens.mjs', 'gen.mjs', 'analytics.mjs', 'i18n.mjs']) must(run(s, s === 'tokens.mjs' || s === 'gen.mjs' ? ['all'] : ['gen'], multi), s)
@@ -86,6 +95,7 @@ authSetup(multi)
 must(run('e2e.mjs', ['init', '--app-id', 'com.test.app', '--scheme', 'acme'], multi), 'e2e init multi')
 must(run('perf.mjs', ['init'], multi), 'perf init multi')
 flagsSetup(multi)
+monitoringSetup(multi, ['--web', 'sentry', '--mobile', 'sentry'])
 write(M('functions', 'src', 'notify.ts'), `import { onDocumentCreated } from 'firebase-functions/v2/firestore'
 import { REGION } from './generated/api'
 import { push, render, format } from './generated/push'
@@ -157,14 +167,24 @@ const name: FlagName = 'maxUploadMb'
 void a; void b; void n; void e; void name; void flagDefaults
 `)
 
+copy(M('rn/src/lib/monitoring.ts'), path.join(OUT, 'ts', 'rn-monitoring.ts'))
+write(path.join(OUT, 'ts', 'use-monitoring.ts'), `import { monitoring, scrubReport, shouldReport, tracesSampleRate, monitoringEnvironment } from './rn-monitoring'
+const ev = { user: { id: 'u1', email: 'a@b.c' }, extra: [{ password: 'p', ok: 1 }] }
+const clean: typeof ev = scrubReport(ev)
+const keep: boolean = shouldReport('TypeError') && monitoring.sendDefaultPii === false
+const rate: number = tracesSampleRate(monitoringEnvironment(undefined))
+void clean; void keep; void rate
+`)
+
 // Kotlin (KMP outputs: theme, models, analytics)
 const K = (...p) => M('kmp', 'composeApp', 'src', 'commonMain', 'kotlin', 'com', 'test', 'app', ...p)
-for (const [f, to] of [[K('theme', 'DsTokens.kt'), 'theme/DsTokens.kt'], [K('model', 'DbModels.kt'), 'model/DbModels.kt'], [K('analytics', 'AnalyticsEvents.kt'), 'analytics/AnalyticsEvents.kt'], [K('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [K('payments', 'PaymentsCatalog.kt'), 'payments/PaymentsCatalog.kt'], [K('push', 'PushMessages.kt'), 'push/PushMessages.kt'], [K('auth', 'AuthCatalog.kt'), 'auth/AuthCatalog.kt'], [K('flags', 'FeatureFlags.kt'), 'flags/FeatureFlags.kt']]) copy(f, path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', to))
+for (const [f, to] of [[K('theme', 'DsTokens.kt'), 'theme/DsTokens.kt'], [K('model', 'DbModels.kt'), 'model/DbModels.kt'], [K('analytics', 'AnalyticsEvents.kt'), 'analytics/AnalyticsEvents.kt'], [K('api', 'ApiClient.kt'), 'api/ApiClient.kt'], [K('payments', 'PaymentsCatalog.kt'), 'payments/PaymentsCatalog.kt'], [K('push', 'PushMessages.kt'), 'push/PushMessages.kt'], [K('auth', 'AuthCatalog.kt'), 'auth/AuthCatalog.kt'], [K('flags', 'FeatureFlags.kt'), 'flags/FeatureFlags.kt'], [K('monitoring', 'Monitoring.kt'), 'monitoring/Monitoring.kt']]) copy(f, path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'com', 'test', 'app', to))
 write(path.join(OUT, 'kotlin', 'settings.gradle.kts'), 'pluginManagement { repositories { gradlePluginPortal(); mavenCentral(); google() } }\ndependencyResolutionManagement { repositories { mavenCentral(); google() } }\nrootProject.name = "dualcraft-kotlin-check"\n')
 write(path.join(OUT, 'kotlin', 'build.gradle.kts'), 'plugins {\n    kotlin("jvm") version "2.0.21"\n    kotlin("plugin.serialization") version "2.0.21"\n    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"\n    id("org.jetbrains.compose") version "1.7.0"\n    application\n}\ndependencies {\n    implementation(compose.desktop.currentOs)\n    implementation(compose.material3)\n    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")\n    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")\n    implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")\n    implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.8.3")\n    implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")\n    implementation("io.coil-kt.coil3:coil-compose:3.0.4")\n}\napplication { mainClass.set("check.MainKt") }\n')
 write(path.join(OUT, 'kotlin', 'src', 'main', 'kotlin', 'check', 'Main.kt'), `package check
 import com.test.app.model.*
 import com.test.app.flags.*
+import com.test.app.monitoring.*
 import com.test.app.analytics.*
 import com.test.app.theme.*
 import com.test.app.api.*
@@ -212,12 +232,15 @@ fun main() {
     check(FeatureFlags.newCheckout && FeatureFlags.homeLayout == "grid" && FeatureFlags.maxUploadMb == 20L && FeatureFlags.priceFactor == 2.0 && FeatureFlags.supportEmail == "help@acme.app") { "flags source and fallback" }
     FeatureFlags.overrides["home_layout"] = "carousel"
     check(FeatureFlags.homeLayout == "list") { "flags enum fallback" }
+    val scrubbed = Monitoring.scrubReport(mapOf("user" to mapOf("id" to "u1", "Email" to "a@b.c"), "extra" to listOf(mapOf("api_key" to "k", "n" to 1)))) as Map<*, *>
+    check((scrubbed["user"] as Map<*, *>)["Email"] == "[redacted]" && (scrubbed["user"] as Map<*, *>)["id"] == "u1" && ((scrubbed["extra"] as List<*>)[0] as Map<*, *>)["api_key"] == "[redacted]") { "monitoring scrub " + scrubbed }
+    check(!Monitoring.shouldReport("ResizeObserver loop") && Monitoring.shouldReport("boom") && Monitoring.tracesSampleRate(Monitoring.environment(null)) == 0.1 && Monitoring.RELEASE.startsWith("testapp@")) { "monitoring settings" }
     println("kotlin OK: \${e.name} \${DsColorsLight.primary}")
 }
 `)
 
 // Swift (iOS outputs)
-for (const [f, to] of [['iosapp/Demo/DesignSystem/DsTokens.swift', 'DsTokens.swift'], ['iosapp/Demo/Core/Models/DbModels.swift', 'DbModels.swift'], ['iosapp/Demo/Core/Analytics/AnalyticsEvents.swift', 'AnalyticsEvents.swift'], ['iosapp/Demo/Resources/DualCraft.xcstrings', 'DualCraft.xcstrings'], ['iosapp/Demo/Core/Api/ApiClient.swift', 'ApiClient.swift'], ['iosapp/Demo/Core/Payments/PaymentsCatalog.swift', 'PaymentsCatalog.swift'], ['iosapp/Demo/Core/Push/PushMessages.swift', 'PushMessages.swift'], ['iosapp/Demo/Core/Auth/AuthCatalog.swift', 'AuthCatalog.swift'], ['iosapp/Demo/Core/Flags/FeatureFlags.swift', 'FeatureFlags.swift']]) copy(M(f), path.join(OUT, 'swift', to))
+for (const [f, to] of [['iosapp/Demo/DesignSystem/DsTokens.swift', 'DsTokens.swift'], ['iosapp/Demo/Core/Models/DbModels.swift', 'DbModels.swift'], ['iosapp/Demo/Core/Analytics/AnalyticsEvents.swift', 'AnalyticsEvents.swift'], ['iosapp/Demo/Resources/DualCraft.xcstrings', 'DualCraft.xcstrings'], ['iosapp/Demo/Core/Api/ApiClient.swift', 'ApiClient.swift'], ['iosapp/Demo/Core/Payments/PaymentsCatalog.swift', 'PaymentsCatalog.swift'], ['iosapp/Demo/Core/Push/PushMessages.swift', 'PushMessages.swift'], ['iosapp/Demo/Core/Auth/AuthCatalog.swift', 'AuthCatalog.swift'], ['iosapp/Demo/Core/Flags/FeatureFlags.swift', 'FeatureFlags.swift'], ['iosapp/Demo/Core/Monitoring/Monitoring.swift', 'Monitoring.swift']]) copy(M(f), path.join(OUT, 'swift', to))
 write(path.join(OUT, 'swift', 'Use.swift'), 'import SwiftUI\nfunc dualcraftCheck() -> [Any] {\n    let u = Users(id: "1", displayName: "a", email: "e", role: .inProgress, tags: nil, createdAt: Date(), lastSeen: nil, settings: ["k": .string("v")], classValue: "vip")\n    return [DsColor.primary, DsSpacing.s4, DsText.titleLarge.font, AnalyticsEvents.signUp(method: .google).name, u.classValue as Any]\n}\n' +
   'struct FakeTransport: ApiTransport {\n    func call(_ endpoint: String, _ data: [String: Any]) async throws -> Any? {\n        if endpoint == "ping" { return nil }\n        return ["coins": 5, "ratio": 1, "level": "silver-plus", "items": ["a"], "levels": ["gold"], "default": true] as [String: Any]\n    }\n}\n' +
   'func apiCheck() async throws -> Int {\n    let api = Api(transport: FakeTransport())\n    try await api.ping()\n    let r = try await api.redeemCode(RedeemCodeInput(code: "ABC", platform: .ios, class: 3))\n    return r.coins + (r.levels?.count ?? 0) + (r.level == .silverPlus ? 1 : 0)\n}\n' +
@@ -225,6 +248,7 @@ write(path.join(OUT, 'swift', 'Use.swift'), 'import SwiftUI\nfunc dualcraftCheck
   'func pushCheck() -> String? {\n    guard let m = PushMessage.parse(["type": "goals_summary", "count": "3"]) else { return nil }\n    if case let .goalsSummary(count, ratio) = m { _ = count + Int(ratio ?? 0) }\n    return (m.route ?? "") + m.type + PushTopic.news.forLocale("es") + PushChannel.all[0].id\n}\n')
 
 write(path.join(OUT, 'swift', 'UseFlags.swift'), 'func flagsCheck() -> Bool {\n    FeatureFlags.source = { k in ["new_checkout": "true", "home_layout": "grid", "max_upload_mb": "7.5", "price_factor": 2][k] }\n    let ok = FeatureFlags.newCheckout && FeatureFlags.homeLayout == "grid" && FeatureFlags.maxUploadMb == 20 && FeatureFlags.priceFactor == 2.0 && !FeatureFlags.supportEmail.isEmpty\n    FeatureFlags.overrides["new_checkout"] = false\n    return ok && !FeatureFlags.newCheckout\n}\n')
+write(path.join(OUT, 'swift', 'UseMonitoring.swift'), 'func monitoringCheck() -> Bool {\n    let s = Monitoring.scrubReport(["user": ["id": "u1", "Email": "a@b.c"]] as [String: Any]) as? [String: Any]\n    let user = s?["user"] as? [String: Any]\n    return (user?["Email"] as? String) == "[redacted]" && !Monitoring.shouldReport("Load failed") && Monitoring.tracesSampleRate(Monitoring.environment(nil)) == 0.1 && !Monitoring.sendDefaultPii\n}\n')
 // ---------- Flutter project (hockey schema) ----------
 const fl = makeProject({ mobile: 'flutter', paths: { mobile: 'app' }, schema: 'hockey' })
 write(path.join(fl, 'app', 'pubspec.yaml'), 'name: dualcraft_check\nenvironment:\n  sdk: ">=3.0.0 <4.0.0"\ndependencies:\n  flutter:\n    sdk: flutter\n  flutter_localizations:\n    sdk: flutter\n  intl: any\n  in_app_purchase: any\n  firebase_messaging: ">=17.0.0"\n  flutter_local_notifications: any\n  flutter_riverpod: any\n  flutter_bloc: any\n  go_router: any\n  firebase_auth: any\n  google_sign_in: ^7.0.0\n  sign_in_with_apple: any\n  crypto: any\n  supabase_flutter: ^2.15.0\n  passkeys: ^2.21.0\nflutter:\n  generate: true\n')
@@ -235,13 +259,15 @@ authSetup(fl)
 payments(fl, 'native')
 pushSetup(fl)
 flagsSetup(fl)
-write(path.join(fl, 'app', 'lib', 'main.dart'), "import 'package:flutter/material.dart';\nimport 'generated/design_tokens.dart';\nimport 'generated/db_models.dart';\nimport 'generated/analytics_events.dart';\nimport 'generated/api_client.dart';\nimport 'generated/payments_catalog.dart';\nimport 'services/purchase_service.dart';\nimport 'generated/push_catalog.dart';\nimport 'services/push_service.dart';\nimport 'generated/feature_flags.dart';\nvoid main() => runApp(MaterialApp(theme: DsTheme.light(), darkTheme: DsTheme.dark(), home: Builder(builder: (c) => Container(color: c.ds.surface, padding: const EdgeInsets.all(DsSpacing.s4)))));\nfinal t = HockeyTeam(id: 1, name: 'x');\nfinal e = AnalyticsEvents.signUp(method: SignUpMethod.google);\n" +
+monitoringSetup(fl, ['--mobile', 'crashlytics'])
+write(path.join(fl, 'app', 'lib', 'main.dart'), "import 'package:flutter/material.dart';\nimport 'generated/design_tokens.dart';\nimport 'generated/db_models.dart';\nimport 'generated/analytics_events.dart';\nimport 'generated/api_client.dart';\nimport 'generated/payments_catalog.dart';\nimport 'services/purchase_service.dart';\nimport 'generated/push_catalog.dart';\nimport 'services/push_service.dart';\nimport 'generated/feature_flags.dart';\nimport 'generated/monitoring.dart';\nvoid main() => runApp(MaterialApp(theme: DsTheme.light(), darkTheme: DsTheme.dark(), home: Builder(builder: (c) => Container(color: c.ds.surface, padding: const EdgeInsets.all(DsSpacing.s4)))));\nfinal t = HockeyTeam(id: 1, name: 'x');\nfinal e = AnalyticsEvents.signUp(method: SignUpMethod.google);\n" +
   "class FakeTransport implements ApiTransport {\n  @override\n  Future<Object?> call(String endpoint, Map<String, Object?> data) async => endpoint == 'ping' ? null : <String, Object?>{'coins': 5, 'level': 'silver-plus', 'levels': ['gold'], 'default': true};\n}\n" +
   "Future<int> apiCheck() async {\n  final api = Api(FakeTransport());\n  await api.ping();\n  final r = await api.redeemCode(RedeemCodeInput(code: 'ABC', platform: RedeemCodePlatform.ios, classValue: 3));\n  return r.coins + (r.levels?.length ?? 0) + (r.level == RedeemCodeLevel.silverPlus ? 1 : 0);\n}\n" +
   "class MemoryCache implements EntitlementCache {\n  Set<String> _s = {};\n  @override\n  Future<Set<String>> load() async => _s;\n  @override\n  Future<void> save(Set<String> e) async => _s = {...e};\n}\n" +
   "bool paymentsCheck(PurchaseService s) => s.has(Entitlement.premium) || PaymentsCatalog.byStoreId('premium')?.type == ProductType.subscription;\nfinal service = PurchaseService(Api(FakeTransport()), MemoryCache());\n" +
   "String? pushCheck() {\n  final m = PushMessage.parse({'type': 'match_started', 'matchId': 'm9', 'minute': '12'});\n  return switch (m) {\n    MatchStartedPush(:final matchId, :final minute) => '$matchId ${minute ?? 0} ${PushTopic.news.forLocale('es')}',\n    GoalsSummaryPush(:final count) => '$count',\n    WeeklyOfferPush() => PushChannel.promos.label,\n    null => null,\n  };\n}\n" +
   "PushService pushService(Api api) => PushService(api, onOpen: (m) => debugPrint(m.route), onForeground: (m, n) => debugPrint(n?.title));\n" +
+  "bool monitoringCheck() {\n  final s = Monitoring.scrubReport({'user': {'id': 'u1', 'Email': 'a@b.c'}}) as Map;\n  return (s['user'] as Map)['Email'] == '[redacted]' && !Monitoring.shouldReport('Network request failed') && Monitoring.provider == 'crashlytics';\n}\n" +
   "bool flagsCheck() {\n  FeatureFlags.source = (k) => <String, Object?>{'new_checkout': 'true', 'home_layout': 'grid', 'max_upload_mb': '7.5', 'price_factor': 2}[k];\n  final ok = FeatureFlags.newCheckout && FeatureFlags.homeLayout == 'grid' && FeatureFlags.maxUploadMb == 20 && FeatureFlags.priceFactor == 2.0 && FeatureFlags.supportEmail.isNotEmpty;\n  FeatureFlags.overrides['new_checkout'] = false;\n  return ok && !FeatureFlags.newCheckout;\n}\n")
 fs.cpSync(path.join(fl, 'app'), path.join(OUT, 'dart'), { recursive: true })
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.33.0] - 2026-11-26
+### Added
+- Error monitoring: `/dualcraft:monitoring` and `scripts/monitoring.mjs` (init, gen, check) — `.dualcraft/monitoring/monitoring.json` → the same settings in every app (TypeScript, Dart, Kotlin, Swift): release name `<app>@<version>`, environment, trace sample rate, personal data off, errors to ignore, consent flag, and `scrubReport()` that redacts sensitive keys at any depth
+  - providers: Sentry on the web; Crashlytics on mobile with a Firebase backend, else Sentry; `none` per platform
+  - `references/monitoring.md`: wiring per stack and provider (Sentry for Next.js, Vite, Astro, Nuxt, React Native, Flutter, Android, iOS, KMP; Crashlytics for Flutter, Android, iOS, React Native), consent gate and symbol upload
+  - `check`: SDK installed per app, symbol upload configured (Sentry Gradle plugin, Crashlytics plugin and dSYM phase, sentry_dart_plugin), DSN documented in `.env.example`, Sentry token in the deploy workflows, privacy policy names the provider, consent reminder
+- deploy: with Sentry, the web and mobile release jobs get `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` and the release name, and Flutter runs `sentry_dart_plugin`; `deploy secrets` lists them
+- release: `bump` regenerates the monitoring settings (the release name carries the version); the readiness check includes monitoring
+- the release and debugger agents and `mobile-crash` point at monitoring; CI compiles and runs the settings in every language and lints the workflows with Sentry
+- new installer pack `monitoring`; eval trigger case
+
 ## [0.32.0] - 2026-11-26
 ### Added
 - Feature flags and remote config: `/dualcraft:flags` and `scripts/flags.mjs` (init, add, remove, gen, check) — `.dualcraft/flags/flags.json` → a typed accessor per stack (TypeScript, Dart, Kotlin, Swift): defaults built in, overrides for tests and QA, and any missing or ill-typed remote value falls back to the default

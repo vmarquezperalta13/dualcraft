@@ -31,4 +31,5 @@ Open the code at the frame; reconstruct the scenario that produces it (which use
 ## 4. Record & hand over
 - Brain: `$BRAIN new bug "<crash summary>" --priority high` (if not there), with trace summary, affected versions, frequency, root cause.
 - Fix via `dualcraft:debug` (reproduce with a test) — and search for the same pattern elsewhere (other `!` on Firestore data, other missing `mounted` checks).
+- No reports coming in, or stack traces unreadable (missing symbols)? Set up or fix collection with `dualcraft:monitoring`.
 - After release: watch the issue's trend in Crashlytics for the fixed version; record it in the bug's log.

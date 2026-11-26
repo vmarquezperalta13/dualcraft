@@ -154,6 +154,13 @@
         "flags"
       ]
     },
+    "monitoring": {
+      "name": "Monitorización de errores",
+      "description": "Sentry o Crashlytics configurados igual en todas las apps: release, muestreo, consentimiento, datos sensibles borrados, símbolos subidos en CI",
+      "skills": [
+        "monitoring"
+      ]
+    },
     "e2e": {
       "name": "Tests end-to-end",
       "description": "Playwright (web) y Maestro (apps) desde un único spec: login, rutas, compras y capturas, con job de CI para la web",
