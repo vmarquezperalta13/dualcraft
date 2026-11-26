@@ -1,6 +1,6 @@
 ---
 name: brain
-description: Project brain - capture and query tasks, bugs, notes and ideas with dependencies and target versions. Use for "apunta", "déjalo para luego", "¿qué tenemos pendiente?", "backlog", or when out-of-scope work comes up.
+description: Project brain - tasks, bugs, notes and ideas with dependencies and target versions. Use for "apunta", "déjalo para luego", "¿qué tenemos pendiente?", "backlog", or when out-of-scope work comes up.
 ---
 
 # DualCraft brain

@@ -1,6 +1,6 @@
 ---
 name: release
-description: Closes and ships a version - readiness checklist, version bump everywhere, CHANGELOG, tag, store notes per language, launch and follow-up. Use for "saca la versión", "cerramos la 1.3", "vamos a publicar", "release".
+description: Closes and ships a version - readiness checklist, version bump everywhere, CHANGELOG, tag, store notes per language, follow-up. Use for "saca la versión", "cerramos la 1.3", "vamos a publicar".
 ---
 
 # DualCraft release

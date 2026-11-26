@@ -1,6 +1,6 @@
 ---
 name: mobile-architecture
-description: Maps the mobile app structure (Flutter, React Native, KMP, Android, iOS) into .dualcraft/architecture/mobile.md and says where each change goes. Use for "¿dónde va esto en la app?", "cómo está organizada la app", or before a new screen.
+description: Maps the mobile app structure (Flutter, React Native, KMP, Android, iOS) and says where each change goes. Use for "¿dónde va esto en la app?", "cómo está organizada la app", or before a new screen.
 ---
 
 # DualCraft mobile architecture

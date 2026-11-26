@@ -1,6 +1,6 @@
 ---
 name: park
-description: Parks finished work that must wait for a later version (parked branch or feature flag) and resumes it later. Use for "déjalo para la siguiente versión", "apárcalo", "no lo metas en esta versión", "¿qué hay aparcado?".
+description: Parks finished work for a later version (parked branch or feature flag) and resumes it later. Use for "déjalo para la siguiente versión", "apárcalo", "no lo metas en esta versión", "¿qué hay aparcado?".
 ---
 
 # DualCraft park

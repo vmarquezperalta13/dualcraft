@@ -1,6 +1,6 @@
 ---
 name: decisions
-description: Project decisions (ADR) - record, list by area, find related, check conflicts, supersede with history. Use for "hemos decidido", "a partir de ahora", "¿qué decidimos sobre…?", "cambiamos de idea", or when a request contradicts a decision.
+description: Project decisions (ADR) - record, list by area, check conflicts, supersede with history. Use for "hemos decidido", "a partir de ahora", "¿qué decidimos sobre…?", "cambiamos de idea", or when a request contradicts a decision.
 ---
 
 # DualCraft decisions

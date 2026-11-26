@@ -1,6 +1,6 @@
 ---
 name: review
-description: Code review - correctness, lifecycle, cross-platform consistency, decisions, design tokens, security, accessibility - ranked findings with file:line. Use for "revisa el código", "¿está bien esto?", or before merging.
+description: Code review - correctness, lifecycle, web/mobile consistency, decisions, tokens, security, accessibility - ranked findings with file:line. Use for "revisa el código", "¿está bien esto?", or before merging.
 ---
 
 # DualCraft review

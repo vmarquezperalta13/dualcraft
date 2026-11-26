@@ -1,6 +1,6 @@
 ---
 name: legal
-description: Legal and privacy for EU/Spain apps and webs - data map (what data, why, legal basis, retention, providers) inferred from SDKs and schema; drafts of privacy policy, terms and cookie policy, App Store privacy and Google Data safety answers, iOS privacy manifest; checks account deletion, ATT, permission texts, cookie consent. Use for "privacidad", "RGPD", "política de privacidad", "cookies", "data safety".
+description: EU/Spain privacy for apps and webs - data map from SDKs and schema, drafts of privacy, terms and cookie policies, App Store privacy, Data safety, iOS privacy manifest; checks deletion, ATT, consent. Use for "privacidad", "RGPD", "cookies", "data safety".
 ---
 
 # DualCraft legal & privacy

@@ -1,6 +1,6 @@
 ---
 name: mobile-build
-description: Builds the mobile app and fixes build problems - dependencies, Gradle, pods, flavors, codegen, signing, store builds and versioning. Use for "no compila la app", "falla Gradle", "error de pods", "genera el appbundle/ipa".
+description: Builds the mobile app and fixes build problems - dependencies, Gradle, pods, flavors, codegen, signing, store builds. Use for "no compila la app", "falla Gradle", "error de pods", "genera el appbundle".
 ---
 
 # DualCraft mobile build

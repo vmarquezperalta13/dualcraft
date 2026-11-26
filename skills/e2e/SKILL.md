@@ -1,6 +1,6 @@
 ---
 name: e2e
-description: End-to-end tests from one spec (.dualcraft/e2e/flows.json) - Playwright for the web and Maestro for the apps, with flows derived from auth, routes, payments and store screenshots, run in CI for the web. Use for "tests e2e", "end to end", "Playwright", "Maestro", "prueba el login entero", "test de humo".
+description: End-to-end tests from one spec - Playwright (web) and Maestro (apps), flows derived from auth, routes, payments and screenshots, web in CI. Use for "tests e2e", "end to end", "Playwright", "Maestro", "prueba el login entero".
 ---
 
 # DualCraft e2e

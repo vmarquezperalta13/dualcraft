@@ -1,6 +1,6 @@
 ---
 name: push
-description: Push notifications with FCM for Android, iOS and web - one catalog (.dualcraft/push/notifications.json) of channels, topics and typed notifications with deep links, texts from the shared i18n in each device's language, device registration, typed senders and parsers per stack, Flutter PushService. Use for "notificaciones push", "avisar al usuario", "FCM".
+description: Push notifications with FCM (Android, iOS, web) from one catalog - channels, topics, typed notifications with deep links, texts per device language, registration, typed senders and parsers per stack. Use for "notificaciones push", "avisar al usuario", "FCM".
 ---
 
 # DualCraft push

@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Evidence before saying done - run analyzer, types, lint, tests, build and decision checks for each affected platform and report. Use before claiming work is finished, committing or closing a task, or for "¿funciona?", "comprueba que va bien".
+description: Evidence before saying done - analyzer, types, lint, tests, build and decision checks per affected platform. Use before saying work is finished, committing or closing a task, or for "¿funciona?".
 ---
 
 # DualCraft verify

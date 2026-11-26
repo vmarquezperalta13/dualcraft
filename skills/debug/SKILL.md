@@ -1,6 +1,6 @@
 ---
 name: debug
-description: Root cause before any fix - reproduce, gather evidence, test hypotheses, fix the cause, check the other platform. Use for any bug, crash or failing test, "no funciona", "falla", or when a previous fix didn't work.
+description: Root cause before any fix - reproduce, gather evidence, test hypotheses, fix the cause, check the other platform. Use for any bug, crash or failing test, "no funciona", or when a fix did not work.
 ---
 
 # DualCraft debug

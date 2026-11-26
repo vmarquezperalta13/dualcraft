@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.31.1] - 2026-11-26
+### Fixed
+- evals: the behaviour scaffolds embedded the day they were generated, so the drift test failed every new day — the brain CLI now honours `DUALCRAFT_TODAY` and the generator pins it
+### Changed
+- skill descriptions trimmed (~3,450 → ~3,000 tokens per session with everything installed), keeping their Spanish trigger phrases; the installer's cost note updated
+- README: overview rewritten for every area and stack (it still described v0.16), roadmap up to date
+- CI: every job has a time limit
+### Added
+- tests for the ER tool, the stacks registry and store screenshots (check; frame when Chrome or Edge is present)
+
 ## [0.31.0] - 2026-11-25
 ### Added
 - `/dualcraft:agents`: lists the specialist agents (installed or not, what each does, how to add the missing ones) — `scripts/agents.mjs` (`--json`); `/dualcraft:agents <agent> <task>` writes the agent a self-contained brief, launches it and relays its report (Spanish agent names accepted)

@@ -50,7 +50,7 @@ if (missing.length) throw new Error(`eval-triggers.json has no request for: ${mi
 /** A small DualCraft project made with the real brain CLI, returned as { relPath: content }. */
 function fixtureProject(setup) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dualcraft-eval-'))
-  const brain = (...a) => { const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'brain.mjs'), ...a], { cwd: dir, encoding: 'utf8' }); if (r.status !== 0) throw new Error(`brain ${a.join(' ')}: ${r.stderr}`) }
+  const brain = (...a) => { const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'brain.mjs'), ...a], { cwd: dir, encoding: 'utf8', env: { ...process.env, DUALCRAFT_TODAY: '2026-01-01' } }); if (r.status !== 0) throw new Error(`brain ${a.join(' ')}: ${r.stderr}`) }
   brain('init', '--name', 'Liga', '--version', '1.2.0', '--web', 'nextjs', '--mobile', 'flutter', '--lang', 'es')
   setup(brain)
   const out = {}

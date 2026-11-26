@@ -1,6 +1,6 @@
 ---
 name: refactor-web
-description: Safe web refactoring without behaviour change - components, server/client split, data fetching, duplication, dead code, adoption of shared sources - small green steps. Use for "refactoriza la web", "limpia este componente".
+description: Safe web refactoring without behaviour change - components, server/client split, data fetching, duplication, dead code - in small green steps. Use for "refactoriza la web", "limpia este componente".
 ---
 
 # DualCraft refactor — web

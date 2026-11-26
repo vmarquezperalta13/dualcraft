@@ -8,26 +8,35 @@ Web + mobile development workflow for **Claude Code, Gemini CLI and Codex CLI**,
 
 You talk to it in your language (Spanish by default); commands are in English.
 
-## What it does (v0.16)
+## What it does
 
-- **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids (`T-001`, `D-002`…), status, target version and dependencies. Loaded automatically at the start of every session.
-- **New projects**: a full intake form (idea, type, platforms, stacks, backend, design, MVP features) creates the brief, decisions, MVP tasks and functional document, and scaffolds each stack with its CLI.
-- **Decisions that stick**: ADR-style decisions by area; all decisions in force are loaded at session start and the ones related to each request are injected automatically; conflicts are raised before acting; superseding keeps the history.
-- **Work modes**: before working, DualCraft asks whether it's a *bug / short task*, a *new development* or a *refactor*. The mode drives the flow, the commit type and the version impact.
-- **Parked work**: finished development that must wait for a later version is kept on a `parked/*` branch or behind a feature flag, with its target version recorded.
-- **Commits**: Conventional Commits derived from the mode, linked to brain ids, with `CHANGELOG.md`.
-- **Team & sharing**: assignee and estimate per task, estimates per version, two-way sync with GitHub Issues, and the roadmap/map as a shareable page (full, or without internal details for clients).
-- **Visual brain**: an offline HTML map of notes as nodes linked by their dependencies, plus a roadmap board by version.
-- **Process**: brainstorm before building, written plans, TDD, root-cause debugging, verification with evidence, code review (incl. accessibility) — for both platforms.
-- **Functional document** (`docs/FUNCTIONAL.md`) kept up to date as work is finished, traceable to brain ids.
-- **Design**: the project's claude.ai Design System is the source of truth for the look; its tokens become Tailwind v4 / CSS variables for Next.js and a Material theme for Flutter (light + dark, contrast-checked). Screens are designed as mobile + web artboard pairs and implemented with tokens only.
-- **Web and mobile packs**: architecture maps, builds, tests, browser and device tooling, SEO, crash analysis, and safe refactoring per platform or across both.
-- **Shared texts and analytics**: one i18n source → Flutter ARB + next-intl; one tracking plan → typed event helpers for Dart and TypeScript.
-- **Security**: global, web and mobile audits with a static scanner (secrets, Firebase rules, Cloud Functions, Next.js endpoints and headers, Android/iOS config, payments) and a dated report; findings become brain bugs.
-- **Release & marketing**: a readiness checklist across brain, security, texts, analytics and docs; one command bumps every version and closes the CHANGELOG; store notes validated against Play/App Store limits; launch copy, campaign plan and growth ideas for each update.
-- **Converter between any stacks** (web ⇄ mobile, or web → web / mobile → mobile migrations): feature-by-feature conversion through a platform-neutral spec; every backend or native dependency is analysed and decided with you (share, expose as API, move to Cloud Functions, alternative, or skip); the target is native, built on the shared sources, and verified against the source.
-- **Databases**: Firebase, Supabase or PostgreSQL + Prisma with local + dev + prod environments set up through each CLI; the schema becomes SQL migrations (incremental, with RLS), a Prisma schema or Firestore rules — applied per environment and promoted to prod safely.
-- **Database schema as source of truth**: `.dualcraft/db/schema.dbml` ([DBML](https://dbml.dbdiagram.io/docs)) → ER diagram with crow's-foot notation (PNG/SVG export) and generated Dart models, TypeScript types and a Firestore rules skeleton.
+DualCraft is both **automation** (generators that write code from one spec per area and keep it in sync, with a `check` that catches drift) and **guidance** (skills that make the agent work like a careful team: design before code, root cause before fixes, evidence before "done"). Every area works across the 9 stacks.
+
+**Project memory and way of working**
+- **Project brain** (`.dualcraft/brain/`): tasks, bugs, decisions, notes and ideas as small markdown files with ids, status, target version, assignee, estimate and dependencies; loaded at the start of every session. Visual map and roadmap board, two-way sync with GitHub Issues, and shareable pages (full, or without internal details for clients).
+- **Decisions that stick**: ADR-style decisions by area; the ones related to each request are injected automatically and conflicts are raised before acting.
+- **Work modes** (bug / new development / refactor) drive the flow, the commit type and the version impact; finished work can be **parked** for a later version (branch or feature flag).
+- **Process**: brainstorm, written plans, TDD, root-cause debugging, verification with evidence, code review, functional document (`docs/FUNCTIONAL.md`), Conventional Commits with CHANGELOG.
+- **New projects** from an intake form (idea, platforms, stacks, backend, design, MVP) to brief, decisions, tasks and scaffolding.
+- **Specialist agents** with their own context: security, reviewer, QA, architect, debugger, designer, marketing, release (`/dualcraft:agents`).
+
+**Generators (one source → every stack)**
+- **Design**: the claude.ai Design System → tokens and themes per stack (contrast-checked); screens as mobile + web artboards, implemented with tokens only.
+- **Data**: `schema.dbml` → ER diagram, models per stack, SQL migrations with RLS, Prisma or Firestore rules; Firebase, Supabase or Postgres with local, dev and prod environments.
+- **Shared texts and analytics**: one i18n source (ICU) and one tracking plan → typed code per stack, with coverage.
+- **Backend**: one contract → Cloud Functions, Supabase Edge Functions or API routes (callables, webhooks, triggers, cron) with server validation and typed clients.
+- **Auth**: email, Google, Apple, phone, passkeys, guest, 2FA, roles and route rules, account deletion — typed AuthService and screens per stack.
+- **Payments**: one product catalog → Google Play and App Store purchases with server verification, or RevenueCat.
+- **Push**: FCM catalog of channels, topics and typed notifications with deep links, in each device's language.
+- **CI/CD**: GitHub Actions per stack, web deploys with PR previews, backend deploys, Play internal and TestFlight on tags.
+- **Tests and performance**: end-to-end flows for Playwright and Maestro from one spec; performance budgets (Lighthouse, bundle, app size, cold start) in CI.
+- **Legal**: data map from SDKs and schema, privacy/terms/cookies drafts, App Store privacy, Data safety, iOS privacy manifest.
+
+**Quality, release and growth**
+- **Security**: global, web and mobile audits with a static scanner and a dated report; findings become brain bugs.
+- **Release**: readiness checklist, one command bumps every version, store notes per language validated against store limits.
+- **Marketing**: what to say in each update, copy per channel and language, campaign plan; store screenshots framed per language; marketing videos with Remotion; product photos from real photos (free, local).
+- **Converters**: between stacks feature by feature (web ⇄ mobile, migrations) and deep code ports between Dart, Kotlin, Swift and TypeScript.
 
 Run `/dualcraft:help` to see every command (installed and not installed).
 
@@ -161,6 +170,12 @@ claude plugin eval . --ablation none --runs 1 --tag behavior --scaffold
 7. ✅ Marketing and release (versioning, store notes, launch checklist)
 8. ✅ Web ⇄ mobile converter
 9. ✅ Installer with packs for Claude Code, Gemini CLI and Codex CLI
+10. ✅ More stacks (React + Vite, Astro, Nuxt, React Native, KMP, Android, iOS) and deep code ports
+11. ✅ Backend, payments, push, CI/CD, legal and auth generators
+12. ✅ End-to-end tests, performance budgets and skill evals
+13. ✅ Marketing videos (Remotion) and product photos
+14. ✅ Specialist agents
+15. Feature flags and Remote Config, error monitoring (Crashlytics / Sentry), deep links
 
 ## Project files
 

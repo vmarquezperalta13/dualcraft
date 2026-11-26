@@ -1,6 +1,7 @@
 ---
 name: backend
-description: Serverless backend from one contract (.dualcraft/backend/api.json) - Firebase Cloud Functions, Supabase Edge Functions or Next.js/Nuxt API routes; scaffolds callables, webhooks, triggers and cron jobs, server validators and typed clients for every stack. Use for "crea una función", "endpoint", "Cloud Function", "webhook", "cron", "backend".
+description: >-
+  Serverless backend from one contract - Firebase Cloud Functions, Supabase Edge Functions or API routes: callables, webhooks, triggers, cron, server validation and typed clients per stack. Use for "crea una función", "endpoint", "webhook", "cron", "backend".
 ---
 
 # DualCraft backend

@@ -1,6 +1,6 @@
 ---
 name: security-mobile
-description: Mobile security review (MASVS) - secure storage, network, deep links, manifest and ATS, release config, IAP verification, App Check. Use for "seguridad de la app", before a store release, or within a global audit.
+description: Mobile security review (MASVS) - storage, network, deep links, manifest and ATS, release config, IAP verification, App Check. Use for "seguridad de la app", before a store release, or in a global audit.
 ---
 
 # DualCraft security — mobile

@@ -1,6 +1,6 @@
 ---
 name: video
-description: Marketing videos with Remotion from one spec (.dualcraft/marketing/videos.json) - App Store app previews, Google Play promo, Reels/TikTok 9:16 and feed formats, per language, styled with the DS tokens, using the store screenshots, listing and release notes; rendered locally. Use for "vídeo", "Remotion", "vídeo promocional", "app preview", "reel de la nueva versión".
+description: Marketing videos with Remotion from one spec - App Store previews, Play promo, Reels/TikTok and feed, per language, from the DS tokens, screenshots and release notes; rendered locally. Use for "vídeo", "Remotion", "app preview", "reel de la versión".
 ---
 
 # DualCraft video

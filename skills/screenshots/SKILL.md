@@ -1,6 +1,6 @@
 ---
 name: screenshots
-description: Store screenshots - capture screens by deep link, frame them at Google Play and App Store sizes with captions per language. Use for "capturas para la tienda", "screenshots de la ficha", "imágenes de Play/App Store".
+description: Store screenshots - capture by deep link, frame at Google Play and App Store sizes with captions per language. Use for "capturas para la tienda", "screenshots de la ficha", "imágenes de Play/App Store".
 ---
 
 # DualCraft store screenshots

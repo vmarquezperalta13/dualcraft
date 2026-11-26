@@ -1,6 +1,6 @@
 ---
 name: port
-description: Deep code conversion between languages - Dart, Kotlin, Swift, TypeScript; Flutter, Compose (Android/KMP), SwiftUI, React Native - with side-by-side idioms, dependency mapping, a file plan and parity checks. Use for "pasa la app de Flutter a Kotlin", "convierte este código a Swift", "migra a KMP".
+description: Deep code conversion between Dart, Kotlin, Swift and TypeScript (Flutter, Compose, KMP, SwiftUI, React Native) - idioms, dependency mapping, file plan, parity checks. Use for "pasa la app de Flutter a Kotlin", "convierte a Swift", "migra a KMP".
 ---
 
 # DualCraft port (deep language conversion)

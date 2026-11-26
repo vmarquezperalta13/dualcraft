@@ -1,6 +1,6 @@
 ---
 name: marketing
-description: What to communicate in each update and ready copy - stores and ASO, web, social, in-app, push and email - with campaign plan, metrics and growth ideas. Use for "ideas de marketing", "cómo anunciamos esta versión", "ASO".
+description: What to communicate in each update and ready copy - stores and ASO, web, social, in-app, push, email - with campaign plan and metrics. Use for "ideas de marketing", "cómo anunciamos esta versión", "ASO".
 ---
 
 # DualCraft marketing

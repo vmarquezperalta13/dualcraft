@@ -1,6 +1,6 @@
 ---
 name: web-architecture
-description: Maps the web app structure (Next.js, React+Vite, Astro, Nuxt) into .dualcraft/architecture/web.md and says where each change goes. Use for "¿dónde va esto en la web?", "cómo está organizada la web", or before a new page or feature.
+description: Maps the web app structure (Next.js, React+Vite, Astro, Nuxt) and says where each change goes. Use for "¿dónde va esto en la web?", "cómo está organizada la web", or before a new page.
 ---
 
 # DualCraft web architecture

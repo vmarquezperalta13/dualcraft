@@ -1,6 +1,6 @@
 ---
 name: refactor-mobile
-description: Safe mobile refactoring without behaviour change - widget/screen decomposition, state, repositories, lifecycle, duplication, shared sources - small green steps. Use for "refactoriza la app", "este widget es enorme".
+description: Safe mobile refactoring without behaviour change - widget/screen decomposition, state, repositories, lifecycle, duplication - in small green steps. Use for "refactoriza la app", "este widget es enorme".
 ---
 
 # DualCraft refactor — mobile

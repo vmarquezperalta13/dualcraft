@@ -1,6 +1,6 @@
 ---
 name: security-global
-description: Full security audit - threat model, scanner, rules vs schema, functions, payments, abuse, privacy - dated report and brain bugs. Use for "auditoría de seguridad", "¿es segura la app?", or before a public launch.
+description: Full security audit - threat model, scanner, rules vs schema, functions, payments, abuse, privacy - with a dated report and brain bugs. Use for "auditoría de seguridad", "¿es segura la app?", before launch.
 ---
 
 # DualCraft security — global audit

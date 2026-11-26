@@ -1,6 +1,6 @@
 ---
 name: agents
-description: Lists DualCraft's specialist agents (security, reviewer, qa, architect, debugger, designer, marketing, release), which are installed and what each does, and hands a task to one. Use for /dualcraft:agents, "¿qué agentes hay?", "lista los agentes", or "/dualcraft:agents <agente> <tarea>".
+description: Lists the specialist agents (installed or not, what each does) and hands a task to one. Use for /dualcraft:agents, "¿qué agentes hay?", "lista los agentes", "/dualcraft:agents <agente> <tarea>".
 ---
 
 # DualCraft agents

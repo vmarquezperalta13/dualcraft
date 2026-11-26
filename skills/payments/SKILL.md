@@ -1,6 +1,6 @@
 ---
 name: payments
-description: In-app purchases on Google Play and the App Store - one product catalog (.dualcraft/payments/products.json) for subscriptions, one-time unlocks and consumables; native mode with server verification and store notifications, or RevenueCat; typed catalogs and a Flutter purchase service. Use for "compras in-app", "suscripción", "premium", "monedas", "RevenueCat".
+description: In-app purchases on Google Play and the App Store from one catalog - subscriptions, unlocks, consumables; server verification and store notifications, or RevenueCat; typed catalogs per stack. Use for "compras in-app", "suscripción", "premium", "RevenueCat".
 ---
 
 # DualCraft payments

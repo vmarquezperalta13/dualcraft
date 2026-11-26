@@ -13,6 +13,7 @@ jobs:
   tests:
     name: Tests (${{ matrix.os }}, Node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -29,6 +30,7 @@ jobs:
   typescript:
     name: Compile TypeScript output
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -66,6 +68,7 @@ jobs:
   actionlint:
     name: Lint generated GitHub Actions workflows (actionlint + shellcheck)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -79,6 +82,7 @@ jobs:
   deno:
     name: Type-check Supabase Edge Functions (Deno)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -94,6 +98,7 @@ jobs:
   dart:
     name: Analyze Dart output (Flutter)
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -112,6 +117,7 @@ jobs:
   kotlin:
     name: Compile and run Kotlin output
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -137,6 +143,7 @@ jobs:
   swift:
     name: Type-check Swift output (macOS + iOS SDK)
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -163,6 +170,7 @@ jobs:
   sql:
     name: Apply SQL migrations (Postgres) and validate Prisma
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -179,6 +187,7 @@ jobs:
   e2e:
     name: Run generated E2E (Playwright), validate Maestro flows, performance runner
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -210,6 +219,7 @@ jobs:
   video:
     name: Render a generated Remotion video
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

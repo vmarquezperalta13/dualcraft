@@ -25,7 +25,7 @@ updated: 2026-01-01
 ## Details
 
 ## Log
-- 2026-11-25: created
+- 2026-01-01: created
 DUALCRAFT_EOF
 mkdir -p "$(dirname '.dualcraft/brain/T-002-pantalla-de-ajustes.md')"
 cat > '.dualcraft/brain/T-002-pantalla-de-ajustes.md' <<'DUALCRAFT_EOF'
@@ -46,8 +46,8 @@ updated: 2026-01-01
 ## Details
 
 ## Log
-- 2026-11-25: created
-- 2026-11-25: status=done
+- 2026-01-01: created
+- 2026-01-01: status=done
 DUALCRAFT_EOF
 mkdir -p "$(dirname '.dualcraft/config.json')"
 cat > '.dualcraft/config.json' <<'DUALCRAFT_EOF'

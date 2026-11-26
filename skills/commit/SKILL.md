@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Conventional Commits from the work mode, linked to brain ids, with CHANGELOG; asks before committing, never pushes unasked. Use for "haz commit", "commitea", "sube los cambios", or when verified work is done.
+description: Conventional Commits from the work mode, linked to brain ids, with CHANGELOG; asks first, never pushes unasked. Use for "haz commit", "commitea", "sube los cambios", or when verified work is done.
 ---
 
 # DualCraft commit

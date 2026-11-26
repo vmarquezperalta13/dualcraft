@@ -1,6 +1,6 @@
 ---
 name: perf
-description: Performance budgets (.dualcraft/perf/budgets.json) checked in CI - web Core Web Vitals with Lighthouse and bundle size per route, app size of the store builds, cold start measured locally with history. Use for "rendimiento", "la web va lenta", "Lighthouse", "tamaño del bundle", "la app pesa mucho", "arranque", "presupuestos de rendimiento".
+description: Performance budgets checked in CI - Lighthouse Core Web Vitals and bundle size per route, store build size, app cold start with history. Use for "rendimiento", "la web va lenta", "Lighthouse", "la app pesa mucho", "arranque".
 ---
 
 # DualCraft perf

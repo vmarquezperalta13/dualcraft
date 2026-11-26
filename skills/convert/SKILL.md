@@ -1,6 +1,6 @@
 ---
 name: convert
-description: Converts between stacks (web and mobile, or migrations) feature by feature - inventory, backend decisions asked to the user, neutral spec, native adaptation, verification. Use for "pasa la web a app", "haz la versión web", "migra a Flutter".
+description: Converts between stacks (web ⇄ mobile, or migrations) feature by feature - inventory, backend decisions with the user, neutral spec, native adaptation, verification. Use for "pasa la web a app", "haz la versión web", "migra a Flutter".
 ---
 
 # DualCraft convert (any stack ⇄ any stack)

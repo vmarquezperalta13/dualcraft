@@ -27,7 +27,8 @@ const fmtHours = (h) => (h >= 8 ? `${+(h / 8).toFixed(1)}d` : `${+h.toFixed(1)}h
 const isActiveDecision = (n) => n.type === 'decision' && n.status === 'done'
 
 // ---------- helpers ----------
-const today = () => new Date().toISOString().slice(0, 10)
+// DUALCRAFT_TODAY=YYYY-MM-DD fixes the date (reproducible output: generated eval scaffolds, tests)
+const today = () => (/^\d{4}-\d{2}-\d{2}$/.test(process.env.DUALCRAFT_TODAY || '') ? process.env.DUALCRAFT_TODAY : new Date().toISOString().slice(0, 10))
 const die = (msg, code = 1) => { console.error(`dualcraft: ${msg}`); process.exit(code) }
 const unq = (s) => s.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1')
 const slugify = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()

@@ -1,6 +1,6 @@
 ---
 name: design-to-code
-description: Implements a designed screen with tokens only, existing components, accessibility and i18n, compared visually with the artboard. Use for "pasa este diseño a código", "implementa la pantalla de…", "maqueta esto".
+description: Implements a designed screen with tokens only, existing components, accessibility and i18n, compared with the artboard. Use for "pasa este diseño a código", "implementa la pantalla de…", "maqueta esto".
 ---
 
 # DualCraft design to code

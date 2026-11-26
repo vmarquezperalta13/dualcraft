@@ -1,6 +1,6 @@
 ---
 name: github
-description: Syncs the brain with GitHub Issues - issues for tasks and bugs, milestones from versions, assignees, closing finished ones, importing new ones. Use for "sube las tareas a GitHub", "sincroniza con GitHub", "asigna esta tarea a…".
+description: Syncs the brain with GitHub Issues - tasks and bugs as issues, versions as milestones, assignees, closing and importing. Use for "sube las tareas a GitHub", "sincroniza con GitHub", "asigna esta tarea a…".
 ---
 
 # DualCraft ⇄ GitHub Issues

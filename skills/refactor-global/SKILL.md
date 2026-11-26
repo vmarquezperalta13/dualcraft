@@ -1,6 +1,6 @@
 ---
 name: refactor-global
-description: Cross-platform refactoring - finds business rules duplicated or drifting between web and mobile and moves them to one place or shared test cases. Use for "unifica web y app", "esto está duplicado en las dos", "no hacen lo mismo".
+description: Cross-platform refactoring - business rules duplicated or drifting between web and mobile moved to one place or shared test cases. Use for "unifica web y app", "esto está duplicado", "no hacen lo mismo".
 ---
 
 # DualCraft refactor — global

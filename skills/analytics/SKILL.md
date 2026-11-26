@@ -1,6 +1,6 @@
 ---
 name: analytics
-description: Tracking plan (.dualcraft/analytics/events.json) validated and generated as typed helpers for every stack, with ANALYTICS.md and per-platform coverage. Use for "analítica", "eventos", "quiero medir…", "¿estamos midiendo X?".
+description: Tracking plan (.dualcraft/analytics/events.json) validated and generated as typed helpers for every stack, with coverage per platform. Use for "analítica", "eventos", "quiero medir…", "¿estamos midiendo X?".
 ---
 
 # DualCraft analytics

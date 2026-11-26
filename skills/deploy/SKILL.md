@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: CI/CD with GitHub Actions generated from the project's stacks - CI per stack, web deploys to Firebase Hosting, Vercel, Cloudflare Pages or Netlify with PR previews, backend deploys, mobile releases to Play internal testing and TestFlight on tags; environments, secrets check, release signing. Use for "CI", "despliegue", "deploy", "pipeline", "subir a TestFlight".
+description: CI/CD with GitHub Actions per stack - web deploys (Firebase Hosting, Vercel, Cloudflare, Netlify) with PR previews, backend deploys, Play internal and TestFlight on tags, environments, secrets, signing. Use for "CI", "deploy", "despliegue", "subir a TestFlight".
 ---
 
 # DualCraft deploy

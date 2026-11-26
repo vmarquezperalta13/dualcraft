@@ -1,6 +1,6 @@
 ---
 name: auth
-description: Authentication on Firebase or Supabase from one config (.dualcraft/auth/auth.json) - email, Google, Apple, phone, passkeys, guest and linking, 2FA, roles and route rules, account deletion; typed AuthService and sign-in/account screens per stack, server functions. Use for "login", "registro", "roles", "borrar cuenta", "passkeys", "2FA".
+description: Authentication on Firebase or Supabase from one config - email, Google, Apple, phone, passkeys, guest, 2FA, roles and route rules, account deletion; typed AuthService and screens per stack. Use for "login", "registro", "roles", "borrar cuenta", "passkeys".
 ---
 
 # DualCraft auth

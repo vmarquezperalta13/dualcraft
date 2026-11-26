@@ -1,6 +1,6 @@
 ---
 name: stacks
-description: Supported stacks (Next.js, React+Vite, Astro, Nuxt, Flutter, React Native, KMP, Android, iOS) and adding one to the project. Use for "¿qué tecnologías soporta?", "añade una app/web al proyecto", or before working in a non-default stack.
+description: Supported stacks (Next.js, React+Vite, Astro, Nuxt, Flutter, React Native, KMP, Android, iOS) and adding one to the project. Use for "¿qué tecnologías soporta?", "añade una app/web al proyecto".
 ---
 
 # DualCraft stacks

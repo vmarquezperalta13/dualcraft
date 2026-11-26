@@ -1,6 +1,6 @@
 ---
 name: database
-description: Creates the database and environments (Firebase, Supabase, Postgres+Prisma; local, dev, prod) with each CLI, migrations with RLS, rules and safe promotion to prod. Use for "crea la base de datos", "configura Firebase/Supabase", "aplica la migración".
+description: Creates the database and environments (Firebase, Supabase, Postgres+Prisma; local, dev, prod) with each CLI, migrations with RLS and safe promotion to prod. Use for "crea la base de datos", "configura Supabase", "aplica la migración".
 ---
 
 # DualCraft database

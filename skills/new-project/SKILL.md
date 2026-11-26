@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: New project from zero - full intake form (idea, type, platforms, stacks, backend, design, MVP features), then brief, decisions, MVP tasks, functional doc and scaffolding. Use for "nuevo proyecto", "empezamos de cero", or start in an empty folder.
+description: New project from zero - intake form (idea, platforms, stacks, backend, design, MVP) → brief, decisions, tasks, functional doc and scaffolding. Use for "nuevo proyecto", "empezamos de cero", or in an empty folder.
 ---
 
 # DualCraft new project

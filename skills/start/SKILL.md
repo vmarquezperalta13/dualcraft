@@ -1,6 +1,6 @@
 ---
 name: start
-description: Starts work - sets up .dualcraft the first time, loads context and asks the work mode (bug or short task, new development, refactor) before any code. Use for "empezamos", "quiero hacer X", or when the context says the work mode is not chosen.
+description: Starts work - sets up .dualcraft the first time, loads context and asks the work mode (bug, new development, refactor) before any code. Use for "empezamos", "quiero hacer X", or when the work mode is not chosen.
 ---
 
 # DualCraft start

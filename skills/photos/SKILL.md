@@ -1,6 +1,6 @@
 ---
 name: photos
-description: Product photos from your real photos, free and local (.dualcraft/marketing/photos.json) - background removed on the CPU, white packshots for stores, transparent cutouts, brand backgrounds and ads with headline and call to action per language in the DS colours; no paid API. Use for "fotos de producto", "quita el fondo", "fondo blanco", "packshot", "anuncio con la foto del producto".
+description: Product photos from your real photos, free and local - background removal, white store packshots, cutouts, brand backgrounds and ads per language in the DS colours. Use for "fotos de producto", "quita el fondo", "fondo blanco", "packshot".
 ---
 
 # DualCraft photos

@@ -1,6 +1,6 @@
 ---
 name: i18n
-description: Texts from one source (.dualcraft/i18n, ICU) generated for every stack; finds missing keys and hard-coded strings, adds languages. Use for "traduce", "añade inglés", "textos sin traducir", "cambia este texto".
+description: Texts from one source (ICU) generated for every stack; missing keys, hard-coded strings, new languages. Use for "traduce", "añade inglés", "textos sin traducir", "cambia este texto".
 ---
 
 # DualCraft i18n
